@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brown -->
+    <style name="AppTheme_Brown.Light" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/brown</item>
+        <item name="colorPrimaryVariant">@color/brown_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">#B1B1B1</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorBackgroundRecyclerView">@color/grey</item>
+        <item name="colorBackgroundMainMenu">@color/brown_lite</item>
+        <item name="colorBackgroundItemMainMenu">@color/orange</item>
+        <item name="colorBackgroundButton">@color/brown_lite</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/black</item>
+        <item name="colorHintText">@color/grey2</item>
+        <item name="colorBackground">@color/white</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home</item>
+        <item name="iconRandom">@drawable/icon_game_cube</item>
+        <item name="iconSetting">@drawable/icon_setting</item>
+        <item name="iconSearch">@drawable/icon_search</item>
+        <item name="iconBack">@drawable/icon_back</item>
+        <item name="iconDelete">@drawable/icon_trash</item>
+        <item name="iconMenu">@drawable/icon_menu</item>
+        <item name="iconEdit">@drawable/icon_edit</item>
+        <item name="iconShare">@drawable/icon_share</item>
+        <item name="iconDataBase">@drawable/icon_data_base</item>
+        <item name="iconGPT">@drawable/icon_gpt</item>
+        <item name="iconSend">@drawable/icon_send</item>
+        <item name="iconBook">@drawable/icon_book</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/black</item>
+    </style>
+
+    <style name="AppTheme_Brown.Dark" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/brown</item>
+        <item name="colorPrimaryVariant">@color/brown_dark</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/back_dark</item>
+        <item name="colorBackgroundRecyclerView">@color/grey2</item>
+        <item name="colorBackgroundMainMenu">@color/brown_dark</item>
+        <item name="colorBackgroundItemMainMenu">@color/brown_lite</item>
+        <item name="colorBackgroundButton">@color/brown</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/white</item>
+        <item name="colorHintText">@color/grey</item>
+        <item name="colorBackground">@color/back_dark</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home_darkmode</item>
+        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
+        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
+        <item name="iconSearch">@drawable/icon_search_darkmode</item>
+        <item name="iconBack">@drawable/icon_back_darkmode</item>
+        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
+        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
+        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
+        <item name="iconShare">@drawable/icon_share_darkmode</item>
+        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
+        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
+        <item name="iconSend">@drawable/icon_send_darkmode</item>
+        <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+
+
+
+    <!-- Blue -->
+    <style name="AppTheme_Blue.Light" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/blue</item>
+        <item name="colorPrimaryVariant">@color/blue_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">#B1B1B1</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorBackgroundRecyclerView">@color/grey</item>
+        <item name="colorBackgroundMainMenu">@color/blue_lite</item>
+        <item name="colorBackgroundItemMainMenu">@color/cyan</item>
+        <item name="colorBackgroundButton">@color/blue_lite</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/black</item>
+        <item name="colorHintText">@color/grey2</item>
+        <item name="colorBackground">@color/white</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home</item>
+        <item name="iconRandom">@drawable/icon_game_cube</item>
+        <item name="iconSetting">@drawable/icon_setting</item>
+        <item name="iconSearch">@drawable/icon_search</item>
+        <item name="iconBack">@drawable/icon_back</item>
+        <item name="iconDelete">@drawable/icon_trash</item>
+        <item name="iconMenu">@drawable/icon_menu</item>
+        <item name="iconEdit">@drawable/icon_edit</item>
+        <item name="iconShare">@drawable/icon_share</item>
+        <item name="iconDataBase">@drawable/icon_data_base</item>
+        <item name="iconGPT">@drawable/icon_gpt</item>
+        <item name="iconSend">@drawable/icon_send</item>
+        <item name="iconBook">@drawable/icon_book</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/black</item>
+    </style>
+
+    <style name="AppTheme_Blue.Dark" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/blue</item>
+        <item name="colorPrimaryVariant">@color/blue_dark</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/back_dark</item>
+        <item name="colorBackgroundRecyclerView">@color/grey2</item>
+        <item name="colorBackgroundMainMenu">@color/blue_dark</item>
+        <item name="colorBackgroundItemMainMenu">@color/blue_lite</item>
+        <item name="colorBackgroundButton">@color/blue</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/white</item>
+        <item name="colorHintText">@color/grey</item>
+        <item name="colorBackground">@color/back_dark</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home_darkmode</item>
+        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
+        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
+        <item name="iconSearch">@drawable/icon_search_darkmode</item>
+        <item name="iconBack">@drawable/icon_back_darkmode</item>
+        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
+        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
+        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
+        <item name="iconShare">@drawable/icon_share_darkmode</item>
+        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
+        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
+        <item name="iconSend">@drawable/icon_send_darkmode</item>
+        <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+
+
+
+
+    <!-- Purple -->
+    <style name="AppTheme_Purple.Light" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple</item>
+        <item name="colorPrimaryVariant">@color/purple_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">#B1B1B1</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorBackgroundRecyclerView">@color/grey</item>
+        <item name="colorBackgroundMainMenu">@color/purple_lite</item>
+        <item name="colorBackgroundItemMainMenu">@color/lavender</item>
+        <item name="colorBackgroundButton">@color/purple_lite</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/black</item>
+        <item name="colorHintText">@color/grey2</item>
+        <item name="colorBackground">@color/white</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home</item>
+        <item name="iconRandom">@drawable/icon_game_cube</item>
+        <item name="iconSetting">@drawable/icon_setting</item>
+        <item name="iconSearch">@drawable/icon_search</item>
+        <item name="iconBack">@drawable/icon_back</item>
+        <item name="iconDelete">@drawable/icon_trash</item>
+        <item name="iconMenu">@drawable/icon_menu</item>
+        <item name="iconEdit">@drawable/icon_edit</item>
+        <item name="iconShare">@drawable/icon_share</item>
+        <item name="iconDataBase">@drawable/icon_data_base</item>
+        <item name="iconGPT">@drawable/icon_gpt</item>
+        <item name="iconSend">@drawable/icon_send</item>
+        <item name="iconBook">@drawable/icon_book</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/black</item>
+    </style>
+
+    <style name="AppTheme_Purple.Dark" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple</item>
+        <item name="colorPrimaryVariant">@color/purple_dark</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/back_dark</item>
+        <item name="colorBackgroundRecyclerView">@color/grey2</item>
+        <item name="colorBackgroundMainMenu">@color/purple_dark</item>
+        <item name="colorBackgroundItemMainMenu">@color/purple_lite</item>
+        <item name="colorBackgroundButton">@color/purple</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/white</item>
+        <item name="colorHintText">@color/grey</item>
+        <item name="colorBackground">@color/back_dark</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home_darkmode</item>
+        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
+        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
+        <item name="iconSearch">@drawable/icon_search_darkmode</item>
+        <item name="iconBack">@drawable/icon_back_darkmode</item>
+        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
+        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
+        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
+        <item name="iconShare">@drawable/icon_share_darkmode</item>
+        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
+        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
+        <item name="iconSend">@drawable/icon_send_darkmode</item>
+        <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+
+
+
+    <!-- Green -->
+    <style name="AppTheme_Green.Light" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryVariant">@color/green_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">#B1B1B1</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorBackgroundRecyclerView">@color/grey</item>
+        <item name="colorBackgroundMainMenu">@color/green_lite</item>
+        <item name="colorBackgroundItemMainMenu">@color/lime</item>
+        <item name="colorBackgroundButton">@color/green</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/black</item>
+        <item name="colorHintText">@color/grey2</item>
+        <item name="colorBackground">@color/white</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home</item>
+        <item name="iconRandom">@drawable/icon_game_cube</item>
+        <item name="iconSetting">@drawable/icon_setting</item>
+        <item name="iconSearch">@drawable/icon_search</item>
+        <item name="iconBack">@drawable/icon_back</item>
+        <item name="iconDelete">@drawable/icon_trash</item>
+        <item name="iconMenu">@drawable/icon_menu</item>
+        <item name="iconEdit">@drawable/icon_edit</item>
+        <item name="iconShare">@drawable/icon_share</item>
+        <item name="iconDataBase">@drawable/icon_data_base</item>
+        <item name="iconGPT">@drawable/icon_gpt</item>
+        <item name="iconSend">@drawable/icon_send</item>
+        <item name="iconBook">@drawable/icon_book</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/black</item>
+    </style>
+
+    <style name="AppTheme_Green.Dark" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryVariant">@color/green_dark</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/back_dark</item>
+        <item name="colorBackgroundRecyclerView">@color/grey2</item>
+        <item name="colorBackgroundMainMenu">@color/green_dark</item>
+        <item name="colorBackgroundItemMainMenu">@color/green_lite</item>
+        <item name="colorBackgroundButton">@color/green</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Text color -->
+        <item name="colorText">@color/white</item>
+        <item name="colorHintText">@color/grey</item>
+        <item name="colorBackground">@color/back_dark</item>
+        <!-- Drawable -->
+        <item name="iconHome">@drawable/icon_home_darkmode</item>
+        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
+        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
+        <item name="iconSearch">@drawable/icon_search_darkmode</item>
+        <item name="iconBack">@drawable/icon_back_darkmode</item>
+        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
+        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
+        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
+        <item name="iconShare">@drawable/icon_share_darkmode</item>
+        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
+        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
+        <item name="iconSend">@drawable/icon_send_darkmode</item>
+        <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <!-- EditText color. -->
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+    <style name="PopupMenuTextStyle">
+        <item name="android:textColor">?attr/colorText</item>
+    </style>
+</resources>

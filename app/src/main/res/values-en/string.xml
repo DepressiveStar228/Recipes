@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">My Recipe</string>
+    <string name="warning_void_name_dish">Cannot add a dish without a name</string>
+    <string name="warning_dublicate_name_dish">A dish with this name already exists</string>
+    <string name="warning_delete_dish">Do you really want to delete this dish?</string>
+    <string name="warning_set_all_data">Fill in all ingredient fields</string>
+    <string name="confirm_delete_dish">Confirm deletion</string>
+    <string name="default_recipe_text">Empty</string>
+    <string name="successful_add_dish">Dish successfully added</string>
+    <string name="successful_edit_dish">Dish successfully updated</string>
+    <string name="successful_delete_dish">Dish successfully deleted</string>
+    <string name="error_add_dish">Error adding dish</string>
+    <string name="error_edit_dish">Error updating dish</string>
+    <string name="error_delete_dish">Error deleting dish</string>
+    <string name="error_get_data">Error retrieving data</string>
+    <string name="error_edit_dish_null_id">Error: dishID is null</string>
+    <string name="error_edit_dish_delete_name">Cannot delete dish name</string>
+    <string name="error_edit_get_dish">Error transferring dish for editing</string>
+    <string name="error_read_get_dish">Error transferring dish for reading</string>
+    <string name="error_void_dish">Error: Dish list is empty</string>
+    <string name="error_void_ingredients">Error: Ingredient list is empty</string>
+    <string name="error_get_ingredients">Ingredients not found for the selected dish</string>
+    <string name="numbs_dishes_0">Number of dishes: 0</string>
+    <string name="numbs_dishes">Number of dishes: </string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="dishes">Dishes</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="recipe">Pecipe</string>
+    <string name="menu">Menu</string>
+    <string name="language">Language</string>
+    <string name="selecte_language">Select your preferred language</string>
+    <string name="settings">Settings</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="share">Share</string>
+    <string name="options">Options</string>
+    <string name="void_data">No data</string>
+    <string name="name_profile">Your name</string>
+    <string name="email_profile">Your email</string>
+    <string name="phone_profile">Your phone</string>
+    <string name="your_profile">Your profile</string>
+    <string name="your_photo_profile">Your photo profile</string>
+    <string name="your_dish">Your dishes</string>
+    <string name="confirm_settings">Confirm Settings</string>
+    <string name="button_add">Add</string>
+    <string name="button_rand">Random</string>
+    <string name="button_search">Search</string>
+    <string name="button_back">Back</string>
+    <string name="button_add_dish">Add dish</string>
+    <string name="button_add_ingredient">Add ingredient</string>
+    <string name="button_edit_dish">Edit dish</string>
+    <string name="hint_text_name_dish">Name dish</string>
+    <string name="hint_text_recipe_dish">Recipe</string>
+    <string name="hint_text_search">Search by name</string>
+    <string name="hint_short_text_name_ingredient">Name ing.</string>
+    <string name="hint_short_text_numbs">Count</string>
+    <string name="theme">Theme</string>
+    <string-array name="options_array">
+        <item>g.</item>
+        <item>ml.</item>
+        <item>pcs.</item>
+        <item>tsp</item>
+        <item>tbsp</item>
+        <item>pinch</item>
+        <item>cup</item>
+        <item> </item>
+    </string-array>
+    <string-array name="theme_options">
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+    <string-array name="palette_options">
+        <item>Brown</item>
+        <item>Blue</item>
+        <item>Purple</item>
+        <item>Green</item>
+    </string-array>
+    <string name="add_dish_text">Add dish</string>
+    <string name="edit_dish_text">Edit dish</string>
+    <string name="rand_dish_text">Random dish</string>
+    <string name="seach_dish_by_ingredient_text">Found dishes:</string>
+    <string name="copy_clipboard_text">Copied to clipboard</string>
+    <string name="import_recipe">Import recipe</string>
+    <string name="export_recipe">Export recipe</string>
+    <string name="successful_import">Recipes successfully imported from file:</string>
+    <string name="successful_export">Recipes successfully exported</string>
+    <string name="error_import">"Error importing recipes "</string>
+    <string name="error_export">Error when exporting recipes</string>
+    <string name="denied_permission_write">File write permission denied</string>
+    <string name="palette">Palette</string>
+    <string name="main_text_gpt">Your faithful assistant</string>
+    <string name="main_text_gpt2">(click on me)</string>
+    <string name="hint_text_GPT_chat">Send ChatGPT</string>
+    <string name="you">You</string>
+    <string name="prompt_start">You are a cook who is very happy to help me with any advice. You will advise me on various issues related to cooking.</string>
+    <string name="command_add_dish">Write this recipe in my book</string>
+    <string name="successful_command_add_dish">The dish has been successfully added to your book</string>
+    <string name="error_command_add_dish">Failed to add a dish to your book</string>
+    <string name="translate_button_text_false">Translate</string>
+    <string name="translate_button_text_true">Show the original</string>
+    <string name="warning_export">Are you sure you want to export recipes?</string>
+    <string name="confirm_export">Confirm export</string>
+    <string name="error_get_response">Failed to get a response from GPT</string>
+    <string name="collections_dish_text">Your collections</string>
+    <string name="collection">Collection</string>
+    <string name="successful_delete_collection">Collection successfully deleted</string>
+    <string name="error_delete_collection">Error deleting dish</string>
+    <string name="favorites">Favorites</string>
+    <string name="my_recipes">My recipes</string>
+    <string name="gpt_recipes">GPT recipes</string>
+    <string name="import_recipes">Imports</string>
+    <string name="delete_only_collection">Delete only the collection</string>
+    <string name="delete_collection_with_dishes">Delete a collection of dishes</string>
+    <string name="warning_delete_collection">Are you sure you want to delete the collection? Only the collection will be deleted. The dishes will remain whole.</string>
+    <string name="warning_delete_collection_with_dishes">Are you sure you want to delete the collection? Not only the collection will be deleted, but also the dishes in it.</string>
+    <string name="add_collection_button_text">Add collection</string>
+    <string name="hint_text_add_collection">Enter the name of the collection</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_empty_name">Error. A collection cannot have an empty name</string>
+    <string name="successful_add_collection">Collection successfully added</string>
+    <string name="hint_text_edit_collection">Enter a new name for the collection</string>
+    <string name="successful_edit_collection">Collection successfully edited</string>
+    <string name="add_collection_dialog">Add collection</string>
+    <string name="edit_collection_dialog">Edit collection</string>
+    <string name="warning_dublicate_name_collection">A collection with this name already exists</string>
+    <string name="add_in_collection">Add to collection</string>
+    <string name="dish_dublicate_in_collection">The dish is already in collection 111</string>
+    <string name="successful_add_dishes">Dishes successfully added</string>
+    <string name="error_edit_collection">Error updating collection</string>
+    <string name="successful_delete_ingredient">Ingredient successfully deleted</string>
+    <string name="error_empty_collection">Error. This collection is empty</string>
+    <string name="clear_collection">Clear the collection</string>
+    <string name="warning_clear_collection">Are you sure you want to clear the collection? The dishes will not be removed completely. The collection will simply become empty</string>
+    <string name="confirm_clear_collection">Confirm to clear the collection</string>
+    <string name="successful_add_dish_in_collection">Dish successfully added to collection(s)</string>
+    <string name="successful_network">Internet connection</string>
+    <string name="error_network">Without access to the Internet</string>
+    <string name="copy_dishes_another_collection">Copy to</string>
+    <string name="successful_copy_dishes">The dishes have been copied successfully</string>
+    <string name="button_copy">Copy</string>
+    <string name="successful_clear_collerction">The collection was successfully cleared</string>
+    <string name="error_have_permissions_write">File write permission not granted</string>
+    <string name="error_have_permissions_read">File read permission not granted</string>
+    <string name="warning_request_time">Please wait before sending another request</string>
+    <string name="warning_empty_message">The message cannot be empty</string>
+    <string name="warning_maximum_length_message">The message exceeds the maximum length of 250 characters</string>
+    <string name="warning_daily_request_limit">Daily request limit exceeded</string>
+    <string name="warning_char_limit">The character limit has been reached</string>
+</resources>

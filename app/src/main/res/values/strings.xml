@@ -1,0 +1,160 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">My Recipe</string>
+    <string name="warning_void_name_dish">Не можна додати страву без назви</string>
+    <string name="warning_dublicate_name_dish">Страва з такою назвою вже існує</string>
+    <string name="warning_delete_dish">Ви дійсно хочете видалити цю страву?</string>
+    <string name="warning_set_all_data">Заповніть всі поля інгредієнтів</string>
+    <string name="confirm_delete_dish">Підтвердіть видалення</string>
+    <string name="default_recipe_text">Пустота</string>
+    <string name="successful_add_dish">Страва успішно додана</string>
+    <string name="successful_edit_dish">Страва успішно оновлена</string>
+    <string name="successful_delete_dish">Страва успішно видалена</string>
+    <string name="error_add_dish">Помилка додавання страви</string>
+    <string name="error_edit_dish">Помилка оновлення страви</string>
+    <string name="error_delete_dish">Помилка видалення страви</string>
+    <string name="error_get_data">Помилка отримання даних</string>
+    <string name="error_edit_dish_null_id">Помилка: dishID дорівнює null</string>
+    <string name="error_edit_dish_delete_name">Не можна видалити назву страви</string>
+    <string name="error_edit_get_dish">Помилка передачі страви для редагування</string>
+    <string name="error_read_get_dish">Помилка передачі страви для читання</string>
+    <string name="error_void_dish">Помилка: Список страв пустий</string>
+    <string name="error_void_ingredients">Помилка: Список інгредієнтів пустий</string>
+    <string name="error_get_ingredients">Інгредієнти не знайдені для вибраної страви</string>
+    <string name="numbs_dishes_0">Кількість страв: 0</string>
+    <string name="numbs_dishes">Кількість страв: </string>
+    <string name="yes">Так</string>
+    <string name="no">Ні</string>
+    <string name="dishes">Страви</string>
+    <string name="ingredients">Інгредієнти</string>
+    <string name="recipe">Рецепт</string>
+    <string name="menu">Меню</string>
+    <string name="language">Мова</string>
+    <string name="selecte_language">Виберіть потрібну мову</string>
+    <string name="settings">Налаштування</string>
+    <string name="edit">Редагувати</string>
+    <string name="delete">Видалити</string>
+    <string name="share">Поділитися</string>
+    <string name="options">Опції</string>
+    <string name="void_data">Немає даних</string>
+    <string name="name_profile">Ваше ім\'я</string>
+    <string name="email_profile">Ваша пошта</string>
+    <string name="phone_profile">Ваш номер телефону</string>
+    <string name="your_profile">Ваш профіль</string>
+    <string name="your_photo_profile">Фото профіля</string>
+    <string name="your_dish">Ваші страви</string>
+    <string name="confirm_settings">Підтвердити налаштування</string>
+    <string name="button_add">Додати</string>
+    <string name="button_rand">Випадково</string>
+    <string name="button_search">Пошук</string>
+    <string name="button_back">Назад</string>
+    <string name="button_add_dish">Додати страву</string>
+    <string name="button_add_ingredient">Додати інгредієнт</string>
+    <string name="button_edit_dish">Редагувати страву</string>
+    <string name="hint_text_name_dish">Назва страви</string>
+    <string name="hint_text_recipe_dish">Рецепт</string>
+    <string name="hint_text_search">Пошук по назві</string>
+    <string name="hint_short_text_name_ingredient">Назва інг.</string>
+    <string name="hint_short_text_numbs">Кіл.</string>
+    <string name="theme">Тема</string>
+    <string-array name="options_array">
+        <item>Г.</item>
+        <item>Мл.</item>
+        <item>Шт.</item>
+        <item>Ч.л</item>
+        <item>С.л</item>
+        <item>Щеп.</item>
+        <item>Стк.</item>
+        <item> </item>
+    </string-array>
+    <string-array name="language_options">
+        <item>Українська</item>
+        <item>English</item>
+    </string-array>
+    <string-array name="language_values">
+        <item>uk</item>
+        <item>en</item>
+    </string-array>
+    <string-array name="theme_options">
+        <item>Світла</item>
+        <item>Темна</item>
+    </string-array>
+    <string-array name="palette_options">
+        <item>Коричневий</item>
+        <item>Синій</item>
+        <item>Фіолетовий</item>
+        <item>Зелений</item>
+    </string-array>
+    <string name="add_dish_text">Додайте страву</string>
+    <string name="edit_dish_text">Редагуйте страву</string>
+    <string name="rand_dish_text">Випадкова страва</string>
+    <string name="seach_dish_by_ingredient_text">Знайдені страви:</string>
+    <string name="copy_clipboard_text">Скопійовано в буфер обміну</string>
+    <string name="import_recipe">Імпорт рецептів</string>
+    <string name="export_recipe">Експорт рецептів</string>
+    <string name="successful_import">Рецепти успішно імпортовані з файлу:</string>
+    <string name="successful_export">Рецепти успішно експортовані</string>
+    <string name="error_import">Помилка при імпорті рецептів</string>
+    <string name="error_export">Помилка при експорті рецептів</string>
+    <string name="denied_permission_write">У дозволі на запис файлу відмовлено</string>
+    <string name="palette">Палітра</string>
+    <string name="main_text_gpt">Ваш вірний помічник</string>
+    <string name="main_text_gpt2">(клікніть на мене)</string>
+    <string name="hint_text_GPT_chat">Надіслати ChatGPT</string>
+    <string name="you">Ви</string>
+    <string name="prompt_start">Ти кухар, який дуже радий допомогти мені з будь-якою порадою. Ти консультуватимеш мене з різних питань, пов\'язаних із готуванням.</string>
+    <string name="command_add_dish">Запиши мені в книгу цей рецепт</string>
+    <string name="error_command_add_dish">Не вдалося записати страву до вашої книги</string>
+    <string name="successful_command_add_dish">Страва успішно додана до вашої книги</string>
+    <string name="translate_button_text_false">Перекласти</string>
+    <string name="translate_button_text_true">Показати оригінал</string>
+    <string name="warning_export">Ви дійсно хочете експортувати рецепти?</string>
+    <string name="confirm_export">Підтвердіть експортування</string>
+    <string name="api_key" translatable="false">sk-proj-SRKNIqnhk2ouNfGlBtf3T3BlbkFJaPgCBgvefCdtMn7OMgFF</string>
+    <string name="error_get_response">Не вдалося отримати відповідь від GPT</string>
+    <string name="collections_dish_text">Ваші колекції</string>
+    <string name="collection">Колекція</string>
+    <string name="successful_delete_collection">Колекція успішно видалена</string>
+    <string name="error_delete_collection">Помилка видалення колекції</string>
+    <string name="favorites">Обране</string>
+    <string name="my_recipes">Мої рецепти</string>
+    <string name="gpt_recipes">Рецепти GPT</string>
+    <string name="import_recipes">Імпортовані</string>
+    <string name="delete_only_collection">Видалити тільки колекцію</string>
+    <string name="delete_collection_with_dishes">Видалити колекцію з стравами</string>
+    <string name="warning_delete_collection">Ви точно хочете видалити колекцію? Буде видалена лише колекція. Страви залишаться цілі.</string>
+    <string name="warning_delete_collection_with_dishes">Ви точно хочете видалити колекцію? Буде видалена не тільки колекція, а й страви в ній.</string>
+    <string name="add_collection_button_text">Додати колекцію</string>
+    <string name="hint_text_add_collection">Впишіть назву колекції</string>
+    <string name="cancel">Відмінити</string>
+    <string name="error_empty_name">Помилка. Коллекція не може мати пусту назву</string>
+    <string name="successful_add_collection">Колекція успішно додана</string>
+    <string name="hint_text_edit_collection">Впишіть нову назву колекції</string>
+    <string name="successful_edit_collection">Колекція успішно редагована</string>
+    <string name="add_collection_dialog">Додати колекцію</string>
+    <string name="edit_collection_dialog">Редагувати колекцію</string>
+    <string name="warning_dublicate_name_collection">Колекція с такою назвою вже існує</string>
+    <string name="system_collection_tag" translatable="false">#%$*@</string>
+    <string name="add_in_collection">Додати в колекцію</string>
+    <string name="dish_dublicate_in_collection">Страва вже знаходить у колекції</string>
+    <string name="successful_add_dishes">Страви успішно додані</string>
+    <string name="error_edit_collection">Помилка редагування колекціх</string>
+    <string name="successful_delete_ingredient">Інгредіент успішно видалено</string>
+    <string name="error_empty_collection">Помилка. Ця колекція пуста</string>
+    <string name="clear_collection">Очистити колекцію</string>
+    <string name="warning_clear_collection">Ви точно хочете очистити колекцію? Страви не будуть видалені повністю. Просто колекція стане пустою</string>
+    <string name="confirm_clear_collection">Підтвердіть очищення колекції</string>
+    <string name="successful_add_dish_in_collection">Страва успішно додана до колекції(й)</string>
+    <string name="successful_network">Підключення до інтернету</string>
+    <string name="error_network">Без доступа до інтернету</string>
+    <string name="copy_dishes_another_collection">Копіювати до</string>
+    <string name="successful_copy_dishes">Страви успішно скопійовано</string>
+    <string name="button_copy">Копіювати</string>
+    <string name="successful_clear_collerction">Колекція успішно очищена</string>
+    <string name="error_have_permissions_read">Дозвіл на читання файлів не надано</string>
+    <string name="error_have_permissions_write">Дозвіл на запис файлів не надано</string>
+    <string name="warning_request_time">Зачекайте, перш ніж надсилати інший запит</string>
+    <string name="warning_empty_message">Повідомлення не може бути пустою</string>
+    <string name="warning_maximum_length_message">Повідомлення перевищує максимальну довжину в 250 символів</string>
+    <string name="warning_daily_request_limit">Перевищено денний ліміт запитів</string>
+    <string name="warning_char_limit">Досягнуто ліміту символів</string>
+</resources>

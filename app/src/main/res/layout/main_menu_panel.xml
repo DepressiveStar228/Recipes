@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_menu"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    android:background="@drawable/rounded_background_main_menu">
+
+    <ImageView
+        android:id="@+id/main_home_hub"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:background="@drawable/selector_item_main_menu"
+        android:src="?attr/iconHome" />
+
+    <ImageView
+        android:id="@+id/main_rand_hub"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:background="@drawable/selector_item_main_menu"
+        android:src="?attr/iconRandom" />
+
+    <ImageView
+        android:id="@+id/main_collections_hub"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:background="@drawable/selector_item_main_menu"
+        android:src="?attr/iconBook" />
+
+</LinearLayout>
