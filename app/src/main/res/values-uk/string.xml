@@ -6,7 +6,7 @@
     <string name="warning_delete_dish">Ви дійсно хочете видалити цю страву?</string>
     <string name="warning_set_all_data">Заповніть всі поля інгредієнтів</string>
     <string name="confirm_delete_dish">Підтвердіть видалення</string>
-    <string name="default_recipe_text">Пустота</string>
+    <string name="default_recipe_text">Рецепту немає</string>
     <string name="successful_add_dish">Страва успішно додана</string>
     <string name="successful_edit_dish">Страва успішно оновлена</string>
     <string name="successful_delete_dish">Страва успішно видалена</string>
@@ -148,4 +148,6 @@
     <string name="warning_maximum_length_message">Повідомлення перевищує максимальну довжину в 250 символів</string>
     <string name="warning_daily_request_limit">Перевищено денний ліміт запитів</string>
     <string name="warning_char_limit">Досягнуто ліміту символів</string>
+    <string name="set_collection_rand_text">Вибирати випадкову з</string>
+    <string name="all">Всі</string>
 </resources>

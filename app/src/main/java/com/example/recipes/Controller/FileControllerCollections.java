@@ -116,10 +116,6 @@ public class FileControllerCollections {
                         int _id = query.getInt(0);
                         String name = query.getString(1);
 
-                        if (_id == 2){
-                            String ww = "sdf";
-                        }
-
                         Collection collection = new Collection(_id, name, getDishes(_id));
                         collections.add(collection);
                     } while (query.moveToNext());
@@ -136,6 +132,26 @@ public class FileControllerCollections {
 
         Log.d("FileControllerCollections", "Повернення списку всіх колекцій успішне");
         return collections;
+    }
+
+    public ArrayList<String> getAllNamesCollection() {
+        Cursor query = database.rawQuery("SELECT " + NAME + " FROM " + TABLE_NAME, null);
+        ArrayList<String> name_collections = new ArrayList<>();
+
+        if (query != null) {
+            try {
+                if (query.moveToFirst()) {
+                    do {
+                        name_collections.add(query.getString(0));
+                    } while (query.moveToNext());
+                }
+            } finally {
+                query.close();
+            }
+        }
+
+        Log.d("FileControllerCollections", "Повернення списку всіх колекцій успішне");
+        return name_collections;
     }
 
     public ArrayList<Dish> getDishes(int id) {

@@ -473,10 +473,11 @@ public class RecipeUtils {
 
     public int getIdCollectionByName(String name) {
         int id = -1;
+        String customName = setCustomNameSystemCollection(name);
 
         fileControllerCollections.beginTransaction();
         try {
-            id = fileControllerCollections.getIdByName(name);
+            id = fileControllerCollections.getIdByName(customName);
             fileControllerCollections.setTransactionSuccessful();
         }
         finally {
@@ -487,11 +488,12 @@ public class RecipeUtils {
     }
 
     public Collection getCollectionByName(String name) {
+        int id = getIdCollectionByName(name);
         Collection collection = null;
 
         fileControllerCollections.beginTransaction();
         try {
-            collection = fileControllerCollections.getById(getIdCollectionByName(name));
+            collection = fileControllerCollections.getById(id);
             fileControllerCollections.setTransactionSuccessful();
         }
         finally {
@@ -509,7 +511,7 @@ public class RecipeUtils {
             Collection collection = fileControllerCollections.getById(id);
 
             if (collection != null){
-                name = collection.getName();
+                name = getCustomNameSystemCollection(collection.getName());
             }
 
             fileControllerCollections.setTransactionSuccessful();
@@ -532,6 +534,20 @@ public class RecipeUtils {
         }
 
         return collections;
+    }
+
+    public ArrayList<String> getAllNameCollections() {
+        ArrayList<String> names = new ArrayList<>();
+
+        fileControllerCollections.beginTransaction();
+        try {
+            names = getCustomNameSystemCollection(fileControllerCollections.getAllNamesCollection());
+            fileControllerCollections.setTransactionSuccessful();
+        } finally {
+            fileControllerCollections.endTransaction();
+        }
+
+        return names;
     }
 
     public ArrayList<Dish> getDishesByCollection(int id_collection) {
@@ -761,13 +777,33 @@ public class RecipeUtils {
         fileControllerDishCollections.closeDb();
     }
 
-    public String getCustomNameSystemCollection(String name) {
+    private String getCustomNameSystemCollection(String name) {
         String systemTag = context.getString(R.string.system_collection_tag);
 
         if (Objects.equals(name, systemTag + "1")) { return context.getString(R.string.favorites); }
         else if (Objects.equals(name, systemTag + "2")) { return context.getString(R.string.my_recipes); }
         else if (Objects.equals(name, systemTag + "3")) { return context.getString(R.string.gpt_recipes); }
         else if (Objects.equals(name, systemTag + "4")) { return context.getString(R.string.import_recipes); }
+        else { return name; }
+    }
+
+    private ArrayList<String> getCustomNameSystemCollection(ArrayList<String> names) {
+        ArrayList<String> customNames = new ArrayList<>();
+
+        for (String name : names) {
+            customNames.add(getCustomNameSystemCollection(name));
+        }
+
+        return customNames;
+    }
+
+    private String setCustomNameSystemCollection(String name) {
+        String systemTag = context.getString(R.string.system_collection_tag);
+
+        if (Objects.equals(name, context.getString(R.string.favorites))) { return systemTag + "1"; }
+        else if (Objects.equals(name, context.getString(R.string.my_recipes))) { return systemTag + "2"; }
+        else if (Objects.equals(name, context.getString(R.string.gpt_recipes))) { return systemTag + "3"; }
+        else if (Objects.equals(name, context.getString(R.string.import_recipes))) { return systemTag + "4"; }
         else { return name; }
     }
 }

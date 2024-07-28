@@ -6,7 +6,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.database.SQLException;
 import android.os.Bundle;
 
@@ -31,11 +30,8 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.example.recipes.Activity.AddDishActivity;
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerIngredient;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
@@ -49,11 +45,10 @@ public class SearchDishFragment extends Fragment {
     private ArrayList<Dish> dishes = new ArrayList<>();
     private ArrayList<Ingredient> ingredients = new ArrayList<>();
     private RecyclerView searchResultsRecyclerView;
-    private Button add_button;
     private SearchResultsAdapter adapter;
     private ArrayList<Object> searchResults;
     private Switch searchSwitch;
-    private ConstraintLayout mainLayout;
+    private ConstraintLayout mainLayout, mainArea;
     private GPTFragment childFragment;
     private FrameLayout gptFragment;
     private RecipeUtils utils;
@@ -105,8 +100,6 @@ public class SearchDishFragment extends Fragment {
 
         searchResultsRecyclerView = view.findViewById(R.id.searchResultsRecyclerView_my_dish);
         searchSwitch = view.findViewById(R.id.searchSwitch);
-
-        add_button = view.findViewById(R.id.add_dish_button);
 
         searchResults = new ArrayList<>();
         adapter = new SearchResultsAdapter(searchResults);
@@ -169,13 +162,11 @@ public class SearchDishFragment extends Fragment {
                 if (!flagOpenGPTContainer) {
                     flagOpenGPTContainer = true;
                     childFragment.openGPTContainer();
-                    hideAddButton();
                 }
             } else {
                 if (flagOpenGPTContainer){
                     flagOpenGPTContainer = false;
                     childFragment.closeGPTContainer();
-                    showAddButton();
                 }
             }
 
@@ -188,8 +179,6 @@ public class SearchDishFragment extends Fragment {
 
             return false;
         });
-
-        add_button.setOnClickListener(this::onAddDishClick);
 
         Log.d("SearchDishFragment", "Слухачі фрагмента успішно завантажені.");
     }
@@ -279,67 +268,43 @@ public class SearchDishFragment extends Fragment {
     }
 
     private void hideSwitch() {
-        ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(searchSwitch, "alpha", 1f, 0f);
-        alphaAnimator.setDuration(300);
+        if (searchSwitch != null) {
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(searchSwitch, "alpha", 1f, 0f);
+            alphaAnimator.setDuration(300);
 
-        ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(searchSwitch, "translationY", 0f, -50f);
-        translationAnimator.setDuration(300);
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(searchSwitch, "translationY", 0f, -50f);
+            translationAnimator.setDuration(300);
 
-        AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(alphaAnimator, translationAnimator);
-        animatorSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                searchSwitch.setVisibility(View.INVISIBLE);
-            }
-        });
-        animatorSet.start();
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    searchSwitch.setVisibility(View.INVISIBLE);
+                }
+            });
+            animatorSet.start();
 
-        Log.d("SearchDishFragment", "Перемикач пошуку страви/інгредієнти захований.");
+            Log.d("SearchDishFragment", "Перемикач пошуку страви/інгредієнти захований.");
+        }
     }
 
 
     private void hideRecyclerView() {
-        searchResultsRecyclerView.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        searchResultsRecyclerView.setVisibility(View.GONE);
-                    }
-                })
-                .start();
+        if (searchResultsRecyclerView != null) {
+            searchResultsRecyclerView.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            searchResultsRecyclerView.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
 
-        Log.d("SearchDishFragment", "Список страв/інгредієнтів захований.");
-    }
-
-    private void showAddButton(){
-        add_button.setAlpha(0f);
-        add_button.setVisibility(View.VISIBLE);
-        add_button.animate()
-                .alpha(1f)
-                .setDuration(300)
-                .setListener(null)
-                .start();
-    }
-
-    private void hideAddButton() {
-        add_button.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        add_button.setVisibility(View.GONE);
-                    }
-                })
-                .start();
-    }
-
-    private void onAddDishClick(View view){
-        Intent intent = new Intent(getActivity(), AddDishActivity.class);
-        startActivity(intent);
+            Log.d("SearchDishFragment", "Список страв/інгредієнтів захований.");
+        }
     }
 
     private void updateListDish(){

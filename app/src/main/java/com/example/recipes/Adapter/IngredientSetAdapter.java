@@ -26,7 +26,6 @@ import java.util.Arrays;
 public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdapter.IngredientViewHolder> {
     private Context context;
     private ArrayList<Ingredient> ingredients;
-    private ArrayList<Spinner> spinners = new ArrayList<>();
 
     public IngredientSetAdapter(Context context, ArrayList<Ingredient> ingredients) {
         this.context = context;
@@ -142,13 +141,6 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             }
             return 0;
-        }
-
-        Ingredient getIngredient() {
-            String name = nameIngredientEditText.getText().toString();
-            String count = countIngredientEditText.getText().toString();
-            String type = spinnerTypeIngredient.getSelectedItem().toString();
-            return new Ingredient(name, count, type);
         }
     }
 }

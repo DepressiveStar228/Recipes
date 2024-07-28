@@ -6,7 +6,7 @@
     <string name="warning_delete_dish">Do you really want to delete this dish?</string>
     <string name="warning_set_all_data">Fill in all ingredient fields</string>
     <string name="confirm_delete_dish">Confirm deletion</string>
-    <string name="default_recipe_text">Empty</string>
+    <string name="default_recipe_text">Empty recipe</string>
     <string name="successful_add_dish">Dish successfully added</string>
     <string name="successful_edit_dish">Dish successfully updated</string>
     <string name="successful_delete_dish">Dish successfully deleted</string>
@@ -148,4 +148,6 @@
     <string name="warning_maximum_length_message">The message exceeds the maximum length of 250 characters</string>
     <string name="warning_daily_request_limit">Daily request limit exceeded</string>
     <string name="warning_char_limit">The character limit has been reached</string>
+    <string name="set_collection_rand_text">Choose a random from</string>
+    <string name="all">All</string>
 </resources>

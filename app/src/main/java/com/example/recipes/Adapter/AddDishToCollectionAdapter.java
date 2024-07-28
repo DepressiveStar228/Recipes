@@ -46,7 +46,7 @@ public class AddDishToCollectionAdapter extends RecyclerView.Adapter<AddDishToCo
     @Override
     public void onBindViewHolder(@NonNull CollectionViewHolder holder, int position) {
         Collection collection = collections.get(position);
-        holder.collection_name.setText(utils.getCustomNameSystemCollection(collection.getName()));
+        holder.collection_name.setText(utils.getNameCollection(collection.getId()));
 
         if (Objects.equals(collection.getName(), context.getString(R.string.system_collection_tag) + "1")) {
             if (Objects.equals(perferencesController.theme, "Light")) {

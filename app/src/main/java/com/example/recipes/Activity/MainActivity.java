@@ -2,17 +2,15 @@ package com.example.recipes.Activity;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -21,13 +19,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.Manifest;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -67,8 +61,8 @@ public class MainActivity extends FragmentActivity {
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
     private ImageView img1, img2, img3, img4;
-    private static int currentActivity = 1;
-
+    private ImageView add_dish_button;
+    private int currentActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,19 +120,24 @@ public class MainActivity extends FragmentActivity {
         img4 = linearLayout.findViewById(R.id.main_collections_hub);
         img3 = constraintLayout.findViewById(R.id.setting);
 
-        setCurrentMenuSelect();
+        add_dish_button = constraintLayout.findViewById(R.id.add_dish);
+
+        setCurrentMenuSelect(1);
 
         ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(this, android.R.layout.simple_spinner_item, Arrays.asList(getResources().getStringArray(R.array.language_options)));
         languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         languageSpinner.setAdapter(languageAdapter);
+        languageSpinner.setSelection(perferencesController.getIndexLanguage());
 
         ArrayAdapter<String> themeAdapter = new CustomSpinnerAdapter(this, android.R.layout.simple_spinner_item, Arrays.asList(getResources().getStringArray(R.array.theme_options)));
         themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         themeSpinner.setAdapter(themeAdapter);
+        themeSpinner.setSelection(perferencesController.getIndexTheme());
 
         ArrayAdapter<String> paletteAdapter = new CustomSpinnerAdapter(this, android.R.layout.simple_spinner_item, Arrays.asList(getResources().getStringArray(R.array.palette_options)));
         paletteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         paletteSpinner.setAdapter(paletteAdapter);
+        paletteSpinner.setSelection(perferencesController.getIndexPalette());
 
         languageArray = getStringArrayForLocale(R.array.language_values, new Locale("en"));
         themeArray = getStringArrayForLocale(R.array.theme_options, new Locale("en"));
@@ -147,26 +146,36 @@ public class MainActivity extends FragmentActivity {
         Log.d("MainActivity", "Завантаження всіх об'єктів активності");
     }
 
-    private void setCurrentMenuSelect(){
-        switch (currentActivity){
+    private void setCurrentMenuSelect(int id){
+        switch (id){
+            case 1:
+                img1.setSelected(true);
+                img2.setSelected(false);
+                img4.setSelected(false);
+                currentActivity = 1;
+                break;
             case 2:
                 img2.setSelected(true);
                 img1.setSelected(false);
                 img4.setSelected(false);
+                currentActivity = 2;
                 break;
             case 4:
                 img4.setSelected(true);
                 img1.setSelected(false);
                 img2.setSelected(false);
+                currentActivity = 4;
                 break;
             default:
                 img1.setSelected(true);
                 img2.setSelected(false);
                 img4.setSelected(false);
+                currentActivity = 0;
                 break;
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void loadClickListeners(){
         languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -242,6 +251,8 @@ public class MainActivity extends FragmentActivity {
                     openSetting();
                 } else if (v.getId() == R.id.main_collections_hub) {
                     fragment = setCollectionsFragment();
+                } else if (v.getId() == R.id.add_dish) {
+                    onAddDishClick();
                 }
 
                 if (fragment != null) {
@@ -287,6 +298,7 @@ public class MainActivity extends FragmentActivity {
         img2.setOnClickListener(imageClickListener);
         img3.setOnClickListener(imageClickListener);
         img4.setOnClickListener(imageClickListener);
+        add_dish_button.setOnClickListener(imageClickListener);
 
         Log.d("MainActivity", "Завантаження всіх слухачів активності");
     }
@@ -329,24 +341,27 @@ public class MainActivity extends FragmentActivity {
     }
 
     private Fragment setSearchFragment(){
-        currentActivity = 1;
-        setCurrentMenuSelect();
-        Log.d("MainActivity", "Зміна фрагмента на домашню сторінку пошуку.");
-        return new SearchDishFragment();
+        if (currentActivity != 1) {
+            setCurrentMenuSelect(1);
+            Log.d("MainActivity", "Зміна фрагмента на домашню сторінку пошуку.");
+            return new SearchDishFragment();
+        } else { return null; }
     }
 
     private Fragment setRandomFragment(){
-        currentActivity = 2;
-        setCurrentMenuSelect();
-        Log.d("MainActivity", "Зміна фрагмента на рандомну сторінку");
-        return new RandDishFragment();
+        if (currentActivity != 2) {
+            setCurrentMenuSelect(2);
+            Log.d("MainActivity", "Зміна фрагмента на рандомну сторінку");
+            return new RandDishFragment();
+        } else { return null; }
     }
 
     private Fragment setCollectionsFragment(){
-        currentActivity = 4;
-        setCurrentMenuSelect();
-        Log.d("MainActivity", "Зміна фрагмента на колекцію страв");
-        return new CollectionsDishFragment();
+        if (currentActivity != 4) {
+            setCurrentMenuSelect(4);
+            Log.d("MainActivity", "Зміна фрагмента на колекцію страв");
+            return new CollectionsDishFragment();
+        } else { return null; }
     }
 
     private void openFragment(Fragment fragment){
@@ -358,8 +373,17 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void updateSearchFragment(){
-        Fragment fragment = setSearchFragment();
-        openFragment(fragment);
+        switch (currentActivity) {
+            case 2:
+                openFragment(new RandDishFragment());
+                break;
+            case 4:
+                openFragment(new CollectionsDishFragment());
+                break;
+            default:
+                openFragment(new SearchDishFragment());
+                break;
+        }
     }
 
     private void animateImage(View view) {
@@ -390,6 +414,11 @@ public class MainActivity extends FragmentActivity {
         config.setLocale(locale);
         Context localizedContext = new ContextWrapper(this).createConfigurationContext(config);
         return localizedContext.getResources().getStringArray(resId);
+    }
+
+    private void onAddDishClick(){
+        Intent intent = new Intent(this, AddDishActivity.class);
+        startActivity(intent);
     }
 
     @Override

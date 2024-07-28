@@ -89,7 +89,7 @@ public class ImportExportController {
             Gson gson = new Gson();
             String jsonString = gson.toJson(recipeData);
             File internalDir = context.getFilesDir();
-            File jsonFile = new File(internalDir, utils.getCustomNameSystemCollection(collection.getName()) + ".json");
+            File jsonFile = new File(internalDir, utils.getNameCollection(collection.getId()) + ".json");
 
             try (FileOutputStream fos = new FileOutputStream(jsonFile);
                  BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
