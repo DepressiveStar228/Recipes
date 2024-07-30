@@ -43,4 +43,19 @@ public class Collection {
     public void setDishes(ArrayList<Dish> dishes) {
         this.dishes = dishes;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        Collection collection = (Collection) obj;
+
+        return id == collection.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
 }

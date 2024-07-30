@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.IngredientSetAdapter;
+import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.FileControllerDish;
 import com.example.recipes.Controller.FileControllerIngredient;
@@ -91,7 +92,7 @@ public class EditDishActivity extends Activity {
         addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerViewEditAct);
 
         ingredients = new ArrayList<>();
-        ingredientAdapter = new IngredientSetAdapter(this, ingredients);
+        ingredientAdapter = new IngredientSetAdapter(this, addIngredientRecyclerView);
         addIngredientRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addIngredientRecyclerView.setAdapter(ingredientAdapter);
 
@@ -103,8 +104,8 @@ public class EditDishActivity extends Activity {
     private void loadClickListeners() {
         imageView.setOnClickListener(v -> { finish(); });
 
-        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, 30);
-        CharacterLimitTextWatcher.setCharacterLimit(this, recipeEditText, 2000);
+        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, Config.CHAR_LIMIT_NAME_DISH);
+        CharacterLimitTextWatcher.setCharacterLimit(this, recipeEditText, Config.CHAR_LIMIT_RECIPE_DISH);
 
         Log.d("AddDishActivity", "Слухачі активності успішно завантажені");
     }
@@ -132,6 +133,9 @@ public class EditDishActivity extends Activity {
                 for (Ingredient in : ingByDish) {
                     utils.deleteIngredient(in);
                 }
+
+                ingredientAdapter.updateIngredients();
+                ingredients = ingredientAdapter.getIngredients();
 
                 if (!ingredients.isEmpty()) {
                     if (utils.addIngredients(dishID, ingredients)) {

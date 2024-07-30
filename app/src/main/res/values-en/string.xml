@@ -145,9 +145,11 @@
     <string name="error_have_permissions_read">File read permission not granted</string>
     <string name="warning_request_time">Please wait before sending another request</string>
     <string name="warning_empty_message">The message cannot be empty</string>
-    <string name="warning_maximum_length_message">The message exceeds the maximum length of 250 characters</string>
+    <string name="warning_max_length_message">The message exceeds the maximum length</string>
     <string name="warning_daily_request_limit">Daily request limit exceeded</string>
     <string name="warning_char_limit">The character limit has been reached</string>
     <string name="set_collection_rand_text">Choose a random from</string>
     <string name="all">All</string>
+    <string name="warning_max_count_ingredients">You have reached the ingredient limit</string>
+    <string name="all_dishes_text">"All dishes: "</string>
 </resources>

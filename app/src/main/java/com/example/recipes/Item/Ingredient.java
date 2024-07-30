@@ -52,8 +52,8 @@ public class Ingredient {
         this.amount = amount;
     }
 
-    public void setType(String amount) {
-        this.amount = amount;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public void setID_Dish(int id_dish) {

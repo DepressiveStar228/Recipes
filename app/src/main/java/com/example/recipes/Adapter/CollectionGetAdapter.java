@@ -83,6 +83,7 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         }
 
         holder.counter_dishes.setText(String.valueOf(counter_dishes));
+        holder.collection_name.setPadding(0,0,countDigits(counter_dishes),0);
 
         holder.menu_img.setOnClickListener(v -> {
             if (collectionClickListener != null) {
@@ -136,10 +137,15 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         }
     }
 
+    private int countDigits(int number) {
+        return (int) ((120 + (String.valueOf(number).length() * 10)) * context.getResources().getDisplayMetrics().density);
+    }
+
     public interface CollectionClickListener {
         void onCollectionClick(Collection collection, RecyclerView childRecyclerView);
         void onDishClick(Dish item, View v);
         void onMenuIconClick(Collection collection, View anchorView);
+        void onDishMenuIconClick(Dish item, View v);
     }
 
     class ChildItemAdapter extends RecyclerView.Adapter<ChildItemAdapter.ViewHolder> {
@@ -156,7 +162,7 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.search_result_item, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dish_item, parent, false);
             return new ViewHolder(view);
         }
 
@@ -164,6 +170,19 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Dish dish = dishes.get(position);
             holder.child_item_name.setText(dish.getName());
+
+            if (Objects.equals(perferencesController.theme, "Light")) {
+                holder.child_item_image.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_menu));
+            } else {
+                holder.child_item_image.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_menu_darkmode));
+            }
+
+            holder.child_item_image.setOnClickListener(v -> {
+                if (collectionClickListener != null) {
+                    collectionClickListener.onDishMenuIconClick(dish, holder.child_item_image);
+                }
+            });
+
             holder.itemView.setOnClickListener(v -> {
                 if (commandClickListener != null) {
                     commandClickListener.onDishClick(dish, v);
@@ -178,10 +197,12 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
 
         class ViewHolder extends RecyclerView.ViewHolder {
             TextView child_item_name;
+            ImageView child_item_image;
 
             ViewHolder(View itemView) {
                 super(itemView);
-                child_item_name = itemView.findViewById(R.id.itemResultTextView);
+                child_item_name = itemView.findViewById(R.id.dish_name);
+                child_item_image = itemView.findViewById(R.id.menu_dish_imageView);
             }
         }
     }

@@ -32,6 +32,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ChatGPTClient;
 import com.example.recipes.Controller.FileControllerDish;
@@ -96,7 +97,7 @@ public class GPTFragment extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     private void loadClickListeners(){
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), GPTEditText, 300);
+        CharacterLimitTextWatcher.setCharacterLimit(getContext(), GPTEditText, Config.CHAR_LIMIT_GPT_PROMPT);
     }
 
     public void openGPTContainer(){
@@ -423,7 +424,7 @@ public class GPTFragment extends Fragment {
             RecipeUtils utils = new RecipeUtils(getContext());
 
             if (!addRecipeStatus) {
-                if (utils.addRecipe(recipeData, 3)) {
+                if (utils.addRecipe(recipeData, Config.ID_GPT_RECIPE_COLLECTION)) {
                     if (Objects.equals(perferencesController.theme, themeArray[0])) {
                         imageView.setImageResource(R.drawable.icon_check_mark);
                     } else {

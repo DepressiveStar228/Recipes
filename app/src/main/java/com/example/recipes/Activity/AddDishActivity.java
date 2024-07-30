@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.IngredientSetAdapter;
+import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
@@ -60,7 +61,7 @@ public class AddDishActivity extends Activity {
         addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerView);
 
         ingredients = new ArrayList<>();
-        ingredientAdapter = new IngredientSetAdapter(this, ingredients);
+        ingredientAdapter = new IngredientSetAdapter(this, addIngredientRecyclerView);
         addIngredientRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addIngredientRecyclerView.setAdapter(ingredientAdapter);
 
@@ -73,14 +74,13 @@ public class AddDishActivity extends Activity {
     private void loadClickListeners() {
         imageView.setOnClickListener(v -> { finish(); });
 
-        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, 30);
-        CharacterLimitTextWatcher.setCharacterLimit(this, recipeEditText, 2000);
+        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, Config.CHAR_LIMIT_NAME_DISH);
+        CharacterLimitTextWatcher.setCharacterLimit(this, recipeEditText, Config.CHAR_LIMIT_RECIPE_DISH);
 
         Log.d("AddDishActivity", "Слухачі активності успішно завантажені");
     }
 
     public void onAddButtonClick(View view) {
-        int dishId;
         String name = nameEditText.getText().toString().trim();
         String recipe = recipeEditText.getText().toString().trim();
 
@@ -96,7 +96,10 @@ public class AddDishActivity extends Activity {
                 return;
             }
 
-            if (utils.addDish(new Dish(name, recipe), ingredients, 2)) {
+            ingredientAdapter.updateIngredients();
+            ingredients = ingredientAdapter.getIngredients();
+
+            if (utils.addDish(new Dish(name, recipe), ingredients, Config.ID_MY_RECIPE_COLLECTION)) {
                 Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();

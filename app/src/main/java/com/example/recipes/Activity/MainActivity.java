@@ -30,6 +30,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
+import com.example.recipes.Config;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Fragments.CollectionsDishFragment;
@@ -322,7 +323,7 @@ public class MainActivity extends FragmentActivity {
                     RecipeUtils utils = new RecipeUtils(this);
                     DataBox recipeData = ImportExportController.importRecipeDataToFile(this, file);
                     if (recipeData != null) {
-                        if (utils.addRecipe(recipeData, 4)){
+                        if (utils.addRecipe(recipeData, Config.ID_IMPORT_RECIPE_COLLECTION)){
                             Toast.makeText(this, getString(R.string.successful_import) + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
                             Log.d("MainActivity", "Рецепти успішно імпортовані із файлу." + file.getAbsolutePath());
                         } else {

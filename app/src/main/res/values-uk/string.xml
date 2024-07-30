@@ -145,9 +145,11 @@
     <string name="error_have_permissions_read">Дозвіл на читання файлів не надано</string>
     <string name="warning_request_time">Зачекайте, перш ніж надсилати інший запит</string>
     <string name="warning_empty_message">Повідомлення не може бути пустою</string>
-    <string name="warning_maximum_length_message">Повідомлення перевищує максимальну довжину в 250 символів</string>
+    <string name="warning_max_length_message">Повідомлення перевищує максимальну довжину</string>
     <string name="warning_daily_request_limit">Перевищено денний ліміт запитів</string>
     <string name="warning_char_limit">Досягнуто ліміту символів</string>
     <string name="set_collection_rand_text">Вибирати випадкову з</string>
     <string name="all">Всі</string>
+    <string name="warning_max_count_ingredients">Ви досягли ліміту інгредієнтів</string>
+    <string name="all_dishes_text">Всього страв:</string>
 </resources>

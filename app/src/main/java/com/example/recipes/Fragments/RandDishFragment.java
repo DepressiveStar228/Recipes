@@ -2,6 +2,8 @@ package com.example.recipes.Fragments;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -53,6 +55,32 @@ public class RandDishFragment extends Fragment {
         loadCollection();
         loadClickListeners();
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (dish == null) { outState.putString("dish_name", ""); }
+        else { outState.putString("dish_name", dish.getText().toString()); }
+
+        outState.putString("collection_name", currentNameCollection);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            Dish dishBox = utils.getDish(utils.getIdDishByName(savedInstanceState.getString("dish_name")));
+            currentNameCollection = savedInstanceState.getString("collection_name");
+
+            if (dish != null) {
+                getDataDish(dishBox);
+            }
+
+            if (currentNameCollection != null) {
+
+            }
+        }
     }
 
     private void loadItemsActivity(View view){

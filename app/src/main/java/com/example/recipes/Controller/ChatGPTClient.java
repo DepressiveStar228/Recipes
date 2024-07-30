@@ -78,7 +78,7 @@ public class ChatGPTClient {
         }
 
         if (prompt.length() > MAX_MESSAGE_LENGTH) {
-            Toast.makeText(context, context.getString(R.string.warning_maximum_length_message), Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.warning_max_length_message), Toast.LENGTH_SHORT).show();
             return false;
         }
 

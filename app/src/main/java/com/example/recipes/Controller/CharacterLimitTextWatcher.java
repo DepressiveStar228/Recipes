@@ -33,7 +33,7 @@ public class CharacterLimitTextWatcher implements TextWatcher {
         if (s.length() > maxCharacters) {
             if (!flagLimit) {
                 editText.setBackgroundTintList(ColorStateList.valueOf(context.getColor(R.color.red)));
-                Toast.makeText(editText.getContext(), context.getString(R.string.warning_char_limit), Toast.LENGTH_SHORT).show();
+                Toast.makeText(editText.getContext(), context.getString(R.string.warning_char_limit) + "(" + maxCharacters + ")", Toast.LENGTH_SHORT).show();
                 flagLimit = true;
             }
 

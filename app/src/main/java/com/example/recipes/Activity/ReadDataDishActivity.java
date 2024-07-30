@@ -25,7 +25,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Adapter.AddDishToCollectionAdapter;
+import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
 import com.example.recipes.Controller.ChatGPTTranslate;
 import com.example.recipes.Controller.PerferencesController;
@@ -225,8 +225,8 @@ public class ReadDataDishActivity extends Activity {
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
-        ArrayList<Collection> collections = utils.getAllCollections();
-        AddDishToCollectionAdapter adapter = new AddDishToCollectionAdapter(this, collections);
+        ArrayList<Collection> unused_collections = utils.getUnusedCollectionInDish(dish);
+        AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(this, unused_collections);
         collectionsRecyclerView.setAdapter(adapter);
         collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         builder.setView(dialogView)

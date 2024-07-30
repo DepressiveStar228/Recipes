@@ -170,6 +170,19 @@ public class RecipeUtils {
         return id;
     }
 
+    public ArrayList<Collection> getCollectionsByDish(Dish dish) {
+        ArrayList<Collection> all_collections = getAllCollections();
+        ArrayList<Collection> collections = new ArrayList<>();
+
+        for (Collection collection : all_collections) {
+            if (collection.getDishes().contains(dish)) {
+                collections.add(collection);
+            }
+        }
+
+        return collections;
+    }
+
     public ArrayList<Dish> getDishesOrdered() {
         ArrayList<Dish> name_dishes = new ArrayList<>();
 
@@ -639,6 +652,33 @@ public class RecipeUtils {
         return result;
     }
 
+    public boolean addDishCollectionData(ArrayList<Integer> dish_ids, int id_collection) {
+        int countFalse = 0;
+        ArrayList<Integer> id_dishes_duplicate = new ArrayList<>();
+
+        fileControllerDishCollections.beginTransaction();
+        try {
+            for (int id_dish : dish_ids){
+                if (fileControllerDishCollections.getIdByData(id_dish, id_collection) == -1) {
+                    if (!fileControllerDishCollections.insert(id_dish, id_collection)){ countFalse++; }
+                } else {
+                    fileControllerDishCollections.endTransaction();
+                    countFalse++;
+                    Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + getCustomNameSystemCollection(getNameCollection(id_collection)), Toast.LENGTH_SHORT).show();
+                    Log.d("RecipeUtils", "Страва вже є у колекції");
+                    fileControllerDishCollections.beginTransaction();
+                }
+            }
+            fileControllerDishCollections.setTransactionSuccessful();
+        } finally {
+            fileControllerDishCollections.endTransaction();
+        }
+
+        Log.d("RecipeUtils", "Успішно додано записів страва/колекція: (" + (dish_ids.size() - countFalse) + "/" + dish_ids.size() + ")");
+        if (countFalse == dish_ids.size()) { return false; }
+        else { return true; }
+    }
+
     public boolean addDishCollectionData(Dish dish, ArrayList<Integer> id_collections) {
         int countFalse = 0;
         ArrayList<Integer> id_collections_duplicate = new ArrayList<>();
@@ -668,6 +708,34 @@ public class RecipeUtils {
         Log.d("RecipeUtils", "Успішно додано записів страва/колекція: (" + (id_collections.size() - countFalse) + "/" + id_collections.size() + ")");
         if (countFalse == id_collections.size()) { return false; }
         else { return true; }
+    }
+
+    public ArrayList<Dish> getUnusedDishInCollection(Collection collection) {
+        ArrayList<Dish> dishes = getDishesOrdered();
+        ArrayList<Dish> collection_dishes = getDishesByCollection(collection.getId());
+        ArrayList<Dish> unused_dished = new ArrayList<>();
+
+        for (Dish dish : dishes) {
+            if (!collection_dishes.contains(dish)) {
+                unused_dished.add(dish);
+            }
+        }
+
+        return unused_dished;
+    }
+
+    public ArrayList<Collection> getUnusedCollectionInDish(Dish dish) {
+        ArrayList<Collection> all_collections = getAllCollections();
+        ArrayList<Collection> collection_dishes = getCollectionsByDish(dish);
+        ArrayList<Collection> unused_dished = new ArrayList<>();
+
+        for (Collection collection : all_collections) {
+            if (!collection_dishes.contains(collection)) {
+                unused_dished.add(collection);
+            }
+        }
+
+        return unused_dished;
     }
 
     public boolean copyDishesToAnotherCollections (int id_collection_origin, ArrayList<Integer> id_collections) {

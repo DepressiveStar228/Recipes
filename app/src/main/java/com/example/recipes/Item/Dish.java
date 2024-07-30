@@ -37,4 +37,19 @@ public class Dish {
     public void setRecipe(String recipe) {
         this.recipe = recipe;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        Dish dish = (Dish) obj;
+
+        return id == dish.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
 }

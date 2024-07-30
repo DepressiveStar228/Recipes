@@ -2,6 +2,9 @@ package com.example.recipes.Fragments;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
@@ -23,15 +27,19 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.recipes.Activity.EditDishActivity;
 import com.example.recipes.Activity.ReadDataDishActivity;
-import com.example.recipes.Adapter.AddDishToCollectionAdapter;
+import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
+import com.example.recipes.Adapter.AddDishesToCollectionAdapter;
 import com.example.recipes.Adapter.CollectionGetAdapter;
+import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.FileUtils;
+import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.RecipeUtils;
 import com.example.recipes.R;
 
@@ -39,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class CollectionsDishFragment extends Fragment {
+    private TextView counter_dishes;
     private PerferencesController perferencesController;
     private RecyclerView collectionsRecyclerView;
     private Button addCollectionButton;
@@ -63,6 +72,14 @@ public class CollectionsDishFragment extends Fragment {
     private void loadItemsActivity(View view) {
         collectionsRecyclerView = view.findViewById(R.id.collections_dishRecyclerView);
         addCollectionButton = view.findViewById(R.id.add_collection_button);
+        counter_dishes = view.findViewById(R.id.counter_dishes_collectionAct);
+        int countDishes = 0;
+
+        try {
+            countDishes = utils.getDishesOrdered().size();
+        } finally {
+            counter_dishes.setText(String.valueOf(countDishes));
+        }
         Log.d("CollectionsDishFragment", "Об'єкти фрагмента успішно завантажені.");
     }
 
@@ -142,6 +159,31 @@ public class CollectionsDishFragment extends Fragment {
         showCopyCollectionDialog(collection);
     }
 
+    private void handleAddDishesAction(Collection collection) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_dishes_in_collection, null);
+        RecyclerView dishesRecyclerView = dialogView.findViewById(R.id.dishes_check_RecyclerView);
+        ArrayList<Dish> unused_dishes = utils.getUnusedDishInCollection(collection);
+        AddDishesToCollectionAdapter adapter = new AddDishesToCollectionAdapter(getContext(), unused_dishes);
+        dishesRecyclerView.setAdapter(adapter);
+        dishesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        builder.setView(dialogView)
+                .setPositiveButton(R.string.button_copy, (dialog, which) -> {
+                    ArrayList<Integer> selectedDishIds = adapter.getSelectedDishIds();
+                    if (!selectedDishIds.isEmpty()){
+                        if (utils.addDishCollectionData(selectedDishIds, collection.getId())) {
+                            updateCollectionRecyclerView();
+                            Toast.makeText(getContext(), getString(R.string.successful_copy_dishes), Toast.LENGTH_SHORT).show();
+                            Log.d("ReadDataDishActivity", "Страви успішно додано до колекцію (ї)");
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
     private void addCollection(String name) {
         if (utils.addCollection(name)) {
             adapter.addCollection(utils.getCollectionByName(name));
@@ -176,7 +218,7 @@ public class CollectionsDishFragment extends Fragment {
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_collection, null);
         EditText editText = dialogView.findViewById(R.id.add_collection_name_editText);
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, 16);
+        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
         builder.setView(dialogView)
                 .setTitle(R.string.add_collection_dialog)
                 .setPositiveButton(R.string.button_add, (dialog, which) -> {
@@ -200,7 +242,7 @@ public class CollectionsDishFragment extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_edit_collection, null);
         EditText editText = dialogView.findViewById(R.id.edit_collection_name_editText);
         editText.setText(collection.getName());
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, 16);
+        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
         builder.setView(dialogView)
                 .setTitle(R.string.edit_collection_dialog)
                 .setPositiveButton(R.string.edit, (dialog, which) -> {
@@ -224,11 +266,10 @@ public class CollectionsDishFragment extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
         ArrayList<Collection> collections = utils.getAllCollections();
-        AddDishToCollectionAdapter adapter = new AddDishToCollectionAdapter(getContext(), collections);
+        AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(getContext(), collections);
         collectionsRecyclerView.setAdapter(adapter);
         collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         builder.setView(dialogView)
-                .setTitle(R.string.copy_dishes_another_collection)
                 .setPositiveButton(R.string.button_copy, (dialog, which) -> {
                     ArrayList<Integer> selectedCollectionIds = adapter.getSelectedCollectionIds();
                     if (!selectedCollectionIds.isEmpty()){
@@ -262,6 +303,96 @@ public class CollectionsDishFragment extends Fragment {
                 Intent intent = new Intent(v.getContext(), ReadDataDishActivity.class);
                 intent.putExtra("dish_id", dish.getID());
                 v.getContext().startActivity(intent);
+            }
+
+            @Override
+            public void onDishMenuIconClick(Dish dish, View v) {
+                PopupMenu popupMenu = new PopupMenu(getContext(), v, Gravity.END);
+                popupMenu.getMenuInflater().inflate(R.menu.context_menu_dish, popupMenu.getMenu());
+
+                for (int i = 0; i < popupMenu.getMenu().size(); i++) {
+                    MenuItem item = popupMenu.getMenu().getItem(i);
+                    SpannableString spannableString = new SpannableString(item.getTitle());
+                    if (!Objects.equals(perferencesController.theme, "Light")) {
+                        spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.white)), 0, spannableString.length(), 0);
+                    } else {
+                        spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.black)), 0, spannableString.length(), 0);
+                    }
+                    item.setTitle(spannableString);
+                }
+
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.action_edit_dish) {
+                        Intent intent = new Intent(getContext(), EditDishActivity.class);
+                        intent.putExtra("dish_id", dish.getID());
+                        startActivity(intent);
+                        updateCollectionRecyclerView();
+                        return true;
+                    } else if (item.getItemId() == R.id.action_delete_dish) {
+                        new AlertDialog.Builder(getContext())
+                                .setTitle(getString(R.string.confirm_delete_dish))
+                                .setMessage(getString(R.string.warning_delete_dish))
+                                .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                                    if (utils.deleteDish(dish)) {
+                                        updateCollectionRecyclerView();
+                                        Toast.makeText(getContext(), getString(R.string.successful_delete_dish), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getContext(), getString(R.string.error_delete_dish), Toast.LENGTH_SHORT).show();
+                                    }
+                                })
+                                .setNegativeButton(getString(R.string.no), null).show();
+                        return true;
+                    } else if (item.getItemId() == R.id.action_share_dish) {
+                        String ingredientsText = "";
+                        ArrayList<Ingredient> ingredients = utils.getIngredients(dish.getID());
+
+                        for (Ingredient ingredient : ingredients){
+                            String ingredientText = ingredient.getName() + "  " +
+                                    ingredient.getAmount() + ingredient.getType() + '\n';
+                            ingredientsText = ingredientsText + ingredientText;
+                        }
+
+                        String text = dish.getName() + "\n\n" + getString(R.string.ingredients) + "\n" + ingredientsText + "\n" + getString(R.string.recipe) + "\n" + dish.getRecipe();
+
+                        ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText("label", text);
+                        clipboard.setPrimaryClip(clip);
+
+                        Toast.makeText(getContext(), getString(R.string.copy_clipboard_text), Toast.LENGTH_SHORT).show();
+                        return true;
+                    } else if (item.getItemId() == R.id.action_add_in_collection_dish) {
+                        /*
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        LayoutInflater inflater = getContext().getLayoutInflater();
+                        View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
+                        RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
+                        ArrayList<Collection> collections = utils.getAllCollections();
+                        AddDishToCollectionAdapter adapter = new AddDishToCollectionAdapter(getContext(), collections);
+                        collectionsRecyclerView.setAdapter(adapter);
+                        collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                        builder.setView(dialogView)
+                                .setTitle(R.string.add_collection_dialog)
+                                .setPositiveButton(R.string.button_add, (dialog, which) -> {
+                                    ArrayList<Integer> selectedCollectionIds = adapter.getSelectedCollectionIds();
+                                    if (!selectedCollectionIds.isEmpty()){
+                                        if (utils.addDishCollectionData(dish, selectedCollectionIds)) {
+                                            Toast.makeText(getContext(), getString(R.string.successful_add_dish_in_collection), Toast.LENGTH_SHORT).show();
+                                            Log.d("ReadDataDishActivity", "Страва успішно додана в колекцію(и)");
+                                        }
+                                    }
+                                })
+                                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+                        builder.create().show();
+                        updateCollectionRecyclerView();
+                         */
+                        return true;
+                    }  else {
+                        return false;
+                    }
+                });
+
+                popupMenu.show();
             }
 
             @Override
@@ -307,6 +438,9 @@ public class CollectionsDishFragment extends Fragment {
                         return true;
                     } else if (item.getItemId() == R.id.action_copy_another_collection) {
                         handleCopyAction(collection);
+                        return true;
+                    } else if (item.getItemId() == R.id.action_add_dishes_in_collection) {
+                        handleAddDishesAction(collection);
                         return true;
                     } else {
                         return false;

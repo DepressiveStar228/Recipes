@@ -7,35 +7,25 @@
     android:orientation="horizontal"
     android:paddingBottom="10dp">
 
-    <ImageView
-        android:id="@+id/collection_imageView_checkItem"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:src="?attr/iconBook"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <TextView
-        android:id="@+id/collection_name_checkItem"
+        android:id="@+id/dish_name_checkItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="100dp"
         android:text=""
         android:textColor="?attr/colorText"
         android:textSize="24sp"
-        android:paddingRight="100dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/collection_imageView_checkItem"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <CheckBox
-        android:id="@+id/collection_check_checkItem"
+        android:id="@+id/dish_check_checkItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

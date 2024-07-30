@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorBackground">
+    android:background="?attr/colorBackground"
+    android:paddingBottom="50dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -27,7 +28,7 @@
             android:id="@+id/getRandDishButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="30dp"
             android:layout_weight="1"
             android:background="@drawable/rounded_background_button"
             android:paddingStart="10dp"
@@ -37,19 +38,19 @@
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/nameDishTextView" />
+            app:layout_constraintTop_toBottomOf="@+id/setCollections_rand_dish" />
 
         <TextView
             android:id="@+id/nameDishTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="40dp"
             android:text=""
             android:textColor="?attr/colorText"
             android:textSize="26sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/setCollections_rand_dish" />
+            app:layout_constraintTop_toBottomOf="@+id/getRandDishButton" />
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -57,13 +58,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="10dp"
             android:background="@drawable/rounded_backgroud_top"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/getRandDishButton" />
+            app:layout_constraintTop_toBottomOf="@+id/nameDishTextView" />
 
         <LinearLayout
             android:id="@+id/randRecipeLayout"
@@ -92,7 +93,7 @@
         <LinearLayout
             android:id="@+id/setCollections_rand_dish"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:orientation="horizontal"
@@ -101,9 +102,8 @@
 
             <TextView
                 android:id="@+id/textView21"
-                android:layout_width="wrap_content"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/set_collection_rand_text"
                 android:textColor="?attr/colorText"
                 android:textSize="18sp" />
@@ -111,7 +111,7 @@
             <Spinner
                 android:id="@+id/collections_spinner"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
                 android:layout_weight="9" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

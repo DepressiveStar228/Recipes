@@ -3,19 +3,21 @@ package com.example.recipes.Adapter;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
@@ -26,10 +28,12 @@ import java.util.Arrays;
 public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdapter.IngredientViewHolder> {
     private Context context;
     private ArrayList<Ingredient> ingredients;
+    private RecyclerView recyclerView;
 
-    public IngredientSetAdapter(Context context, ArrayList<Ingredient> ingredients) {
+    public IngredientSetAdapter(Context context, RecyclerView recyclerView) {
         this.context = context;
-        this.ingredients = ingredients;
+        this.recyclerView = recyclerView;
+        this.ingredients = new ArrayList<>();
     }
 
     @NonNull
@@ -42,7 +46,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
     @Override
     public void onBindViewHolder(@NonNull IngredientViewHolder holder, int position) {
         Ingredient ingredient = ingredients.get(position);
-        holder.bind(ingredient, position);
+        holder.bind(ingredient);
     }
 
     @Override
@@ -51,21 +55,42 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
     }
 
     public void addIngredient(Ingredient ingredient) {
-        ingredients.add(ingredient);
-        notifyItemInserted(ingredients.size() - 1);
+        if (ingredients.size() < Config.COUNT_LIMIT_INGREDIENT) {
+            ingredients.add(ingredient);
+            notifyItemInserted(ingredients.size() - 1);
+        } else {
+            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
+            Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
+        }
     }
+
     public void delIngredient(int position) {
         ingredients.remove(position);
         notifyItemRemoved(position);
     }
+
+    public ArrayList<Ingredient> getIngredients() {
+        return ingredients;
+    }
+
+    public void updateIngredients() {
+        for (int i = 0; i < getItemCount(); i++) {
+            IngredientViewHolder holder = (IngredientViewHolder) recyclerView.findViewHolderForAdapterPosition(i);
+            if (holder != null) {
+                Ingredient ingredient = ingredients.get(i);
+                ingredient.setName(holder.nameIngredientEditText.getText().toString());
+                ingredient.setAmount(holder.countIngredientEditText.getText().toString());
+                ingredient.setType(holder.spinnerTypeIngredient.getSelectedItem().toString());
+            }
+        }
+    }
+
 
     class IngredientViewHolder extends RecyclerView.ViewHolder {
         EditText nameIngredientEditText;
         EditText countIngredientEditText;
         Spinner spinnerTypeIngredient;
         ImageButton deleteButton;
-        TextWatcher nameTextWatcher;
-        TextWatcher countTextWatcher;
 
         IngredientViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,53 +110,60 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             });
 
-            CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, 30);
-            CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, 10);
+            CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Config.CHAR_LIMIT_NAME_INGREDIENT);
+            CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, Config.CHAR_LIMIT_AMOUNT_INGREDIENT);
+
+            nameIngredientEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        ingredients.get(position).setName(s.toString());
+                    }
+                }
+            });
+
+            countIngredientEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        ingredients.get(position).setAmount(s.toString());
+                    }
+                }
+            });
+
+            spinnerTypeIngredient.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    int adapterPosition = getAdapterPosition();
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        ingredients.get(adapterPosition).setType(parent.getItemAtPosition(position).toString());
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
         }
 
-        void bind(Ingredient ingredient, int position) {
-            // Remove previous TextWatchers
-            if (nameTextWatcher != null) {
-                nameIngredientEditText.removeTextChangedListener(nameTextWatcher);
-            }
-            if (countTextWatcher != null) {
-                countIngredientEditText.removeTextChangedListener(countTextWatcher);
-            }
-
+        void bind(Ingredient ingredient) {
             nameIngredientEditText.setText(ingredient.getName());
             countIngredientEditText.setText(ingredient.getAmount());
             int index = getIndex(spinnerTypeIngredient, ingredient.getType());
             spinnerTypeIngredient.setSelection(index);
-
-            // Add new TextWatchers
-            nameTextWatcher = new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    ingredient.setName(s.toString());
-                }
-            };
-
-            countTextWatcher = new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    ingredient.setAmount(s.toString());
-                }
-            };
-
-            nameIngredientEditText.addTextChangedListener(nameTextWatcher);
-            countIngredientEditText.addTextChangedListener(countTextWatcher);
         }
 
         private int getIndex(Spinner spinner, String myString) {
