@@ -4,11 +4,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,9 +34,9 @@ import com.example.recipes.Fragments.RandDishFragment;
 import com.example.recipes.Fragments.SearchDishFragment;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.FileUtils;
+import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 import com.google.android.material.navigation.NavigationView;
 
@@ -48,14 +44,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 
 public class MainActivity extends FragmentActivity {
     private DrawerLayout drawerLayout;
-    private LinearLayout linearLayout, importLayout, exportLayout;
-    private ConstraintLayout constraintLayout;
+    private LinearLayout importLayout;
+    private LinearLayout exportLayout;
     private PerferencesController perferencesController;
-    private View headerView;
     private RecipeUtils utils;
     private Spinner languageSpinner, themeSpinner, paletteSpinner;
     private String[] languageArray, themeArray, paletteArray;
@@ -104,11 +98,11 @@ public class MainActivity extends FragmentActivity {
 
     private void loadItemsActivity(){
         drawerLayout = findViewById(R.id.drawerLayout);
-        linearLayout = findViewById(R.id.main_menu);
-        constraintLayout = findViewById(R.id.main_header);
+        LinearLayout linearLayout = findViewById(R.id.main_menu);
+        ConstraintLayout constraintLayout = findViewById(R.id.main_header);
         NavigationView navigationView = findViewById(R.id.navigationView);
 
-        headerView = navigationView.getHeaderView(0);
+        View headerView = navigationView.getHeaderView(0);
         languageSpinner = headerView.findViewById(R.id.language_spinner);
         themeSpinner = headerView.findViewById(R.id.theme_spinner);
         paletteSpinner = headerView.findViewById(R.id.palette_spinner);
@@ -140,9 +134,9 @@ public class MainActivity extends FragmentActivity {
         paletteSpinner.setAdapter(paletteAdapter);
         paletteSpinner.setSelection(perferencesController.getIndexPalette());
 
-        languageArray = getStringArrayForLocale(R.array.language_values, new Locale("en"));
-        themeArray = getStringArrayForLocale(R.array.theme_options, new Locale("en"));
-        paletteArray = getStringArrayForLocale(R.array.palette_options, new Locale("en"));
+        languageArray = perferencesController.getStringArrayForLocale(R.array.language_values, "en");
+        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options,"en");
+        paletteArray = perferencesController.getStringArrayForLocale(R.array.palette_options, "en");
 
         Log.d("MainActivity", "Завантаження всіх об'єктів активності");
     }
@@ -407,14 +401,6 @@ public class MainActivity extends FragmentActivity {
         AnimatorSet scale = new AnimatorSet();
         scale.playSequentially(scaleUp, scaleDown);
         scale.start();
-    }
-
-    private String[] getStringArrayForLocale(int resId, Locale locale) {
-        Resources resources = this.getResources();
-        Configuration config = new Configuration(resources.getConfiguration());
-        config.setLocale(locale);
-        Context localizedContext = new ContextWrapper(this).createConfigurationContext(config);
-        return localizedContext.getResources().getStringArray(resId);
     }
 
     private void onAddDishClick(){

@@ -1,8 +1,6 @@
 package com.example.recipes.Adapter;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;

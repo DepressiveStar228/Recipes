@@ -32,14 +32,13 @@ public class ChatGPTClient {
 
         JSONObject json = new JSONObject();
         json.put("model", "gpt-3.5-turbo");
-        //json.put("max_tokens", 500);
         json.put("temperature", 1.0);
         json.put("top_p", 1.0);
         json.put("frequency_penalty", 0.0);
         json.put("presence_penalty", 0.5);
 
         JSONArray messages = new JSONArray();
-        messages.put(new JSONObject().put("role", "system").put("content", "You are a professional chef. They will ask you for advice and recipes and you will answer in detail. Answer in the language in which they write to you. Return all recipes as a JSON string: {\"dishes\":[{\"id\":1,\"name\":\"Here is the name of the dish\",\"recipe\":\"Here is a detailed recipe for the dish.\"}],\"ingredients\":[{\" amount\":\"Here is the amount of the ingredient without of measurement type\",\"id\":1,\"id_dish\":1,\"name\":\"Here is the name of the ingredient\",\"type\":\"Here is the type of measurement\"},{another ingredient in the same format. Add as many ingredients as in the recipe}]}"));
+        messages.put(new JSONObject().put("role", "system").put("content", "You are a professional chef. They will ask you for advice and recipes and you will answer in detail. Answer in the language in which they write to you. Return all recipes as a JSON string: {\"dishes\":[{\"id\":1,\"name\":\"Here is the name of the dish\",\"recipe\":\"Here write in detail how to prepare this dish.\"}],\"ingredients\":[{\" amount\":\"Here is the amount of the ingredient without of measurement type\",\"id\":1,\"id_dish\":1,\"name\":\"Here is the name of the ingredient\",\"type\":\"Here is the type of measurement\"},{another ingredient in the same format. Add as many ingredients as in the recipe}]}"));
         messages.put(new JSONObject().put("role", "user").put("content", prompt));
         json.put("messages", messages);
 

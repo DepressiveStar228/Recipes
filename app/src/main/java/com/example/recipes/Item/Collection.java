@@ -18,12 +18,6 @@ public class Collection {
         this.dishes = dishes;
     }
 
-    public Collection(int id, String name) {
-        this.id = id;
-        this.name = name;
-        this.dishes = new ArrayList<>();
-    }
-
     public int getId() {
         return id;
     }

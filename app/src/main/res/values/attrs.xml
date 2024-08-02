@@ -20,4 +20,5 @@
     <attr name="iconGPT" format="reference" />
     <attr name="iconSend" format="reference" />
     <attr name="iconBook" format="reference" />
+    <attr name="iconClipboard" format="reference" />
 </resources>

@@ -23,7 +23,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -35,7 +34,7 @@ import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;

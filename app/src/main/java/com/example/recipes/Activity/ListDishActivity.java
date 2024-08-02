@@ -1,16 +1,10 @@
 package com.example.recipes.Activity;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.database.SQLException;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,12 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.SearchResultsAdapter;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerIngredient;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -31,16 +22,12 @@ import java.util.ArrayList;
 public class ListDishActivity extends Activity {
     private ArrayList<Dish> dishes = new ArrayList<>();
     private TextView name_ing;
-    private RecyclerView listDishResultsRecyclerView;
-    private ImageView imageView;
-    private SearchResultsAdapter adapter;
     private ArrayList<Object> listDishResults;
-    private PerferencesController perferencesController;
     private RecipeUtils utils;
 
     @Override
     protected void onCreate (Bundle savedInstanceState){
-        perferencesController = new PerferencesController();
+        PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(this);
 
         utils = new RecipeUtils(this);
@@ -61,15 +48,15 @@ public class ListDishActivity extends Activity {
     }
 
     private void loadItemsActivity() {
-        listDishResultsRecyclerView = findViewById(R.id.listDishResultsRecyclerView);
+        RecyclerView listDishResultsRecyclerView = findViewById(R.id.listDishResultsRecyclerView);
         name_ing = findViewById(R.id.nameDishByIngredientTextView);
 
         listDishResults = new ArrayList<>();
-        adapter = new SearchResultsAdapter(listDishResults);
+        SearchResultsAdapter adapter = new SearchResultsAdapter(listDishResults);
         listDishResultsRecyclerView.setAdapter(adapter);
         listDishResultsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        imageView = findViewById(R.id.back_list_dish_by_ingredient_imageView);
+        ImageView imageView = findViewById(R.id.back_list_dish_by_ingredient_imageView);
         imageView.setOnClickListener(v -> { finish(); });
         Log.d("ListDishActivity", "Елементи активності успішно завантажені");
     }

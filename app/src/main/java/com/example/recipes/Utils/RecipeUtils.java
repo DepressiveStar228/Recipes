@@ -1,4 +1,4 @@
-package com.example.recipes.Item;
+package com.example.recipes.Utils;
 
 import android.content.Context;
 import android.util.Log;
@@ -8,6 +8,10 @@ import com.example.recipes.Controller.FileControllerCollections;
 import com.example.recipes.Controller.FileControllerDish;
 import com.example.recipes.Controller.FileControllerDishCollections;
 import com.example.recipes.Controller.FileControllerIngredient;
+import com.example.recipes.Item.Collection;
+import com.example.recipes.Item.DataBox;
+import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -345,14 +349,12 @@ public class RecipeUtils {
         int countFalse = 0;
 
         for (Ingredient ing : ingredients){
-            if (id_dish == ing.getID_Dish()) {
-                fileControllerIngredient.beginTransaction();
-                try {
-                    if (!fileControllerIngredient.insert(ing.getName(), ing.getAmount(), ing.getType(), id_dish)){ countFalse++; }
-                    fileControllerIngredient.setTransactionSuccessful();
-                } finally {
-                    fileControllerIngredient.endTransaction();
-                }
+            fileControllerIngredient.beginTransaction();
+            try {
+                if (!fileControllerIngredient.insert(ing.getName(), ing.getAmount(), ing.getType(), id_dish)){ countFalse++; }
+                fileControllerIngredient.setTransactionSuccessful();
+            } finally {
+                fileControllerIngredient.endTransaction();
             }
         }
 

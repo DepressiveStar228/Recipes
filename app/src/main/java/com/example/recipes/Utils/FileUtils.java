@@ -1,13 +1,11 @@
-package com.example.recipes.Item;
+package com.example.recipes.Utils;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;

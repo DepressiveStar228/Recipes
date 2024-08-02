@@ -38,9 +38,9 @@ import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.FileUtils;
+import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -53,6 +53,7 @@ public class CollectionsDishFragment extends Fragment {
     private Button addCollectionButton;
     private ArrayList<Collection> collections;
     private CollectionGetAdapter adapter;
+    private String[] themeArray;
     private RecipeUtils utils;
 
     @Override
@@ -73,13 +74,9 @@ public class CollectionsDishFragment extends Fragment {
         collectionsRecyclerView = view.findViewById(R.id.collections_dishRecyclerView);
         addCollectionButton = view.findViewById(R.id.add_collection_button);
         counter_dishes = view.findViewById(R.id.counter_dishes_collectionAct);
-        int countDishes = 0;
+        updateCounterDishes();
 
-        try {
-            countDishes = utils.getDishesOrdered().size();
-        } finally {
-            counter_dishes.setText(String.valueOf(countDishes));
-        }
+        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options,"en");
         Log.d("CollectionsDishFragment", "Об'єкти фрагмента успішно завантажені.");
     }
 
@@ -98,7 +95,27 @@ public class CollectionsDishFragment extends Fragment {
     }
 
     private void handleEditAction(Collection collection) {
-        showEditCollectionDialog(collection);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_collection, null);
+        EditText editText = dialogView.findViewById(R.id.edit_collection_name_editText);
+        editText.setText(collection.getName());
+        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
+        builder.setView(dialogView)
+                .setTitle(R.string.edit_collection_dialog)
+                .setPositiveButton(R.string.edit, (dialog, which) -> {
+                    String collectionName = editText.getText().toString().trim();
+                    if (collectionName.isEmpty()) {
+                        Toast.makeText(getContext(), R.string.error_empty_name, Toast.LENGTH_SHORT).show();
+                    } else if (utils.getIdCollectionByName(collectionName) != -1) {
+                        Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
+                    } else {
+                        editCollection(collection, collectionName);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
     }
 
     private void handleDeleteAction(Collection collection, boolean mode) {
@@ -112,6 +129,7 @@ public class CollectionsDishFragment extends Fragment {
                 .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
                     if (utils.deleteCollection(collection.getId(), mode)) {
                         adapter.delCollection(collection);
+                        updateCounterDishes();
                         updateCollectionRecyclerView();
                     }
                 })
@@ -156,7 +174,28 @@ public class CollectionsDishFragment extends Fragment {
     }
 
     private void handleCopyAction(Collection collection) {
-        showCopyCollectionDialog(collection);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
+        RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
+        ArrayList<Collection> collections = utils.getAllCollections();
+        AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(getContext(), collections);
+        collectionsRecyclerView.setAdapter(adapter);
+        collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        builder.setView(dialogView)
+                .setPositiveButton(R.string.button_copy, (dialog, which) -> {
+                    ArrayList<Integer> selectedCollectionIds = adapter.getSelectedCollectionIds();
+                    if (!selectedCollectionIds.isEmpty()){
+                        if (utils.copyDishesToAnotherCollections(collection.getId(), selectedCollectionIds)) {
+                            updateCollectionRecyclerView();
+                            Toast.makeText(getContext(), getString(R.string.successful_copy_dishes), Toast.LENGTH_SHORT).show();
+                            Log.d("ReadDataDishActivity", "Страви успішно додано до колекцію (ї)");
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
     }
 
     private void handleAddDishesAction(Collection collection) {
@@ -236,55 +275,6 @@ public class CollectionsDishFragment extends Fragment {
         builder.create().show();
     }
 
-    private void showEditCollectionDialog(Collection collection) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_collection, null);
-        EditText editText = dialogView.findViewById(R.id.edit_collection_name_editText);
-        editText.setText(collection.getName());
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
-        builder.setView(dialogView)
-                .setTitle(R.string.edit_collection_dialog)
-                .setPositiveButton(R.string.edit, (dialog, which) -> {
-                    String collectionName = editText.getText().toString().trim();
-                    if (collectionName.isEmpty()) {
-                        Toast.makeText(getContext(), R.string.error_empty_name, Toast.LENGTH_SHORT).show();
-                    } else if (utils.getIdCollectionByName(collectionName) != -1) {
-                        Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
-                    } else {
-                        editCollection(collection, collectionName);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
-    }
-
-    private void showCopyCollectionDialog(Collection collection) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
-        RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
-        ArrayList<Collection> collections = utils.getAllCollections();
-        AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(getContext(), collections);
-        collectionsRecyclerView.setAdapter(adapter);
-        collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        builder.setView(dialogView)
-                .setPositiveButton(R.string.button_copy, (dialog, which) -> {
-                    ArrayList<Integer> selectedCollectionIds = adapter.getSelectedCollectionIds();
-                    if (!selectedCollectionIds.isEmpty()){
-                        if (utils.copyDishesToAnotherCollections(collection.getId(), selectedCollectionIds)) {
-                            updateCollectionRecyclerView();
-                            Toast.makeText(getContext(), getString(R.string.successful_copy_dishes), Toast.LENGTH_SHORT).show();
-                            Log.d("ReadDataDishActivity", "Страви успішно додано до колекцію (ї)");
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
-    }
-
     private void updateCollectionRecyclerView() {
         loadCollections();
 
@@ -313,7 +303,7 @@ public class CollectionsDishFragment extends Fragment {
                 for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                     MenuItem item = popupMenu.getMenu().getItem(i);
                     SpannableString spannableString = new SpannableString(item.getTitle());
-                    if (!Objects.equals(perferencesController.theme, "Light")) {
+                    if (!Objects.equals(perferencesController.theme, themeArray[0])) {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.white)), 0, spannableString.length(), 0);
                     } else {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.black)), 0, spannableString.length(), 0);
@@ -334,6 +324,7 @@ public class CollectionsDishFragment extends Fragment {
                                 .setMessage(getString(R.string.warning_delete_dish))
                                 .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
                                     if (utils.deleteDish(dish)) {
+                                        updateCounterDishes();
                                         updateCollectionRecyclerView();
                                         Toast.makeText(getContext(), getString(R.string.successful_delete_dish), Toast.LENGTH_SHORT).show();
                                     } else {
@@ -342,7 +333,7 @@ public class CollectionsDishFragment extends Fragment {
                                 })
                                 .setNegativeButton(getString(R.string.no), null).show();
                         return true;
-                    } else if (item.getItemId() == R.id.action_share_dish) {
+                    } else if (item.getItemId() == R.id.action_copy_as_text_dish) {
                         String ingredientsText = "";
                         ArrayList<Ingredient> ingredients = utils.getIngredients(dish.getID());
 
@@ -360,14 +351,33 @@ public class CollectionsDishFragment extends Fragment {
 
                         Toast.makeText(getContext(), getString(R.string.copy_clipboard_text), Toast.LENGTH_SHORT).show();
                         return true;
+                    } else if (item.getItemId() == R.id.action_share_dish) {
+                        if (dish != null) {
+                            new AlertDialog.Builder(getContext())
+                                    .setTitle(getString(R.string.confirm_export))
+                                    .setMessage(getString(R.string.warning_export))
+                                    .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                                        Uri fileUri = ImportExportController.exportDish(getContext(), dish);
+
+                                        if (fileUri != null) {
+                                            FileUtils.sendFileByUri(getContext(), fileUri);
+                                            FileUtils.deleteFileByUri(getContext(), fileUri);
+                                            Log.d("CollectionsDishFragment", "Рецепт успішно експортовані");
+                                        }
+                                    })
+                                    .setNegativeButton(getString(R.string.no), null).show();
+                        } else {
+                            Toast.makeText(getContext(), R.string.error_read_get_dish, Toast.LENGTH_SHORT).show();
+                            Log.d("CollectionsDishFragment", "Помилка. Страва порожня");
+                        }
+                        return true;
                     } else if (item.getItemId() == R.id.action_add_in_collection_dish) {
-                        /*
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        LayoutInflater inflater = getContext().getLayoutInflater();
+                        LayoutInflater inflater = requireActivity().getLayoutInflater();
                         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
                         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
-                        ArrayList<Collection> collections = utils.getAllCollections();
-                        AddDishToCollectionAdapter adapter = new AddDishToCollectionAdapter(getContext(), collections);
+                        ArrayList<Collection> unused_collections = utils.getUnusedCollectionInDish(dish);
+                        AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(getContext(), unused_collections);
                         collectionsRecyclerView.setAdapter(adapter);
                         collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                         builder.setView(dialogView)
@@ -376,16 +386,15 @@ public class CollectionsDishFragment extends Fragment {
                                     ArrayList<Integer> selectedCollectionIds = adapter.getSelectedCollectionIds();
                                     if (!selectedCollectionIds.isEmpty()){
                                         if (utils.addDishCollectionData(dish, selectedCollectionIds)) {
+                                            updateCollectionRecyclerView();
                                             Toast.makeText(getContext(), getString(R.string.successful_add_dish_in_collection), Toast.LENGTH_SHORT).show();
-                                            Log.d("ReadDataDishActivity", "Страва успішно додана в колекцію(и)");
+                                            Log.d("CollectionsDishFragment", "Страва успішно додана в колекцію(и)");
                                         }
                                     }
                                 })
                                 .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
                         builder.create().show();
-                        updateCollectionRecyclerView();
-                         */
                         return true;
                     }  else {
                         return false;
@@ -412,7 +421,7 @@ public class CollectionsDishFragment extends Fragment {
                 for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                     MenuItem item = popupMenu.getMenu().getItem(i);
                     SpannableString spannableString = new SpannableString(item.getTitle());
-                    if (!Objects.equals(perferencesController.theme, "Light")) {
+                    if (!Objects.equals(perferencesController.theme, themeArray[0])) {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.white)), 0, spannableString.length(), 0);
                     } else {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.black)), 0, spannableString.length(), 0);
@@ -453,5 +462,15 @@ public class CollectionsDishFragment extends Fragment {
         Log.d("CollectionsDishFragment", "Адаптер колекцій успішно створено");
         collectionsRecyclerView.setAdapter(adapter);
         collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
+
+    private void updateCounterDishes() {
+        int countDishes = 0;
+
+        try {
+            countDishes = utils.getDishesOrdered().size();
+        } finally {
+            counter_dishes.setText(String.valueOf(countDishes));
+        }
     }
 }

@@ -2,9 +2,7 @@ package com.example.recipes.Controller;
 
 import android.content.Context;
 
-import com.example.recipes.Activity.ReadDataDishActivity;
 import com.example.recipes.R;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,7 +37,7 @@ public class ChatGPTTranslate {
 
         JSONObject json = new JSONObject();
         json.put("model", "gpt-3.5-turbo");
-        json.put("max_tokens", 250);
+        json.put("max_tokens", 350);
         json.put("temperature", 0.4);
         json.put("top_p", 0.4);
         json.put("frequency_penalty", 0.0);

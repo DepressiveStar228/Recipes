@@ -1,7 +1,5 @@
 package com.example.recipes.Item;
 
-import java.util.ArrayList;
-
 public class Dish {
     private int id;
     private String name;

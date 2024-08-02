@@ -1,6 +1,5 @@
 package com.example.recipes.Fragments;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -8,7 +7,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,16 +19,12 @@ import android.widget.Toast;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerIngredient;
-import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 

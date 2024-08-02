@@ -1,10 +1,7 @@
 package com.example.recipes.Controller;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,7 +11,7 @@ import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -24,10 +21,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.util.ArrayList;
 
 public class ImportExportController {
@@ -123,16 +118,27 @@ public class ImportExportController {
         return null;
     }
 
-    private static Uri getExportUri(Context context, String fileName) {
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/recipes");
+    public static Uri exportDish(Context context, Dish dish) {
+        RecipeUtils utils = new RecipeUtils(context);
+        ArrayList<Dish> dishes = new ArrayList<>();
+        ArrayList<Ingredient> ingredients = new ArrayList<>();
 
-        Uri uri = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            uri = context.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+        dishes.add(dish);
+        ingredients.addAll(utils.getIngredients(dish.getID()));
+
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(new DataBox(dishes, ingredients));
+        File internalDir = context.getFilesDir();
+        File jsonFile = new File(internalDir, dish.getName() + ".json");
+
+        try (FileOutputStream fos = new FileOutputStream(jsonFile);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
+            writer.write(jsonString);
+            return FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile);
+        } catch (IOException e) {
+            Toast.makeText(context, context.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
+            Log.e("ImportExportController", "Помилка при експорті рецептів", e);
         }
-        return uri;
+        return null;
     }
 }

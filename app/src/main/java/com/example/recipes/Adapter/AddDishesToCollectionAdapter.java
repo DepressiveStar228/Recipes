@@ -6,7 +6,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -15,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -23,11 +21,10 @@ import java.util.ArrayList;
 public class AddDishesToCollectionAdapter extends RecyclerView.Adapter<AddDishesToCollectionAdapter.CollectionViewHolder> {
     private static ArrayList<Dish> dishes;
     private static ArrayList<Integer> selectedDishIds = new ArrayList<>();
-    private PerferencesController perferencesController;
 
     public AddDishesToCollectionAdapter(Context context, ArrayList<Dish> dishes) {
         this.dishes = dishes;
-        perferencesController = new PerferencesController();
+        PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(context);
     }
 

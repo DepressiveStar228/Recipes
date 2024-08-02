@@ -2,9 +2,7 @@ package com.example.recipes.Activity;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -20,15 +18,13 @@ import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
 
 public class AddDishActivity extends Activity {
     private EditText nameEditText, recipeEditText;
-    private RecyclerView addIngredientRecyclerView;
-    private PerferencesController perferencesController;
     private IngredientSetAdapter ingredientAdapter;
     private ArrayList<Ingredient> ingredients;
     private RecipeUtils utils;
@@ -36,7 +32,7 @@ public class AddDishActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        perferencesController = new PerferencesController();
+        PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(this);
         utils = new RecipeUtils(this);
 
@@ -58,7 +54,7 @@ public class AddDishActivity extends Activity {
     private void loadItemsActivity() {
         nameEditText = findViewById(R.id.nameEditText);
         recipeEditText = findViewById(R.id.recipeEditText);
-        addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerView);
+        RecyclerView addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerView);
 
         ingredients = new ArrayList<>();
         ingredientAdapter = new IngredientSetAdapter(this, addIngredientRecyclerView);

@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_edit_dish"
+        android:id="@+id/action_add_in_collection_dish"
         android:orderInCategory="1"
+        android:title="@string/add_in_collection" />
+    <item
+        android:id="@+id/action_edit_dish"
+        android:orderInCategory="2"
         android:title="@string/edit" />
     <item
-        android:id="@+id/action_delete_dish"
-        android:orderInCategory="2"
-        android:title="@string/delete" />
+        android:id="@+id/action_copy_as_text_dish"
+        android:orderInCategory="3"
+        android:title="@string/copy_as_text" />
     <item
         android:id="@+id/action_share_dish"
-        android:orderInCategory="3"
+        android:orderInCategory="4"
         android:title="@string/share" />
     <item
-        android:id="@+id/action_add_in_collection_dish"
-        android:orderInCategory="4"
-        android:title="@string/add_in_collection" />
+        android:id="@+id/action_delete_dish"
+        android:orderInCategory="5"
+        android:title="@string/delete" />
 </menu>

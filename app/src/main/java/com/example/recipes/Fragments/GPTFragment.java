@@ -35,14 +35,12 @@ import androidx.fragment.app.Fragment;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ChatGPTClient;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerIngredient;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpResponseException;
 

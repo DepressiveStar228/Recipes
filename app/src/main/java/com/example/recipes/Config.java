@@ -2,7 +2,7 @@ package com.example.recipes;
 
 public class Config {
     public static final int CHAR_LIMIT_NAME_DISH = 50;
-    public static final int CHAR_LIMIT_RECIPE_DISH = 2000;
+    public static final int CHAR_LIMIT_RECIPE_DISH = 3500;
 
     public static final int CHAR_LIMIT_NAME_INGREDIENT = 40;
     public static final int CHAR_LIMIT_AMOUNT_INGREDIENT = 10;

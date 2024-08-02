@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.drawable.AnimationDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,11 +29,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
 import com.example.recipes.Controller.ChatGPTTranslate;
+import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 import com.google.android.material.navigation.NavigationView;
 
@@ -45,15 +48,13 @@ import java.util.Locale;
 
 public class ReadDataDishActivity extends Activity {
     private Dish dish;
-    private PerferencesController perferencesController;
     private ArrayList<Ingredient> ingredients;
-    private RecyclerView ingredientRecyclerView;
     private IngredientGetAdapter ingredientGetAdapter;
     private ChatGPTTranslate client;
     private DrawerLayout drawerLayout;
     private ImageView imageView, translateLoadImageView;
     private TextView nameDish, translate, recipeText;
-    private LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4;
+    private LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5;
     private String translatedNameDish = "", translatedRecipeDish = "";
     private ArrayList<Ingredient> translatedIngredient = new ArrayList<>();
     private AnimationDrawable animationDrawable;
@@ -62,7 +63,7 @@ public class ReadDataDishActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        perferencesController = new PerferencesController();
+        PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(this);
         client = new ChatGPTTranslate(this);
         utils = new RecipeUtils(this);
@@ -95,7 +96,7 @@ public class ReadDataDishActivity extends Activity {
     }
 
     private void loadItemsActivity(){
-        ingredientRecyclerView = findViewById(R.id.ingredientReadRecyclerView);
+        RecyclerView ingredientRecyclerView = findViewById(R.id.ingredientReadRecyclerView);
         ingredientGetAdapter = new IngredientGetAdapter(new ArrayList<>());
         ingredientRecyclerView.setAdapter(ingredientGetAdapter);
         ingredientRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -104,10 +105,11 @@ public class ReadDataDishActivity extends Activity {
         NavigationView navigationView = findViewById(R.id.readNavigationView);
         View headerView = navigationView.getHeaderView(0);
 
-        linearLayout1 = headerView.findViewById(R.id.setting_dish_item1);
-        linearLayout2 = headerView.findViewById(R.id.setting_dish_item2);
-        linearLayout3 = headerView.findViewById(R.id.setting_dish_item3);
-        linearLayout4 = headerView.findViewById(R.id.setting_dish_item4);
+        linearLayout1 = headerView.findViewById(R.id.setting_dish_edit);
+        linearLayout2 = headerView.findViewById(R.id.setting_dish_delete);
+        linearLayout3 = headerView.findViewById(R.id.setting_dish_share);
+        linearLayout4 = headerView.findViewById(R.id.setting_dish_add_to_collection);
+        linearLayout5 = headerView.findViewById(R.id.setting_dish_copy_as_text);
 
         imageView = findViewById(R.id.back_read_dish_imageView);
         translateLoadImageView = findViewById(R.id.translate_loading_imageView);
@@ -133,6 +135,9 @@ public class ReadDataDishActivity extends Activity {
         });
         linearLayout4.setOnClickListener(v -> {
             showAddDishInCollectionDialog();
+        });
+        linearLayout5.setOnClickListener(v -> {
+            copy_as_text();
         });
 
         translate.setOnClickListener(v -> {
@@ -202,7 +207,7 @@ public class ReadDataDishActivity extends Activity {
         startActivity(intent);
     }
 
-    public void shareDish() {
+    public void copy_as_text() {
         String ingredientsText = "";
 
         for (Ingredient ingredient : ingredients){
@@ -218,6 +223,27 @@ public class ReadDataDishActivity extends Activity {
         clipboard.setPrimaryClip(clip);
 
         Toast.makeText(this, getString(R.string.copy_clipboard_text), Toast.LENGTH_SHORT).show();
+    }
+
+    public void shareDish() {
+        if (dish != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.confirm_export))
+                    .setMessage(getString(R.string.warning_export))
+                    .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                        Uri fileUri = ImportExportController.exportDish(this, dish);
+
+                        if (fileUri != null) {
+                            FileUtils.sendFileByUri(this, fileUri);
+                            FileUtils.deleteFileByUri(this, fileUri);
+                            Log.d("ReadDataDishActivity", "Рецепт успішно експортовано");
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.no), null).show();
+        } else {
+            Toast.makeText(this, R.string.error_read_get_dish, Toast.LENGTH_SHORT).show();
+            Log.d("ReadDataDishActivity", "Помилка. Страва порожня");
+        }
     }
 
     private void showAddDishInCollectionDialog() {

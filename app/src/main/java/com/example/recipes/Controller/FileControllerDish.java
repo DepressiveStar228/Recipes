@@ -6,12 +6,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
-import com.example.recipes.R;
 
 import java.util.ArrayList;
 

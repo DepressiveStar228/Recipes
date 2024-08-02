@@ -18,7 +18,7 @@
     <string name="error_edit_dish_delete_name">Cannot delete dish name</string>
     <string name="error_edit_get_dish">Error transferring dish for editing</string>
     <string name="error_read_get_dish">Error transferring dish for reading</string>
-    <string name="error_void_dish">Error: Dish list is empty</string>
+    <string name="error_void_dish">Error: Dish is empty</string>
     <string name="error_void_ingredients">Error: Ingredient list is empty</string>
     <string name="error_get_ingredients">Ingredients not found for the selected dish</string>
     <string name="numbs_dishes_0">Number of dishes: 0</string>
@@ -152,4 +152,6 @@
     <string name="all">All</string>
     <string name="warning_max_count_ingredients">You have reached the ingredient limit</string>
     <string name="all_dishes_text">"All dishes: "</string>
+    <string name="copy_as_text">Copy as text</string>
+    <string name="error_void_list_dish">Error: Dish list is empty</string>
 </resources>

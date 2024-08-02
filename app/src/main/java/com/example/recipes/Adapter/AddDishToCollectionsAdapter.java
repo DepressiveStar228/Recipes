@@ -16,8 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
-import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import java.util.Objects;
 public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToCollectionsAdapter.CollectionViewHolder> {
     private static Context context;
     private RecipeUtils utils;
+    private static String[] themeArray;
     private static ArrayList<Collection> collections;
     private static ArrayList<Integer> selectedCollectionIds = new ArrayList<>();
     private static PerferencesController perferencesController;
@@ -36,6 +36,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
         utils = new RecipeUtils(context);
         perferencesController = new PerferencesController();
         perferencesController.loadPreferences(context);
+        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options, "en");
     }
 
     @NonNull
@@ -75,13 +76,13 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
 
     private static void setImage(CollectionViewHolder holder, Collection collection) {
         if (Objects.equals(collection.getName(), context.getString(R.string.favorites))) {
-            if (Objects.equals(perferencesController.theme, "Light")) {
+            if (Objects.equals(perferencesController.theme, themeArray[0])) {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
             } else {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star_darkmode));
             }
         } else {
-            if (Objects.equals(perferencesController.theme, "Light")) {
+            if (Objects.equals(perferencesController.theme, themeArray[0])) {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
             } else {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_darkmode));

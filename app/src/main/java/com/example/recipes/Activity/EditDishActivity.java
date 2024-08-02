@@ -1,40 +1,30 @@
 package com.example.recipes.Activity;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.IngredientSetAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerIngredient;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.RecipeUtils;
+import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class EditDishActivity extends Activity {
     private EditText nameEditText, recipeEditText;
-    private RecyclerView addIngredientRecyclerView;
-    private PerferencesController perferencesController;
     private IngredientSetAdapter ingredientAdapter;
     private ArrayList<Ingredient> ingredients;
     private ImageView imageView;
@@ -42,7 +32,7 @@ public class EditDishActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        perferencesController = new PerferencesController();
+        PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(this);
 
         utils = new RecipeUtils(this);
@@ -89,7 +79,7 @@ public class EditDishActivity extends Activity {
     private void loadItemsActivity(){
         nameEditText = findViewById(R.id.nameEditTextEditAct);
         recipeEditText = findViewById(R.id.recipeEditTextEditAct);
-        addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerViewEditAct);
+        RecyclerView addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerViewEditAct);
 
         ingredients = new ArrayList<>();
         ingredientAdapter = new IngredientSetAdapter(this, addIngredientRecyclerView);
@@ -164,9 +154,5 @@ public class EditDishActivity extends Activity {
     public void onAddIngredientButtonClickEditAct(View view) {
         Ingredient newIngredient = new Ingredient("", "", "");
         ingredientAdapter.addIngredient(newIngredient);
-    }
-
-    private void updateDishOnActivity() {
-
     }
 }

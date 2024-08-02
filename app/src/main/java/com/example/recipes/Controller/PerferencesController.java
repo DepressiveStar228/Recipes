@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.recipes.R;
 
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -91,11 +90,11 @@ public class PerferencesController {
         return langArray[position];
     }
     public String getThemeNameBySpinner(int position) {
-        String[] themeArray = getStringArrayForLocale(R.array.theme_options);
+        String[] themeArray = getStringArrayForLocale(R.array.theme_options, "en");
         return themeArray[position];
     }
     public String getPaletteNameBySpinner(int position) {
-        String[] paletteArray = getStringArrayForLocale(R.array.palette_options);
+        String[] paletteArray = getStringArrayForLocale(R.array.palette_options, "en");
         return paletteArray[position];
     }
 
@@ -111,7 +110,7 @@ public class PerferencesController {
 
     public int getIndexTheme() {
         int index = 0;
-        String[] themeArray = getStringArrayForLocale(R.array.theme_options);
+        String[] themeArray = getStringArrayForLocale(R.array.theme_options, "en");
         for (String th : themeArray) {
             if (Objects.equals(th, theme)) { return index; }
             else { index++; }
@@ -121,7 +120,7 @@ public class PerferencesController {
 
     public int getIndexPalette() {
         int index = 0;
-        String[] paletteArray = getStringArrayForLocale(R.array.palette_options);
+        String[] paletteArray = getStringArrayForLocale(R.array.palette_options, "en");
         for (String pal : paletteArray) {
             if (Objects.equals(pal, palette)) { return index; }
             else { index++; }
@@ -129,10 +128,10 @@ public class PerferencesController {
         return 0;
     }
 
-    private String[] getStringArrayForLocale(int resId) {
+    public String[] getStringArrayForLocale(int resId, String locate) {
         Resources resources = context.getResources();
         Configuration config = new Configuration(resources.getConfiguration());
-        config.setLocale(new Locale("en"));
+        config.setLocale(new Locale(locate));
         Resources localizedResources = context.createConfigurationContext(config).getResources();
         return localizedResources.getStringArray(resId);
     }

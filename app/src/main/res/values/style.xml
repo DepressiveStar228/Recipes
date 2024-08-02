@@ -36,6 +36,7 @@
         <item name="iconGPT">@drawable/icon_gpt</item>
         <item name="iconSend">@drawable/icon_send</item>
         <item name="iconBook">@drawable/icon_book</item>
+        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -75,6 +76,7 @@
         <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
         <item name="iconSend">@drawable/icon_send_darkmode</item>
         <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -118,6 +120,7 @@
         <item name="iconGPT">@drawable/icon_gpt</item>
         <item name="iconSend">@drawable/icon_send</item>
         <item name="iconBook">@drawable/icon_book</item>
+        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -157,6 +160,7 @@
         <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
         <item name="iconSend">@drawable/icon_send_darkmode</item>
         <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -201,6 +205,7 @@
         <item name="iconGPT">@drawable/icon_gpt</item>
         <item name="iconSend">@drawable/icon_send</item>
         <item name="iconBook">@drawable/icon_book</item>
+        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -240,6 +245,7 @@
         <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
         <item name="iconSend">@drawable/icon_send_darkmode</item>
         <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -283,6 +289,7 @@
         <item name="iconGPT">@drawable/icon_gpt</item>
         <item name="iconSend">@drawable/icon_send</item>
         <item name="iconBook">@drawable/icon_book</item>
+        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -322,6 +329,7 @@
         <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
         <item name="iconSend">@drawable/icon_send_darkmode</item>
         <item name="iconBook">@drawable/icon_book_darkmode</item>
+        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>

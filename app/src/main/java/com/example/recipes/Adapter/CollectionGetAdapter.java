@@ -13,7 +13,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Controller.FileControllerDishCollections;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
@@ -24,6 +23,7 @@ import java.util.Objects;
 
 public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdapter.ViewHolder>{
     private final Context context;
+    private static String[] themeArray;
     private final ArrayList<Collection> collections;
     private PerferencesController perferencesController;
     private CollectionClickListener collectionClickListener;
@@ -34,6 +34,7 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         this.collectionClickListener = clickListener;
         perferencesController = new PerferencesController();
         perferencesController.loadPreferences(context);
+        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options, "en");
     }
 
     @NonNull
@@ -59,13 +60,13 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
         }
 
         if (Objects.equals(collection.getName(), context.getString(R.string.system_collection_tag) + "1")) {
-            if (Objects.equals(perferencesController.theme, "Light")) {
+            if (Objects.equals(perferencesController.theme, themeArray[0])) {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
             } else {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star_darkmode));
             }
         } else {
-            if (Objects.equals(perferencesController.theme, "Light")) {
+            if (Objects.equals(perferencesController.theme, themeArray[0])) {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
             } else {
                 holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_darkmode));
@@ -171,7 +172,7 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
             Dish dish = dishes.get(position);
             holder.child_item_name.setText(dish.getName());
 
-            if (Objects.equals(perferencesController.theme, "Light")) {
+            if (Objects.equals(perferencesController.theme, themeArray[0])) {
                 holder.child_item_image.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_menu));
             } else {
                 holder.child_item_image.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_menu_darkmode));
