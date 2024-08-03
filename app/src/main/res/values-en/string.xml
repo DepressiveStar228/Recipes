@@ -154,4 +154,6 @@
     <string name="all_dishes_text">"All dishes: "</string>
     <string name="copy_as_text">Copy as text</string>
     <string name="error_void_list_dish">Error: Dish list is empty</string>
+    <string name="exit_app">Exit application</string>
+    <string name="confirm_exit_app">Are you sure you want to exit?</string>
 </resources>

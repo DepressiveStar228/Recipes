@@ -28,6 +28,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.ImportExportController;
+import com.example.recipes.Controller.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Fragments.CollectionsDishFragment;
 import com.example.recipes.Fragments.RandDishFragment;
@@ -57,6 +58,7 @@ public class MainActivity extends FragmentActivity {
     private String selectedLanguage, selectedTheme, selectedPalette;
     private ImageView img1, img2, img3, img4;
     private ImageView add_dish_button;
+    private Fragment searchFragment, randFragment, collectionFragment;
     private int currentActivity;
 
     @Override
@@ -83,6 +85,37 @@ public class MainActivity extends FragmentActivity {
         updateSearchFragment();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        boolean flagMayClose = false;
+
+        if (currentFragment instanceof OnBackPressedListener) {
+            flagMayClose = ((OnBackPressedListener) currentFragment).onBackPressed();
+        }
+
+        if (flagMayClose || currentActivity != 1) {
+            if (currentActivity != 1) {
+                openFragment(setSearchFragment());
+            } else if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END);
+            } else {
+                new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.exit_app))
+                        .setMessage(getString(R.string.confirm_exit_app))
+                        .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
+                            super.onBackPressed();
+                        })
+                        .setNegativeButton(getString(R.string.no), null)
+                        .show();
+            }
+        }
+    }
 
     public void openSetting() {
         if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
@@ -335,27 +368,42 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    private Fragment setSearchFragment(){
+    private Fragment setSearchFragment() {
         if (currentActivity != 1) {
             setCurrentMenuSelect(1);
             Log.d("MainActivity", "Зміна фрагмента на домашню сторінку пошуку.");
-            return new SearchDishFragment();
+
+            if (searchFragment == null) {
+                searchFragment = new SearchDishFragment();
+            }
+
+            return searchFragment;
         } else { return null; }
     }
 
-    private Fragment setRandomFragment(){
+    private Fragment setRandomFragment() {
         if (currentActivity != 2) {
             setCurrentMenuSelect(2);
             Log.d("MainActivity", "Зміна фрагмента на рандомну сторінку");
-            return new RandDishFragment();
+
+            if (randFragment == null) {
+                randFragment = new RandDishFragment();
+            }
+
+            return randFragment;
         } else { return null; }
     }
 
-    private Fragment setCollectionsFragment(){
+    private Fragment setCollectionsFragment() {
         if (currentActivity != 4) {
             setCurrentMenuSelect(4);
             Log.d("MainActivity", "Зміна фрагмента на колекцію страв");
-            return new CollectionsDishFragment();
+
+            if (collectionFragment == null) {
+                collectionFragment = new CollectionsDishFragment();
+            }
+
+            return collectionFragment;
         } else { return null; }
     }
 
@@ -406,10 +454,5 @@ public class MainActivity extends FragmentActivity {
     private void onAddDishClick(){
         Intent intent = new Intent(this, AddDishActivity.class);
         startActivity(intent);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 }

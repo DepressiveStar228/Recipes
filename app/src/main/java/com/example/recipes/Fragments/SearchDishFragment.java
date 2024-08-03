@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
+import com.example.recipes.Controller.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
@@ -39,7 +40,7 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
-public class SearchDishFragment extends Fragment {
+public class SearchDishFragment extends Fragment implements OnBackPressedListener {
     private EditText searchEditText;
     private ArrayList<Dish> dishes = new ArrayList<>();
     private ArrayList<Ingredient> ingredients = new ArrayList<>();
@@ -51,7 +52,7 @@ public class SearchDishFragment extends Fragment {
     private GPTFragment childFragment;
     private FrameLayout gptFragment;
     private RecipeUtils utils;
-    private boolean flagOpenGPTContainer = false;
+    private boolean flagOpenGPTContainer = false, flagOpenSearch = false;
 
 
     @Override
@@ -88,6 +89,23 @@ public class SearchDishFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        if (flagOpenGPTContainer) {
+            flagOpenGPTContainer = false;
+            childFragment.closeGPTContainer();
+            return false;
+        } else if  (flagOpenSearch) {
+            searchEditText.clearFocus();
+            hideRecyclerView();
+            hideSwitch();
+            flagOpenSearch = false;
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void loadItemsActivity(View view){
@@ -144,6 +162,7 @@ public class SearchDishFragment extends Fragment {
                 updateListDish();
                 showRecyclerView();
                 showSwitch();
+                flagOpenSearch = true;
             }
         });
 
@@ -174,6 +193,7 @@ public class SearchDishFragment extends Fragment {
                 hideRecyclerView();
                 hideSwitch();
                 hideKeyboard(v);
+                flagOpenSearch = false;
             }
 
             return false;

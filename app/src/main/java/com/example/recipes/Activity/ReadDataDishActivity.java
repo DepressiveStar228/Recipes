@@ -95,6 +95,15 @@ public class ReadDataDishActivity extends Activity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            drawerLayout.closeDrawer(GravityCompat.END);
+        } else {
+            finish();
+        }
+    }
+
     private void loadItemsActivity(){
         RecyclerView ingredientRecyclerView = findViewById(R.id.ingredientReadRecyclerView);
         ingredientGetAdapter = new IngredientGetAdapter(new ArrayList<>());

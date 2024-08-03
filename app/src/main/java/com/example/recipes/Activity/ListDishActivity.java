@@ -47,6 +47,11 @@ public class ListDishActivity extends Activity {
         Log.d("ListDishActivity", "Активність успішно закрита");
     }
 
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
+
     private void loadItemsActivity() {
         RecyclerView listDishResultsRecyclerView = findViewById(R.id.listDishResultsRecyclerView);
         name_ing = findViewById(R.id.nameDishByIngredientTextView);

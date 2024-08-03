@@ -109,7 +109,7 @@
     <string name="translate_button_text_true">Показати оригінал</string>
     <string name="warning_export">Ви дійсно хочете експортувати рецепти?</string>
     <string name="confirm_export">Підтвердіть експортування</string>
-    <string name="api_key" translatable="false">sk-proj-SRKNIqnhk2ouNfGlBtf3T3BlbkFJaPgCBgvefCdtMn7OMgFF</string>
+    <string name="api_key" translatable="false">123</string>
     <string name="error_get_response">Не вдалося отримати відповідь від GPT</string>
     <string name="collections_dish_text">Ваші колекції</string>
     <string name="collection">Колекція</string>
@@ -163,4 +163,6 @@
     <string name="all_dishes_text">Всього страв:</string>
     <string name="copy_as_text">Копіювати як текст</string>
     <string name="error_void_list_dish">Помилка: Список страв пустий</string>
+    <string name="exit_app">Вийти з додатка</string>
+    <string name="confirm_exit_app">Ви точно хочете вийти?</string>
 </resources>

@@ -109,11 +109,11 @@ public class GPTFragment extends Fragment {
     }
 
     public void closeGPTContainer(){
-        showGptText();
-        decreaseGptContainer();
-        hideGPT_mainLayout();
         hideGPTEditText();
         hideGPTImageView();
+        showGptText();
+        hideGPT_mainLayout();
+        decreaseGptContainer();
     }
 
     private void showGPTEditText(){

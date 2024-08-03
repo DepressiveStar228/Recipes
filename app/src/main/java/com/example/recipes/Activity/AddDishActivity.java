@@ -1,6 +1,7 @@
 package com.example.recipes.Activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -49,6 +50,11 @@ public class AddDishActivity extends Activity {
         super.onDestroy();
         utils.close();
         Log.d("AddDishActivity", "Активність успішно закрита");
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 
     private void loadItemsActivity() {
