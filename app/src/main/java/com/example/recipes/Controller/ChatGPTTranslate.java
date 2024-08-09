@@ -53,7 +53,7 @@ public class ChatGPTTranslate {
         Request request = new Request.Builder()
                 .url(API_URL)
                 .post(body)
-                .addHeader("Authorization", "Bearer " + context.getString(R.string.api_key))
+                //.addHeader("Authorization", "Bearer " + context.getString(R.string.api_key))
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
