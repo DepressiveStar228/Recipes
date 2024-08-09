@@ -55,6 +55,7 @@ public class ChatGPTClient {
                 String responseBody = response.body().string();
                 throw new IOException("Unexpected code " + response + ": " + responseBody);
             }
+
             JSONObject responseJson = new JSONObject(response.body().string());
             return responseJson.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
         }
