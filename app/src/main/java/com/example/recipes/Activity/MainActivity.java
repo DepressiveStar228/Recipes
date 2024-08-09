@@ -71,8 +71,28 @@ public class MainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SearchDishFragment()).commit();
+        if (savedInstanceState != null) {
+            Fragment currentFragment = getSupportFragmentManager().getFragment(savedInstanceState, "currentFragment");
+            if (currentFragment != null) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, currentFragment).commit();
+            }
+
+            currentActivity = savedInstanceState.getInt("currentActivity");
+        } else {
+            switch (currentActivity) {
+                case 1:
+                    openFragment(setSearchFragment());
+                    break;
+                case 2:
+                    openFragment(setRandomFragment());
+                    break;
+                case 4:
+                    openFragment(setCollectionsFragment());
+                    break;
+                default:
+                    openFragment(new SearchDishFragment());
+                    break;
+            }
         }
 
         loadItemsActivity();
@@ -80,14 +100,9 @@ public class MainActivity extends FragmentActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        updateSearchFragment();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
+        utils.close();
     }
 
     @Override
@@ -100,21 +115,34 @@ public class MainActivity extends FragmentActivity {
         }
 
         if (flagMayClose || currentActivity != 1) {
-            if (currentActivity != 1) {
-                openFragment(setSearchFragment());
-            } else if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 drawerLayout.closeDrawer(GravityCompat.END);
+            } else if (currentActivity != 1) {
+                openFragment(setSearchFragment());
             } else {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.exit_app))
                         .setMessage(getString(R.string.confirm_exit_app))
                         .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
                             super.onBackPressed();
+                            finish();
                         })
                         .setNegativeButton(getString(R.string.no), null)
                         .show();
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        if (currentFragment != null) {
+            getSupportFragmentManager().putFragment(outState, "currentFragment", currentFragment);
+        }
+
+        outState.putInt("currentActivity", currentActivity);
     }
 
     public void openSetting() {
@@ -411,22 +439,9 @@ public class MainActivity extends FragmentActivity {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
         Log.d("MainActivity", "Завантаження нового фрагмента");
-    }
-
-    private void updateSearchFragment(){
-        switch (currentActivity) {
-            case 2:
-                openFragment(new RandDishFragment());
-                break;
-            case 4:
-                openFragment(new CollectionsDishFragment());
-                break;
-            default:
-                openFragment(new SearchDishFragment());
-                break;
-        }
     }
 
     private void animateImage(View view) {

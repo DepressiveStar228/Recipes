@@ -100,14 +100,25 @@ public class AddDishActivity extends Activity {
 
             ingredientAdapter.updateIngredients();
             ingredients = ingredientAdapter.getIngredients();
+            boolean flagFullIngredient = true;
 
-            if (utils.addDish(new Dish(name, recipe), ingredients, Config.ID_MY_RECIPE_COLLECTION)) {
-                Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+            for (Ingredient in : ingredients) {
+                if (in.getName().isEmpty() || in.getAmount().isEmpty() || in.getType().isEmpty()) {
+                    flagFullIngredient = false;
+                    break;
+                }
             }
 
-            finish();
+            if (!flagFullIngredient) {
+                Toast.makeText(this, getString(R.string.warning_set_all_data), Toast.LENGTH_SHORT).show();
+            } else {
+                if (utils.addDish(new Dish(name, recipe), ingredients, Config.ID_MY_RECIPE_COLLECTION)) {
+                    Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                }
+            }
         }
     }
 

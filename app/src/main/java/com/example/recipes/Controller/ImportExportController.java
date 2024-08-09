@@ -7,6 +7,9 @@ import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
@@ -50,11 +53,15 @@ public class ImportExportController {
 
         if (firstCurlyBraceIndex != -1 && lastCurlyBraceIndex != -1 && firstCurlyBraceIndex < lastCurlyBraceIndex) {
             String finalJsonResponse = jsonResponse.substring(firstCurlyBraceIndex, lastCurlyBraceIndex + 1);
+            String recipe = extractRecipe(finalJsonResponse);
+
             finalJsonResponse = finalJsonResponse.replaceAll("\n", "")
                     .replaceAll("\\s*\\{\\s*", "{")
                     .replaceAll("\\s*\\}\\s*", "}")
                     .replaceAll(":\\s*", ":")
                     .replaceAll(",\\s*\"", ",\"");
+
+            finalJsonResponse = replaceRecipe(finalJsonResponse, recipe.replaceAll("\n", ""), recipe);
 
             try {
                 Type recipeDataType = new TypeToken<DataBox>() {}.getType();
@@ -140,5 +147,20 @@ public class ImportExportController {
             Log.e("ImportExportController", "Помилка при експорті рецептів", e);
         }
         return null;
+    }
+
+    private static String extractRecipe(String input) {
+        String regex = "\"recipe\":(.*?)\\}\\]";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    public static String replaceRecipe(String input, String oldText, String newText) {
+        return input.replaceFirst(Pattern.quote("\"recipe\":" + oldText + "}]"), "\"recipe\":" + newText + "}]");
     }
 }

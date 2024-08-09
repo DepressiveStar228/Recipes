@@ -58,13 +58,14 @@
     <string name="hint_short_text_numbs">Кіл.</string>
     <string name="theme">Тема</string>
     <string-array name="options_array">
-        <item>Г.</item>
-        <item>Мл.</item>
-        <item>Шт.</item>
-        <item>Ч.л</item>
-        <item>С.л</item>
-        <item>Щеп.</item>
-        <item>Стк.</item>
+        <item>г.</item>
+        <item>кг.</item>
+        <item>мл.</item>
+        <item>шт.</item>
+        <item>ч.л</item>
+        <item>с.л</item>
+        <item>щеп.</item>
+        <item>стк.</item>
         <item> </item>
     </string-array>
     <string-array name="theme_options">

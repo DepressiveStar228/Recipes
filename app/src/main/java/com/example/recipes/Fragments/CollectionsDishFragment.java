@@ -22,6 +22,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -57,14 +58,16 @@ public class CollectionsDishFragment extends Fragment {
     private RecipeUtils utils;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.collections_activity, container, false);
-
-        utils = new RecipeUtils(getContext());
-
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         perferencesController = new PerferencesController();
         perferencesController.loadPreferences(getContext());
+        utils = new RecipeUtils(getContext());
+    }
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view =  inflater.inflate(R.layout.collections_activity, container, false);
         loadItemsActivity(view);
         loadClickListeners();
         return view;

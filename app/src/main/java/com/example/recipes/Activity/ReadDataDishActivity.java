@@ -78,6 +78,7 @@ public class ReadDataDishActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        utils.close();
     }
 
     @Override

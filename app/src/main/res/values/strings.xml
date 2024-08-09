@@ -57,13 +57,14 @@
     <string name="hint_short_text_numbs">Кіл.</string>
     <string name="theme">Тема</string>
     <string-array name="options_array">
-        <item>Г.</item>
-        <item>Мл.</item>
-        <item>Шт.</item>
-        <item>Ч.л</item>
-        <item>С.л</item>
-        <item>Щеп.</item>
-        <item>Стк.</item>
+        <item>г.</item>
+        <item>кг.</item>
+        <item>мл.</item>
+        <item>шт.</item>
+        <item>ч.л</item>
+        <item>с.л</item>
+        <item>щеп.</item>
+        <item>стк.</item>
         <item> </item>
     </string-array>
     <string-array name="language_options">
@@ -109,7 +110,7 @@
     <string name="translate_button_text_true">Показати оригінал</string>
     <string name="warning_export">Ви дійсно хочете експортувати рецепти?</string>
     <string name="confirm_export">Підтвердіть експортування</string>
-    <string name="api_key" translatable="false">123</string>
+    <string name="api_key" translatable="false">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</string>
     <string name="error_get_response">Не вдалося отримати відповідь від GPT</string>
     <string name="collections_dish_text">Ваші колекції</string>
     <string name="collection">Колекція</string>

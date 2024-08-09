@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
+import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Utils.RecipeUtils;
@@ -41,40 +42,20 @@ public class RandDishFragment extends Fragment {
     private RecipeUtils utils;
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        PerferencesController perferencesController = new PerferencesController();
+        perferencesController.loadPreferences(getContext());
+        utils = new RecipeUtils(getContext());
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.rand_dish_activity, container, false);
-        utils = new RecipeUtils(getContext());
-
         loadItemsActivity(view);
         loadCollection();
         loadClickListeners();
         return view;
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (dish == null) { outState.putString("dish_name", ""); }
-        else { outState.putString("dish_name", dish.getText().toString()); }
-
-        outState.putString("collection_name", currentNameCollection);
-    }
-
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState != null) {
-            Dish dishBox = utils.getDish(utils.getIdDishByName(savedInstanceState.getString("dish_name")));
-            currentNameCollection = savedInstanceState.getString("collection_name");
-
-            if (dish != null) {
-                getDataDish(dishBox);
-            }
-
-            if (currentNameCollection != null) {
-
-            }
-        }
     }
 
     private void loadItemsActivity(View view){

@@ -470,6 +470,8 @@ public class GPTFragment extends Fragment {
         }
 
         for (Ingredient in : ingredients) {
+            if (in.getType() == null) { in.setType(""); }
+
             data += "- " + in.getAmount() + " " + in.getType() + " " + in.getName() + "\n";
         }
 

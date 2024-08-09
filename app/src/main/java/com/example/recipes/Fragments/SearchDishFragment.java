@@ -54,18 +54,19 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private RecipeUtils utils;
     private boolean flagOpenGPTContainer = false, flagOpenSearch = false;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        PerferencesController perferencesController = new PerferencesController();
+        perferencesController.loadPreferences(getContext());
+        utils = new RecipeUtils(getContext());
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.my_dish_activity, container, false);
-        PerferencesController perferencesController = new PerferencesController();
-        perferencesController.loadPreferences(getContext());
-
-        utils = new RecipeUtils(getContext());
-
         loadItemsActivity(view);
         loadClickListeners();
-
         return view;
     }
 
@@ -87,17 +88,12 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
     public boolean onBackPressed() {
         if (flagOpenGPTContainer) {
             flagOpenGPTContainer = false;
             childFragment.closeGPTContainer();
             return false;
-        } else if  (flagOpenSearch) {
+        } else if (flagOpenSearch) {
             searchEditText.clearFocus();
             hideRecyclerView();
             hideSwitch();
@@ -338,6 +334,10 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
             if (!searchSwitch.isChecked()){
                 searchResults.clear();
                 searchResults.addAll(performSearchByDish(""));
+                adapter.notifyDataSetChanged();
+            } else {
+                searchResults.clear();
+                searchResults.addAll(performSearchByIngredient(""));
                 adapter.notifyDataSetChanged();
             }
 
