@@ -110,7 +110,7 @@
     <string name="translate_button_text_true">Показати оригінал</string>
     <string name="warning_export">Ви дійсно хочете експортувати рецепти?</string>
     <string name="confirm_export">Підтвердіть експортування</string>
-    <string name="api_key" translatable="false">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</string>
+    <string name="api_key" translatable="false">123</string>
     <string name="error_get_response">Не вдалося отримати відповідь від GPT</string>
     <string name="collections_dish_text">Ваші колекції</string>
     <string name="collection">Колекція</string>
