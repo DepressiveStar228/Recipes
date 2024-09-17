@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,10 +30,13 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 public class RandDishFragment extends Fragment {
     private Random random = new Random();
-    private ArrayList<Dish> dishes;
-    private ArrayList<Ingredient> ingredients;
     private TextView dish, recipe;
     private Button rand_button;
     private Spinner collectionsSpinner;
@@ -40,6 +44,7 @@ public class RandDishFragment extends Fragment {
     private IngredientGetAdapter ingredientGetAdapter;
     private String currentNameCollection;
     private RecipeUtils utils;
+    private CompositeDisposable compositeDisposable;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,6 +52,7 @@ public class RandDishFragment extends Fragment {
         PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(getContext());
         utils = new RecipeUtils(getContext());
+        compositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -56,6 +62,13 @@ public class RandDishFragment extends Fragment {
         loadCollection();
         loadClickListeners();
         return view;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
+        Log.d("RandDishFragment", "Фрагмент успішно закритий");
     }
 
     private void loadItemsActivity(View view){
@@ -93,15 +106,61 @@ public class RandDishFragment extends Fragment {
 
     public void onClickGetDish(View view) {
         if (Objects.equals(currentNameCollection, getString(R.string.system_collection_tag) + "All")) {
-            dishes = utils.getDishesOrdered();
+            Disposable disposable = utils.getDishesOrdered()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            dishes -> {
+                                if (dishes != null && !dishes.isEmpty()) {
+                                    getDataDish(getRandomIndex(new ArrayList<>(dishes)));
+                                    Log.d("RandDishFragment", "Успішне отримання списку страв.");
+                                } else {
+                                    Log.e("RandDishFragment", "Список страв пустий.");
+                                    Toast.makeText(getContext(), getString(R.string.error_void_dishes), Toast.LENGTH_SHORT).show();
+                                }
+                            },
+                            throwable -> {
+                                Log.e("RandDishFragment", "Помилка отримання списку страв.", throwable);
+                                Toast.makeText(getContext(), getString(R.string.error_get_dishes_by_db), Toast.LENGTH_SHORT).show();
+                            }
+                    );
+            compositeDisposable.add(disposable);
         } else {
-            dishes = utils.getDishesByCollection(utils.getIdCollectionByName(currentNameCollection));
-        }
+            Disposable disposable = utils.getIdCollectionByName(currentNameCollection)
+                    .flatMap(
+                            id -> {
+                                if (id > 0) {
+                                    Log.d("RandDishFragment", "Успішне отримання айді колекції.");
+                                    return utils.getDishesByCollection(id);
+                                } else {
+                                    Log.e("RandDishFragment", "Помилка. Айді колекції нульовий.");
+                                    return null;
+                                }
+                            },
+                            throwable -> {
+                                Log.e("RandDishFragment", "Помилка отримання айді колекції з бд.", throwable);
+                                return null;
+                            }
+                    )
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            dishes -> {
+                                if (dishes != null && !dishes.isEmpty()) {
+                                    getDataDish(getRandomIndex(new ArrayList<>(dishes)));
+                                    Log.d("RandDishFragment", "Успішне отримання списку страв в колекції.");
+                                } else {
+                                    Log.e("RandDishFragment", "Помилка. Список страв в колекції пустий.");
+                                    Toast.makeText(getContext(), getString(R.string.error_void_dishes), Toast.LENGTH_SHORT).show();
+                                }
+                            },
+                            throwable -> {
+                                Log.e("RandDishFragment", "Помилка отримання списку страв в колекції з бд.", throwable);
+                                Toast.makeText(getContext(), getString(R.string.error_get_dishes_by_db), Toast.LENGTH_SHORT).show();
+                            }
+                    );
 
-        if (dishes != null && !dishes.isEmpty()) {
-            getDataDish(getRandomIndex());
-        } else {
-            Toast.makeText(getContext(), getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
+            compositeDisposable.add(disposable);
         }
     }
 
@@ -110,7 +169,7 @@ public class RandDishFragment extends Fragment {
         loadIngredients(randDish);
     }
 
-    private Dish getRandomIndex() {
+    private Dish getRandomIndex(ArrayList<Dish> dishes) {
         return dishes.get(random.nextInt(dishes.size()));
     }
 
@@ -119,27 +178,57 @@ public class RandDishFragment extends Fragment {
             recipe.setVisibility(View.VISIBLE);
         }
 
-        ingredients = utils.getIngredients(randDish.getID());
-        ingredients.add(0, (new Ingredient(getString(R.string.ingredients), "", "")));
-        ingredients.add((new Ingredient(" ", "", "")));
-        recipe.setText(getString(R.string.recipe) + "\n" + randDish.getRecipe());
+        Disposable disposable = utils.getIngredients(randDish.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        ingredients -> {
+                            ingredients.add(0, (new Ingredient(getString(R.string.ingredients), "", "")));
+                            ingredients.add((new Ingredient(" ", "", "")));
+                            recipe.setText(getString(R.string.recipe) + "\n" + randDish.getRecipe());
 
-        if (ingredients != null && !ingredients.isEmpty()) {
-            ingredientGetAdapter.clear();
-            ingredientGetAdapter.addAll(ingredients);
-        } else {
-            Toast.makeText(getContext(), getString(R.string.error_get_ingredients), Toast.LENGTH_SHORT).show();
-        }
+                            if (ingredients != null && !ingredients.isEmpty()) {
+                                ingredientGetAdapter.clear();
+                                ingredientGetAdapter.addAll(new ArrayList<>(ingredients));
+                                Log.d("RandDishFragment", "Успішне отримання списку інгредієнтів для вибраної страви.");
+                            } else {
+                                Log.d("RandDishFragment", "Список інгредієнтів поточної страви пустий.");
+                                Toast.makeText(getContext(), getString(R.string.error_get_ingredients), Toast.LENGTH_SHORT).show();
+                            }
+                        },
+                        throwable -> {
+                            Log.e("RandDishFragment", "Помилка отримання списку інгредієнтів для поточної страви з бд.", throwable);
+                            Toast.makeText(getContext(), getString(R.string.error_get_ingredients_by_db), Toast.LENGTH_SHORT).show();
+                        }
+                );
+        compositeDisposable.add(disposable);
     }
 
     private void loadCollection() {
         ArrayList<String> nameCollections = new ArrayList<>();
         nameCollections.add(getString(R.string.all));
-        nameCollections.addAll(utils.getAllNameCollections());
-        if (!nameCollections.isEmpty()){
-            ArrayAdapter<String> themeAdapter = new CustomSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item, nameCollections);
-            themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            collectionsSpinner.setAdapter(themeAdapter);
-        }
+
+        Disposable disposable =  utils.getAllNameCollections()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        allNameCollection -> {
+                            if (allNameCollection != null) {
+                                nameCollections.addAll(allNameCollection);
+                                Log.d("RandDishFragment", "Успішне отримання списку назв колекцій.");
+                            }
+
+                            if (!nameCollections.isEmpty()){
+                                ArrayAdapter<String> themeAdapter = new CustomSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item, nameCollections);
+                                themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                collectionsSpinner.setAdapter(themeAdapter);
+                            }
+                        },
+                        throwable -> {
+                            Log.e("RandDishFragment", "Помилка отримання списку назв всіх колекцій з бд.", throwable);
+                        }
+                );
+
+        compositeDisposable.add(disposable);
     }
 }

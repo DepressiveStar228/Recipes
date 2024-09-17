@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class AddDishesToCollectionAdapter extends RecyclerView.Adapter<AddDishesToCollectionAdapter.CollectionViewHolder> {
     private static ArrayList<Dish> dishes;
-    private static ArrayList<Integer> selectedDishIds = new ArrayList<>();
+    private static ArrayList<Long> selectedDishIds = new ArrayList<>();
 
     public AddDishesToCollectionAdapter(Context context, ArrayList<Dish> dishes) {
         this.dishes = dishes;
@@ -41,12 +41,12 @@ public class AddDishesToCollectionAdapter extends RecyclerView.Adapter<AddDishes
         holder.bind(dish);
 
         holder.dish_check.setOnCheckedChangeListener(null);
-        holder.dish_check.setChecked(selectedDishIds.contains(dish.getID()));
+        holder.dish_check.setChecked(selectedDishIds.contains(dish.getId()));
         holder.dish_check.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                selectedDishIds.add(dish.getID());
+                selectedDishIds.add((long) dish.getId());
             } else {
-                selectedDishIds.remove(Integer.valueOf(dish.getID()));
+                selectedDishIds.remove(Integer.valueOf(dish.getId()));
             }
         });
     }
@@ -56,7 +56,7 @@ public class AddDishesToCollectionAdapter extends RecyclerView.Adapter<AddDishes
         return dishes.size();
     }
 
-    public ArrayList<Integer> getSelectedDishIds() {
+    public ArrayList<Long> getSelectedDishIds() {
         return selectedDishIds;
     }
 
@@ -93,9 +93,9 @@ public class AddDishesToCollectionAdapter extends RecyclerView.Adapter<AddDishes
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     if (isChecked) {
-                        selectedDishIds.add(dishes.get(position).getID());
+                        selectedDishIds.add((long) dishes.get(position).getId());
                     } else {
-                        selectedDishIds.remove(Integer.valueOf(dishes.get(position).getID()));
+                        selectedDishIds.remove(Integer.valueOf(dishes.get(position).getId()));
                     }
                 }
             });

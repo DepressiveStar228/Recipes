@@ -3,10 +3,12 @@ package com.example.recipes.Controller;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +29,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class ImportExportController {
     public static DataBox importRecipeDataToFile(Context context, File file) {
@@ -75,40 +84,62 @@ public class ImportExportController {
         return recipeData;
     }
 
-    public static Uri exportRecipeData(Context context, Collection collection) {
+    public static void exportRecipeData(Context context, Collection collection, ExportCallbackUri callback) {
         RecipeUtils utils = new RecipeUtils(context);
-        ArrayList<Dish> dishes = utils.getDishesByCollection(collection.getId());
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
+        Disposable disposable = utils.getDishesByCollection(collection.getId())
+                .flatMap(
+                        dishes -> {
+                            if (!dishes.isEmpty()) {
+                                return Observable.fromIterable(dishes)
+                                        .flatMapSingle(dish -> utils.getIngredients(dish.getId())
+                                                .map(ingredients -> new Pair<>(dish, ingredients))
+                                        )
+                                        .toList()
+                                        .map(pairs -> {
+                                            ArrayList<Ingredient> allIngredients = new ArrayList<>();
+                                            for (Pair<Dish, List<Ingredient>> pair : pairs) {
+                                                allIngredients.addAll(pair.second);
+                                            }
+                                            return new Pair<>(dishes, allIngredients);
+                                        });
+                            } else {
+                                return Single.just(new Pair<>(dishes, new ArrayList<Ingredient>()));
+                            }
+                        }
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        pair -> {
+                            try {
+                                DataBox recipeData = new DataBox(new ArrayList<>(pair.first), pair.second);
 
-        if (!dishes.isEmpty()) {
-            for (Dish dish : dishes) {
-                ArrayList<Ingredient> dishIngredients = utils.getIngredients(dish.getID());
-                ingredients.addAll(dishIngredients);
-            }
+                                Gson gson = new Gson();
+                                String jsonString = gson.toJson(recipeData);
+                                File internalDir = context.getFilesDir();
+                                File jsonFile = new File(internalDir, collection.getName() + ".json");
 
-            DataBox recipeData = new DataBox(dishes, ingredients);
+                                try (FileOutputStream fos = new FileOutputStream(jsonFile);
+                                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
+                                    writer.write(jsonString);
+                                }
 
-            Gson gson = new Gson();
-            String jsonString = gson.toJson(recipeData);
-            File internalDir = context.getFilesDir();
-            File jsonFile = new File(internalDir, utils.getNameCollection(collection.getId()) + ".json");
+                                Uri fileUri = FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile);
+                                callback.onSuccess(fileUri);
 
-            try (FileOutputStream fos = new FileOutputStream(jsonFile);
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
-                writer.write(jsonString);
-                return FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile);
-            } catch (IOException e) {
-                Toast.makeText(context, context.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
-                Log.e("ImportExportController", "Помилка при експорті рецептів", e);
-            }
-        } else {
-            Toast.makeText(context, context.getString(R.string.error_empty_collection), Toast.LENGTH_SHORT).show();
-            Log.e("ImportExportController", "Помилка при експорті рецептів");
-        }
-        return null;
+                            } catch (IOException e) {
+                                callback.onError(e);
+                            }
+                        },
+                        throwable -> {
+                            callback.onError(throwable);
+                        }
+                );
+
+        callback.getDisposable(disposable);
     }
 
-    public static Uri exportRecipeData(Context context, DataBox recipeData) {
+    public static void exportRecipeData(Context context, DataBox recipeData, ExportCallbackUri callback) {
         Gson gson = new Gson();
         String jsonString = gson.toJson(recipeData);
         File internalDir = context.getFilesDir();
@@ -117,36 +148,38 @@ public class ImportExportController {
         try (FileOutputStream fos = new FileOutputStream(jsonFile);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
             writer.write(jsonString);
-            return FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile);
+            callback.onSuccess(FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile));
         } catch (IOException e) {
-            Toast.makeText(context, context.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
-            Log.e("ImportExportController", "Помилка при експорті рецептів", e);
+            callback.onError(e);
         }
-        return null;
     }
 
-    public static Uri exportDish(Context context, Dish dish) {
+    public static void exportDish(Context context, Dish dish, ExportCallbackUri callback) {
         RecipeUtils utils = new RecipeUtils(context);
         ArrayList<Dish> dishes = new ArrayList<>();
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
-
         dishes.add(dish);
-        ingredients.addAll(utils.getIngredients(dish.getID()));
 
-        Gson gson = new Gson();
-        String jsonString = gson.toJson(new DataBox(dishes, ingredients));
-        File internalDir = context.getFilesDir();
-        File jsonFile = new File(internalDir, dish.getName() + ".json");
+        Disposable disposable = utils.getIngredients(dish.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        ingredients -> {
+                            Gson gson = new Gson();
+                            String jsonString = gson.toJson(new DataBox(dishes, new ArrayList<>(ingredients)));
+                            File internalDir = context.getFilesDir();
+                            File jsonFile = new File(internalDir, dish.getName() + ".json");
 
-        try (FileOutputStream fos = new FileOutputStream(jsonFile);
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
-            writer.write(jsonString);
-            return FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile);
-        } catch (IOException e) {
-            Toast.makeText(context, context.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
-            Log.e("ImportExportController", "Помилка при експорті рецептів", e);
-        }
-        return null;
+                            try (FileOutputStream fos = new FileOutputStream(jsonFile);
+                                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos))) {
+                                writer.write(jsonString);
+                                callback.onSuccess(FileProvider.getUriForFile(context, "com.example.recipes.file-provider", jsonFile));
+                            } catch (IOException e) {
+                                callback.onError(e);
+                            }
+                        }
+                );
+
+        callback.getDisposable(disposable);
     }
 
     private static String extractRecipe(String input) {

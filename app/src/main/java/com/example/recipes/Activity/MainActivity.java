@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -27,12 +28,15 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
 import com.example.recipes.Config;
+import com.example.recipes.Controller.ExportCallbackUri;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Database.RecipeDatabase;
 import com.example.recipes.Fragments.CollectionsDishFragment;
 import com.example.recipes.Fragments.RandDishFragment;
 import com.example.recipes.Fragments.SearchDishFragment;
+import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Utils.FileUtils;
@@ -45,6 +49,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MainActivity extends FragmentActivity {
     private DrawerLayout drawerLayout;
@@ -59,6 +71,7 @@ public class MainActivity extends FragmentActivity {
     private ImageView img1, img2, img3, img4;
     private ImageView add_dish_button;
     private Fragment searchFragment, randFragment, collectionFragment;
+    private CompositeDisposable compositeDisposable;
     private int currentActivity;
 
     @Override
@@ -67,6 +80,8 @@ public class MainActivity extends FragmentActivity {
         perferencesController.loadPreferences(this);
 
         utils = new RecipeUtils(this);
+        compositeDisposable = new CompositeDisposable();
+        initialDB();
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -99,10 +114,17 @@ public class MainActivity extends FragmentActivity {
         loadClickListeners();
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        utils.close();
+        compositeDisposable.clear();
+        Log.d("MainActivity", "Активність успішно закрита");
     }
 
     @Override
@@ -318,29 +340,59 @@ public class MainActivity extends FragmentActivity {
         };
 
         exportLayout.setOnClickListener(v -> {
-            ArrayList<Dish> dishes = utils.getDishesOrdered();
-            ArrayList<Ingredient> ingredients = utils.getIngredients();
+            Disposable disposable = Single.zip(
+                        utils.getDishesOrdered(),
+                        utils.getIngredients(),
+                        (dishes, ingredients) -> new Pair<>(dishes, ingredients)
+                    )
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                    result -> {
+                        ArrayList<Dish> dishes = (ArrayList<Dish>) result.first;
+                        ArrayList<Ingredient> ingredients = (ArrayList<Ingredient>) result.second;
 
-            if (!dishes.isEmpty()) {
-                new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.confirm_export))
-                        .setMessage(getString(R.string.warning_export))
-                        .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                            DataBox recipeData = new DataBox(dishes, ingredients);
-                            Uri fileUri = ImportExportController.exportRecipeData(MainActivity.this, recipeData);
+                        if (!dishes.isEmpty()) {
+                            new AlertDialog.Builder(this)
+                                    .setTitle(getString(R.string.confirm_export))
+                                    .setMessage(getString(R.string.warning_export))
+                                    .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                                        DataBox recipeData = new DataBox(dishes, ingredients);
+                                        ImportExportController.exportRecipeData(MainActivity.this, recipeData, new ExportCallbackUri() {
+                                            @Override
+                                            public void onSuccess(Uri uri) {
+                                                if (uri != null) {
+                                                    FileUtils.sendFileByUri(MainActivity.this, uri);
+                                                    Log.d("ImportExportController", "Рецепти успішно експортовані");
+                                                }
 
-                            if (fileUri != null) {
-                                FileUtils.sendFileByUri(this, fileUri);
-                                Log.d("ImportExportController", "Рецепти успішно експортовані");
-                            }
+                                                FileUtils.deleteFileByUri(MainActivity.this, uri);
+                                            }
 
-                            FileUtils.deleteFileByUri(this, fileUri);
-                        })
-                        .setNegativeButton(getString(R.string.no), null).show();
-            } else {
-                Toast.makeText(this, getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
-                Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
-            }
+                                            @Override
+                                            public void onError(Throwable throwable) {
+                                                Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
+                                                Log.e("ImportExportController", "Помилка при експорті рецептів", throwable);
+                                            }
+
+                                            @Override
+                                            public void getDisposable(Disposable disposable) {
+
+                                            }
+                                        });
+                                    })
+                                    .setNegativeButton(getString(R.string.no), null).show();
+                        } else {
+                            Toast.makeText(this, getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
+                            Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
+                        }
+                    },
+                    throwable -> {
+                        Log.d("ImportExportController", "Помилка отримання страв та інгредієнтів");
+                    }
+            );
+
+            compositeDisposable.add(disposable);
         });
 
         importLayout.setOnClickListener(v -> {
@@ -378,12 +430,23 @@ public class MainActivity extends FragmentActivity {
                     RecipeUtils utils = new RecipeUtils(this);
                     DataBox recipeData = ImportExportController.importRecipeDataToFile(this, file);
                     if (recipeData != null) {
-                        if (utils.addRecipe(recipeData, Config.ID_IMPORT_RECIPE_COLLECTION)){
-                            Toast.makeText(this, getString(R.string.successful_import) + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                            Log.d("MainActivity", "Рецепти успішно імпортовані із файлу." + file.getAbsolutePath());
-                        } else {
-                            Log.e("MainActivity", "Не вдалося імпортувати дані рецепту.");
-                        }
+                        Disposable disposable = utils.addRecipe(recipeData, Config.ID_IMPORT_RECIPE_COLLECTION)
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(status -> {
+                                    if (status){
+                                        if (collectionFragment != null && collectionFragment instanceof CollectionsDishFragment) {
+                                            ((CollectionsDishFragment) collectionFragment).updateCounterDishes();
+                                            ((CollectionsDishFragment) collectionFragment).updateCollections();
+                                        }
+                                        Toast.makeText(this, getString(R.string.successful_import) + file.getName(), Toast.LENGTH_SHORT).show();
+                                        Log.d("MainActivity", "Рецепти успішно імпортовані із файлу." + file.getName());
+                                    } else {
+                                        Log.e("MainActivity", "Не вдалося імпортувати дані рецепту.");
+                                    }
+                                });
+
+                        compositeDisposable.add(disposable);
                     } else {
                         Log.e("MainActivity", "Не вдалося імпортувати дані рецепту.");
                     }
@@ -469,5 +532,33 @@ public class MainActivity extends FragmentActivity {
     private void onAddDishClick(){
         Intent intent = new Intent(this, AddDishActivity.class);
         startActivity(intent);
+    }
+
+    private void initialDB() {
+        Disposable disposable = utils.getAllCollections()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(collections -> {
+                    if (collections.isEmpty()) {
+                        ArrayList<String> names = utils.getAllNameSystemCollection();
+                        Disposable disposable1 = Observable.fromIterable(names)
+                                .concatMap(name -> utils.addCollection(new Collection(name))
+                                        .subscribeOn(Schedulers.io())
+                                        .toObservable()
+                                        .onErrorComplete()
+                                )
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(status -> {
+                                    Log.d("MainActivity", "Всі колекції успішно додані");
+                                }, throwable -> {
+                                    Log.e("MainActivity", "Помилка при додаванні колекції", throwable);
+                                });
+                        compositeDisposable.add(disposable1);
+                    }
+                }, throwable -> {
+                    Log.e("MainActivity", "Помилка при отриманні всіх колекцій", throwable);
+                });
+
+        compositeDisposable.add(disposable);
     }
 }

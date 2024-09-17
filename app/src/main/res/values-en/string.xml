@@ -157,4 +157,8 @@
     <string name="error_void_list_dish">Error: Dish list is empty</string>
     <string name="exit_app">Exit application</string>
     <string name="confirm_exit_app">Are you sure you want to exit?</string>
+    <string name="loading">Loading...</string>
+    <string name="error_void_dishes">Error. The list dishes is empty.</string>
+    <string name="error_get_dishes_by_db">Error retrieving dish list from database.</string>
+    <string name="error_get_ingredients_by_db">Error retrieving the ingredients for the selected dish from the database.</string>
 </resources>

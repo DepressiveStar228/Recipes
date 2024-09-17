@@ -1,10 +1,21 @@
 package com.example.recipes.Item;
 
-public class Dish {
-    private int id;
-    private String name;
-    private String recipe;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.Index;
+import androidx.room.PrimaryKey;
 
+@Entity(
+        tableName = "dish",
+        indices = {@Index("id")}
+)
+public class Dish {
+    @PrimaryKey(autoGenerate = true) private int id;
+    @ColumnInfo(name = "name") private String name;
+    @ColumnInfo(name = "recipe") private String recipe;
+
+    @Ignore
     public Dish(int id, String name, String recipe){
         this.id = id;
         this.name = name;
@@ -16,7 +27,7 @@ public class Dish {
         this.recipe = recipe;
     }
 
-    public int getID() {
+    public int getId() {
         return id;
     }
 
@@ -26,6 +37,11 @@ public class Dish {
 
     public String getRecipe() {
         return recipe;
+    }
+
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setName(String name) {

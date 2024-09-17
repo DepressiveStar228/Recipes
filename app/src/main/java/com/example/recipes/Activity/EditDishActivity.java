@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -24,12 +25,19 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 public class EditDishActivity extends Activity {
     private EditText nameEditText, recipeEditText;
     private IngredientSetAdapter ingredientAdapter;
-    private ArrayList<Ingredient> ingredients;
     private ImageView imageView;
+    private int dishID;
     private RecipeUtils utils;
+    private CompositeDisposable compositeDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +45,7 @@ public class EditDishActivity extends Activity {
         perferencesController.loadPreferences(this);
 
         utils = new RecipeUtils(this);
+        compositeDisposable = new CompositeDisposable();
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_dish_activity);
@@ -49,21 +58,45 @@ public class EditDishActivity extends Activity {
     @Override
     protected void onResume(){
         super.onResume();
-        int dishID = getIntent().getIntExtra("dish_id", -1);
+        dishID = getIntent().getIntExtra("dish_id", -1);
 
         if (dishID != -1) {
-            Dish dish = utils.getDish(dishID);
+            Disposable disposable = utils.getDish(dishID)
+                    .flatMap(dish -> {
+                                if (dish != null) {
+                                    nameEditText.setText(dish.getName());
+                                    recipeEditText.setText(dish.getRecipe());
+                                    return utils.getIngredients(dish.getId());
+                                } else {
+                                    Log.e("EditDishActivity", "Помилка. Страва пуста");
+                                    return Single.just(new ArrayList<Ingredient>());
+                                }
+                            },
+                            throwable -> {
+                                Log.e("EditDishActivity", "Помилка отримання страви з бд.", throwable);
+                                return Single.just(new ArrayList<Ingredient>());
+                            }
+                    )
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            ingredients -> {
+                                if (ingredients != null && !ingredients.isEmpty()) {
+                                    for (Ingredient in : ingredients) {
+                                        ingredientAdapter.addIngredient(in);
+                                    }
 
-            nameEditText.setText(dish.getName());
-            recipeEditText.setText(dish.getRecipe());
+                                    Log.d("EditDishActivity", "Активність успішно відобразилась. Всі дані рецепта отримані");
+                                } else {
+                                    Log.d("EditDishActivity", "Страва немає інгредієнтів.");
+                                }
+                            },
+                            throwable -> {
+                                Log.e("EditDishActivity", "Помилка отримання інгредієнтів з бд.", throwable);
+                            }
+                    );
 
-            ArrayList<Ingredient> ingByDish = utils.getIngredients(dishID);
-
-            for (Ingredient in : ingByDish) {
-                ingredientAdapter.addIngredient(in);
-            }
-
-            Log.d("EditDishActivity", "Активність успішно відобразилась");
+            compositeDisposable.add(disposable);
         } else {
             Toast.makeText(this,  getString(R.string.error_edit_dish_null_id), Toast.LENGTH_SHORT).show();
             Log.e("EditDishActivity", "Помилка. Не вдалося отримати блюдо на редагування");
@@ -73,7 +106,7 @@ public class EditDishActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        utils.close();
+        compositeDisposable.clear();
         Log.d("EditDishActivity", "Активність успішно закрита");
     }
 
@@ -87,7 +120,6 @@ public class EditDishActivity extends Activity {
         recipeEditText = findViewById(R.id.recipeEditTextEditAct);
         RecyclerView addIngredientRecyclerView = findViewById(R.id.addIngredientRecyclerViewEditAct);
 
-        ingredients = new ArrayList<>();
         ingredientAdapter = new IngredientSetAdapter(this, addIngredientRecyclerView);
         addIngredientRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addIngredientRecyclerView.setAdapter(ingredientAdapter);
@@ -103,7 +135,7 @@ public class EditDishActivity extends Activity {
         CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, Config.CHAR_LIMIT_NAME_DISH);
         CharacterLimitTextWatcher.setCharacterLimit(this, recipeEditText, Config.CHAR_LIMIT_RECIPE_DISH);
 
-        Log.d("AddDishActivity", "Слухачі активності успішно завантажені");
+        Log.d("EditDishActivity", "Слухачі активності успішно завантажені");
     }
 
     public void onEditButtonClick(View view) {
@@ -118,37 +150,75 @@ public class EditDishActivity extends Activity {
                 recipe = getString(R.string.default_recipe_text);
             }
 
-            newDish = new Dish(name, recipe);
-            int dishID = getIntent().getIntExtra("dish_id", -1);
+            newDish = new Dish(dishID, name, recipe);
 
             if (dishID != -1){
-                utils.updateDish(dishID, newDish);
+                Disposable disposable = utils.updateDish(newDish)
+                        .andThen(
+                                utils.getIngredients(dishID)
+                                        .flatMap(
+                                                ingredients -> {
+                                                    if (ingredients != null && !ingredients.isEmpty()) {
+                                                        return utils.deleteIngredient(new ArrayList<>(ingredients))
+                                                                .flatMap(status -> {
+                                                                    if (status) {
+                                                                        ingredientAdapter.updateIngredients();
+                                                                        ArrayList<Ingredient> newIngredients = ingredientAdapter.getIngredients();
+                                                                        return Single.just(newIngredients);
+                                                                    } else {
+                                                                        Log.e("EditDishActivity", "Помилка видалення інгредієнтів страви з БД.");
+                                                                        return Single.just(new ArrayList<Ingredient>());
+                                                                    }
+                                                                });
+                                                    } else {
+                                                        Log.d("EditDishActivity", "Список інгредієнтів страви пустий.");
+                                                        return Single.just(new ArrayList<Ingredient>());
+                                                    }
+                                                },
+                                                throwable -> {
+                                                    Log.e("EditDishActivity", "Помилка отримання інгредієнтів страви.", throwable);
+                                                    return Single.just(new ArrayList<Ingredient>());
+                                                }
+                                        )
+                                        .flatMap(
+                                                ingredients -> {
+                                                    if (ingredients != null && !ingredients.isEmpty()) {
+                                                        return utils.addIngredients(dishID, new ArrayList<>(ingredients));
+                                                    } else {
+                                                        Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
+                                                        Log.d("EditDishActivity", "Помилка редагування страви");
+                                                        return Single.just(false);
+                                                    }
+                                                },
+                                                throwable -> {
+                                                    Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
+                                                    Log.d("EditDishActivity", "Помилка редагування страви");
+                                                    return Single.just(false);
+                                                }
+                                        )
+                        )
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                result -> {
+                                    if (result) {
+                                        Toast.makeText(this, getString(R.string.successful_edit_dish), Toast.LENGTH_SHORT).show();
+                                        Log.d("EditDishActivity", "Страва успішно відредагована");
+                                    }
+                                    else {
+                                        Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
+                                        Log.e("EditDishActivity", "Помилка редагування страви");
+                                    }
 
-                ArrayList<Ingredient> ingByDish = utils.getIngredients(dishID);
+                                    finish();
+                                },
+                                throwable -> {
+                                    Log.e("EditDishActivity", "Помилка редагування страви", throwable);
+                                    finish();
+                                }
+                        );
 
-                for (Ingredient in : ingByDish) {
-                    utils.deleteIngredient(in);
-                }
-
-                ingredientAdapter.updateIngredients();
-                ingredients = ingredientAdapter.getIngredients();
-
-                if (!ingredients.isEmpty()) {
-                    if (utils.addIngredients(dishID, ingredients)) {
-                        Toast.makeText(this, getString(R.string.successful_edit_dish), Toast.LENGTH_SHORT).show();
-                        Log.d("EditDishActivity", "Страва успішно відредагована");
-                    }
-                    else {
-                        Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
-                        Log.d("EditDishActivity", "Помилка редагування страви");
-                    }
-
-                    finish();
-                }
-                else {
-                    Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
-                    Log.d("EditDishActivity", "Помилка редагування страви");
-                }
+                compositeDisposable.add(disposable);
             }
             else {
                 Toast.makeText(this, getString(R.string.error_edit_get_dish), Toast.LENGTH_SHORT).show();

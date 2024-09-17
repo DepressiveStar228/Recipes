@@ -24,11 +24,17 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 public class AddDishActivity extends Activity {
     private EditText nameEditText, recipeEditText;
     private IngredientSetAdapter ingredientAdapter;
     private ArrayList<Ingredient> ingredients;
     private RecipeUtils utils;
+    private CompositeDisposable compositeDisposable;
     private ImageView imageView;
 
     @Override
@@ -36,6 +42,7 @@ public class AddDishActivity extends Activity {
         PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(this);
         utils = new RecipeUtils(this);
+        compositeDisposable = new CompositeDisposable();
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_dish_activity);
@@ -48,7 +55,7 @@ public class AddDishActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        utils.close();
+        compositeDisposable.clear();
         Log.d("AddDishActivity", "Активність успішно закрита");
     }
 
@@ -93,36 +100,74 @@ public class AddDishActivity extends Activity {
                 recipe = getString(R.string.default_recipe_text);
             }
 
-            if (utils.checkDuplicateDishName(name)) {
-                Toast.makeText(this, getString(R.string.warning_dublicate_name_dish), Toast.LENGTH_SHORT).show();
-                return;
-            }
+            final String finalRecipe = recipe;
+            Disposable checkDuplicateDisposable = utils.checkDuplicateDishName(name)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            status -> {
+                                if (status) {
+                                    Toast.makeText(this, getString(R.string.warning_dublicate_name_dish), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    ingredientAdapter.updateIngredients();
+                                    ingredients = ingredientAdapter.getIngredients();
+                                    boolean flagFullIngredient = true;
 
-            ingredientAdapter.updateIngredients();
-            ingredients = ingredientAdapter.getIngredients();
-            boolean flagFullIngredient = true;
+                                    for (Ingredient in : ingredients) {
+                                        if (in.getType().isEmpty()) {
+                                            in.setType(utils.getNameIngredientType(Config.VOID));
+                                        }
 
-            for (Ingredient in : ingredients) {
-                if (in.getName().isEmpty() || in.getAmount().isEmpty() || in.getType().isEmpty()) {
-                    flagFullIngredient = false;
-                    break;
-                }
-            }
+                                        if (in.getName().isEmpty() || in.getAmount().isEmpty()) {
+                                            flagFullIngredient = false;
+                                            break;
+                                        }
+                                    }
 
-            if (!flagFullIngredient) {
-                Toast.makeText(this, getString(R.string.warning_set_all_data), Toast.LENGTH_SHORT).show();
-            } else {
-                if (utils.addDish(new Dish(name, recipe), ingredients, Config.ID_MY_RECIPE_COLLECTION)) {
-                    Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
-                    finish();
-                } else {
-                    Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
-                }
-            }
+                                    if (!flagFullIngredient) {
+                                        Toast.makeText(this, getString(R.string.warning_set_all_data), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        addDish(new Dish(name, finalRecipe));
+                                    }
+                                }
+                            },
+                            throwable -> {
+                                Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                                Log.e("AddDishActivity", "Ошибка при проверке дубликата", throwable);
+                            }
+                    );
+
+            compositeDisposable.add(checkDuplicateDisposable);
         }
     }
 
+
     public void onAddIngredientButtonClick(View view) {
         ingredientAdapter.addIngredient(new Ingredient("", "", ""));
+    }
+
+    private void addDish(Dish dish) {
+        Disposable addDishDisposable = utils.addDish(dish, ingredients, Config.ID_MY_RECIPE_COLLECTION)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        success -> {
+                            if (success) {
+                                Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
+                                Log.d("AddDishActivity", "Страва успішно додана в бд");
+                                finish();
+                            } else {
+                                Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                                Log.e("AddDishActivity", "Помилка при добаванні страви в бд");
+                            }
+                        },
+                        throwable -> {
+                            Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                            Log.e("AddDishActivity", "Помилка при добаванні страви в бд", throwable);
+                            finish();
+                        }
+                );
+
+        compositeDisposable.add(addDishDisposable);
     }
 }

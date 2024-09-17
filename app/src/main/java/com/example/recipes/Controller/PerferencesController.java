@@ -8,7 +8,9 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.recipes.Database.RecipeDatabase;
 import com.example.recipes.R;
+import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.Locale;
 import java.util.Objects;

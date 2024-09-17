@@ -27,7 +27,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
     private RecipeUtils utils;
     private static String[] themeArray;
     private static ArrayList<Collection> collections;
-    private static ArrayList<Integer> selectedCollectionIds = new ArrayList<>();
+    private static ArrayList<Long> selectedCollectionIds = new ArrayList<>();
     private static PerferencesController perferencesController;
 
     public AddDishToCollectionsAdapter(Context context, ArrayList<Collection> collections) {
@@ -51,14 +51,14 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
         Collection collection = collections.get(position);
         holder.bind(collection);
 
-        holder.collection_name.setText(utils.getNameCollection(collection.getId()));
+        holder.collection_name.setText(collection.getName());
 
         setImage(holder, collection);
 
         holder.collection_check.setOnCheckedChangeListener(null);
         holder.collection_check.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                selectedCollectionIds.add(collection.getId());
+                selectedCollectionIds.add((long) collection.getId());
             } else {
                 selectedCollectionIds.remove(Integer.valueOf(collection.getId()));
             }
@@ -70,7 +70,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
         return collections.size();
     }
 
-    public ArrayList<Integer> getSelectedCollectionIds() {
+    public ArrayList<Long> getSelectedCollectionIds() {
         return selectedCollectionIds;
     }
 
@@ -126,7 +126,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     if (isChecked) {
-                        selectedCollectionIds.add(collections.get(position).getId());
+                        selectedCollectionIds.add((long) collections.get(position).getId());
                     } else {
                         selectedCollectionIds.remove(Integer.valueOf(collections.get(position).getId()));
                     }

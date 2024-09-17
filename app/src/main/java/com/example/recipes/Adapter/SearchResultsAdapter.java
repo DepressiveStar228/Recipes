@@ -41,7 +41,7 @@ public class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdap
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(v.getContext(), ReadDataDishActivity.class);
-                    intent.putExtra("dish_id", ((Dish) item).getID());
+                    intent.putExtra("dish_id", ((Dish) item).getId());
                     v.getContext().startActivity(intent);
                 }
             });

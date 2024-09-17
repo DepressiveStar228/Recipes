@@ -5,20 +5,25 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.database.SQLException;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,21 +34,34 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.example.recipes.Activity.MainActivity;
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
+import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Database.DAO.DishDAO;
+import com.example.recipes.Database.DAO.IngredientDAO;
+import com.example.recipes.Database.RecipeDatabase;
+import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
+import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class SearchDishFragment extends Fragment implements OnBackPressedListener {
     private EditText searchEditText;
-    private ArrayList<Dish> dishes = new ArrayList<>();
-    private ArrayList<Ingredient> ingredients = new ArrayList<>();
+    private ArrayList<Dish> dishes;
+    private ArrayList<Ingredient> ingredients;
     private RecyclerView searchResultsRecyclerView;
     private SearchResultsAdapter adapter;
     private ArrayList<Object> searchResults;
@@ -52,6 +70,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private GPTFragment childFragment;
     private FrameLayout gptFragment;
     private RecipeUtils utils;
+    private Disposable disposable;
     private boolean flagOpenGPTContainer = false, flagOpenSearch = false;
 
     @Override
@@ -67,12 +86,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         View view = inflater.inflate(R.layout.my_dish_activity, container, false);
         loadItemsActivity(view);
         loadClickListeners();
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
 
         if (savedInstanceState == null) {
             try {
@@ -85,6 +98,8 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                 Log.e("SearchDishFragment", "Не вдалося вставити фрагмент GPT.");
             }
         }
+
+        return view;
     }
 
     @Override
@@ -104,9 +119,23 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        updateRecipesData();
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
+    }
+
     private void loadItemsActivity(View view){
         mainLayout = view.findViewById(R.id.mainLayout);
-        LinearLayout linearLayout = view.findViewById(R.id.search_LinearLayout);
+        ConstraintLayout linearLayout = view.findViewById(R.id.search_LinearLayout);
         gptFragment = view.findViewById(R.id.fragmen_GPT_container);
 
         searchEditText = linearLayout.findViewById(R.id.search_edit_text_my_dish);
@@ -134,10 +163,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String query = searchEditText.getText().toString().trim();
-                ArrayList<Object> searchResult = performSearch(query);
-                searchResults.clear();
-                searchResults.addAll(searchResult);
+                updateResults();
             }
 
             @Override
@@ -155,7 +181,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
 
         searchEditText.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                updateListDish();
+                updateRecipesData();
                 showRecyclerView();
                 showSwitch();
                 flagOpenSearch = true;
@@ -219,8 +245,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                     result.add(dish);
                 }
             }
-        } else {
-            Toast.makeText(getContext(), getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
         }
         Log.d("SearchDishFragment", "Пошук за стравами.");
         return result;
@@ -239,8 +263,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                     result.add(ingredient);
                 }
             }
-        } else {
-            Toast.makeText(getContext(), getString(R.string.error_void_ingredients), Toast.LENGTH_SHORT).show();
         }
         Log.d("SearchDishFragment", "Пошук за інгредієнтами.");
         return result;
@@ -322,29 +344,35 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
-    private void updateListDish(){
+    private void updateResults() {
+        String query = searchEditText.getText().toString().trim();
+        ArrayList<Object> searchResult = performSearch(query);
         searchResults.clear();
-        searchResults.addAll(performSearchByDish(""));
+        searchResults.addAll(searchResult);
         adapter.notifyDataSetChanged();
+    }
 
-        try {
-            dishes = utils.getDishesOrdered();
-            ingredients = utils.getIngredientsOrdered();
-
-            if (!searchSwitch.isChecked()){
-                searchResults.clear();
-                searchResults.addAll(performSearchByDish(""));
-                adapter.notifyDataSetChanged();
-            } else {
-                searchResults.clear();
-                searchResults.addAll(performSearchByIngredient(""));
-                adapter.notifyDataSetChanged();
-            }
-
-            Log.d("SearchDishFragment", "Список страв/інгредієнтів успішно оновлено.");
-        } catch (SQLException e) {
-            Toast.makeText(getContext(), getString(R.string.error_get_data), Toast.LENGTH_SHORT).show();
-            Log.e("SearchDishFragment", "Помилка оновлення списку страв/інгредієнтів.");
-        }
+    private void updateRecipesData(){
+        disposable = Single.zip(
+                        utils.getDishesOrdered(),
+                        utils.getIngredients(),
+                        (dishes, ingredients) -> new Pair<>(dishes, ingredients)
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        result -> {
+                            dishes = (ArrayList<Dish>) result.first;
+                            ingredients = (ArrayList<Ingredient>) result.second;
+                            updateResults();
+                            Log.d("SearchDishFragment", "Список страв/інгредієнтів успішно оновлено.");
+                        },
+                        throwable -> {
+                            dishes = new ArrayList<>();
+                            ingredients = new ArrayList<>();
+                            Toast.makeText(getContext(), getString(R.string.error_get_data), Toast.LENGTH_SHORT).show();
+                            Log.e("SearchDishFragment", "Помилка оновлення списку страв/інгредієнтів.", throwable);
+                        }
+                );
     }
 }

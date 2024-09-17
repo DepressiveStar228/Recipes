@@ -22,7 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/search_LinearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,17 +39,26 @@
             android:id="@+id/searchImageView"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_weight="1"
-            android:src="?attr/iconSearch" />
+            android:src="?attr/iconSearch"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
             android:id="@+id/search_edit_text_my_dish"
-            android:layout_width="250dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="19"
+            android:layout_marginStart="35dp"
+            android:hint="@string/hint_text_search"
             android:textColor="?attr/colorText"
-            app:backgroundTint="?attr/colorControlNormal" />
-    </LinearLayout>
+            android:textColorHint="?attr/colorHintText"
+            android:textSize="20sp"
+            app:backgroundTint="?attr/colorControlNormal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/searchImageView"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchResultsRecyclerView_my_dish"

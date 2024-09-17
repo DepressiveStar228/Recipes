@@ -165,4 +165,8 @@
     <string name="error_void_list_dish">Помилка: Список страв пустий</string>
     <string name="exit_app">Вийти з додатка</string>
     <string name="confirm_exit_app">Ви точно хочете вийти?</string>
+    <string name="loading">Завантаження...</string>
+    <string name="error_void_dishes">Помилка. Список страв пустий.</string>
+    <string name="error_get_dishes_by_db">Помилка отримання списку страв з бази даних.</string>
+    <string name="error_get_ingredients_by_db">Помилка отримання інгредієнтів для вибранної страви з бази даних.</string>
 </resources>

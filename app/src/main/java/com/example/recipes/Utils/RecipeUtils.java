@@ -4,457 +4,253 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.recipes.Controller.FileControllerCollections;
-import com.example.recipes.Controller.FileControllerDish;
-import com.example.recipes.Controller.FileControllerDishCollections;
-import com.example.recipes.Controller.FileControllerIngredient;
+import androidx.room.Database;
+import androidx.room.Room;
+import androidx.room.Transaction;
+
+import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Database.DAO.CollectionDAO;
+import com.example.recipes.Database.DAO.DishCollectionDAO;
+import com.example.recipes.Database.DAO.DishDAO;
+import com.example.recipes.Database.DAO.IngredientDAO;
+import com.example.recipes.Database.RecipeDatabase;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.Dish_Collection;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.internal.operators.single.SingleLift;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import kotlin.Pair;
 
 
 public class RecipeUtils {
     private Context context;
-    private FileControllerDish fileControllerDish;
-    private FileControllerIngredient fileControllerIngredient;
-    private FileControllerCollections fileControllerCollections;
-    private FileControllerDishCollections fileControllerDishCollections;
+    private RecipeDatabase database;
+    private DishDAO dishDAO;
+    private IngredientDAO ingredientDAO;
+    private CollectionDAO collectionDAO;
+    private DishCollectionDAO dishCollectionDAO;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public RecipeUtils(Context context) {
         this.context = context;
-        fileControllerDish = new FileControllerDish(context);
-        fileControllerIngredient = new FileControllerIngredient(context);
-        fileControllerCollections = new FileControllerCollections(context);
-        fileControllerDishCollections = new FileControllerDishCollections(context);
-        fileControllerDish.openDb();
-        fileControllerIngredient.openDb();
-        fileControllerCollections.openDb();
-        fileControllerDishCollections.openDb();
-    }
-
-    public boolean addDish(Dish dish, int id_collection) {
-        String dishName = dish.getName();
-        boolean result;
-        int suffix = 1;
-
-        while (checkDuplicateDishName(dishName)) {
-            dishName = dish.getName() + " №" + suffix;
-            suffix++;
-        }
-
-        fileControllerDish.beginTransaction();
         try {
-            result = fileControllerDish.insert(dishName, dish.getRecipe());
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
+            database = RecipeDatabase.getInstance(context);
+        } catch (Exception e) {
+            Log.e("RecipeUtils", "База даних не створилась", e);
         }
 
-        if (result) {
-            Dish dish_inserted = getDish(getIdDishByName(dishName));
-
-            if (!addDishCollectionData(dish_inserted, id_collection)) {
-                Log.e("RecipeUtils", "Помилка додавання страви до колекції.");
-            }
+        if (database != null) {
+            dishDAO = database.dishDao();
+            ingredientDAO = database.ingredientDao();
+            collectionDAO = database.collectionDao();
+            dishCollectionDAO = database.dishCollectionDao();
         }
-
-        return result;
-    }
-
-    public boolean addDish(Dish dish, ArrayList<Ingredient> ingredients, int id_collection) {
-        String dishName = dish.getName();
-        boolean result;
-        int suffix = 1;
-
-        while (checkDuplicateDishName(dishName)) {
-            dishName = dish.getName() + " №" + suffix;
-            suffix++;
-        }
-
-        fileControllerDish.beginTransaction();
-        try {
-            result = fileControllerDish.insert(dishName, dish.getRecipe());
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        if (result) {
-            Dish dish_inserted = getDish(getIdDishByName(dishName));
-
-            if (!addIngredients(dish_inserted, ingredients)) {
-                Log.e("RecipeUtils", "Помилка додавання інгредієнтів.");
-            }
-
-            if (!addDishCollectionData(dish_inserted, id_collection)) {
-                Log.e("RecipeUtils", "Помилка додавання страви до колекції.");
-            }
-        }
-
-        return result;
     }
 
 
-    public boolean addRecipe(DataBox box, int id_collection) {
-        int countFalse = 0;
-        ArrayList<Dish> dishes = box.getDishes();
-        ArrayList<Ingredient> ingredients = box.getIngredients();
 
-        if (dishes != null && ingredients != null) {
-            for (Dish dish : dishes){
-                String dishName = dish.getName();
-                int suffix = 1;
+    //
+    //
+    //       Dish
+    //
+    //
+    public Single<Boolean> addDish (Dish dish, long id_collection) {
+        return getUniqueDishName(dish.getName())
+                .flatMap(name -> dishDAO.insert(dish))
+                .flatMap(id -> {
+                    if (id > 0) {
+                        Log.d("RecipeUtils", "Страва додалась до бази");
+                        return addDishCollectionData(id, id_collection);
+                    } else {
+                        Log.e("RecipeUtils", "Страва не додалась до бази");
+                        return Single.just(false);
+                    }
+                })
+                .doOnSuccess(success -> {
+                    if (success) {
+                        Log.d("RecipeUtils", "Рецепт успішно додано до колекції.");
+                    } else {
+                        Log.e("RecipeUtils", "Помилка додавання рецепта в колекцію.");
+                    }
+                })
+                .onErrorReturn(throwable -> {
+                    Log.e("RecipeUtils", "Помилка. Рецепт не додано до колекції", throwable);
+                    return false;
+                });
+    }
 
-                while (checkDuplicateDishName(dishName)) {
-                    dishName = dish.getName() + " №" + suffix;
-                    suffix++;
-                }
+    public Single<Boolean> addDish (Dish dish, ArrayList<Ingredient> ingredients, long id_collection) {
+        return getUniqueDishName(dish.getName())
+                .flatMap(name -> dishDAO.insert(new Dish(name, dish.getRecipe())))
+                .flatMap(id -> {
+                    if (id > 0) {
+                        Log.d("RecipeUtils", "Страва додалась до бази");
+                        return Single.zip(
+                                addIngredients(id, ingredients),
+                                addDishCollectionData(id, id_collection),
+                                (addIngredientsSuccess, addDishCollectionDataSuccess) -> addIngredientsSuccess && addDishCollectionDataSuccess
+                        );
+                    } else {
+                        Log.e("RecipeUtils", "Страва не додалась до бази");
+                        return Single.just(false);
+                    }
+                })
+                .doOnSuccess(success -> {
+                    if (success) {
+                        Log.d("RecipeUtils", "Рецепт успішно додано до колекції. До рецепта успішно додани інгредієнти");
+                    } else {
+                        Log.e("RecipeUtils", "Помилка додавання рецепта в колекцію, а інгредієнтів до рецепта.");
+                    }
+                })
+                .onErrorReturn(throwable -> {
+                    deleteDish(dish);
+                    Log.e("RecipeUtils", "Помилка під час додавання страви", throwable);
+                    return false;
+                });
+    }
 
-                Dish newDish = new Dish(dishName, dish.getRecipe());
+    public Single<Boolean> addRecipe(DataBox box, long id_collection) {
+        ArrayList<Pair<Dish, ArrayList<Ingredient>>> dataList = box.getBox();
 
-                if (addDish(newDish, id_collection)) {
-                    if (!addIngredients(getIdDishByName(dishName), dish.getID(), ingredients)) { countFalse++; }
-                }
-            }
-
-            Log.d("RecipeUtils", "Успішно додано страви інгредієнти: (" + (dishes.size() - countFalse) + "/" + dishes.size() + ")");
-            if (countFalse == dishes.size() && dishes.isEmpty()) { return false; }
-            else { return true; }
+        if (!dataList.isEmpty()) {
+            return Observable.fromIterable(dataList)
+                    .concatMapSingle(data -> getUniqueDishName(data.getFirst().getName())
+                            .flatMap(name -> addDish(new Dish(name, data.getFirst().getRecipe()), id_collection)
+                                    .flatMap(status -> {
+                                        if (status) {
+                                            return getIdDishByName(name)
+                                                    .flatMap(
+                                                            id -> addIngredients(id, data.getSecond()),
+                                                            throwable -> Single.just(false)
+                                                    );
+                                        } else {
+                                            return Single.just(false);
+                                        }
+                                    })))
+                    .toList()
+                    .map(results -> {
+                        for (Boolean result : results) {
+                            if (!result) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .doOnSubscribe(compositeDisposable::add)
+                    .doFinally(this::clearDisposables);
         } else {
-            Toast.makeText(context, context.getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
-            Log.e("RecipeUtils", "Помилка додавання рецептів.");
-            return false;
+            return Single.just(false);
         }
     }
 
-    public boolean checkDuplicateDishName(String name){
-        int id_dish = -1;
-
-        fileControllerDish.beginTransaction();
-        try {
-            id_dish = fileControllerDish.getIdByName(name);
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        return id_dish != -1;
+    public Single<String> getUniqueDishName(String name) {
+        return Single.fromCallable(() -> name)
+                .flatMap(dishName -> getUniqueDishNameRecursive(dishName, 1));
     }
 
-    public Dish getDish(int id) {
-        Dish dish = null;
-
-        fileControllerDish.beginTransaction();
-        try {
-            dish = fileControllerDish.getById(id);
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        return dish;
+    private Single<String> getUniqueDishNameRecursive(String dishName, int suffix) {
+        return checkDuplicateDishName(dishName)
+                .flatMap(isDuplicate -> {
+                    if (isDuplicate) {
+                        String newDishName = dishName + " №" + suffix;
+                        return getUniqueDishNameRecursive(newDishName, suffix + 1);
+                    } else {
+                        return Single.just(dishName);
+                    }
+                });
     }
 
-    public int getIdDishByName(String name) {
-        int id = -1;
-
-        fileControllerDish.beginTransaction();
-        try {
-            id = fileControllerDish.getIdByName(name);
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        return id;
+    public Single<Boolean> checkDuplicateDishName(String name) {
+        return dishDAO.getIdByName(name)
+                .map(id -> id != null)
+                .switchIfEmpty(Single.just(false));
     }
 
-    public ArrayList<Collection> getCollectionsByDish(Dish dish) {
-        ArrayList<Collection> all_collections = getAllCollections();
-        ArrayList<Collection> collections = new ArrayList<>();
-
-        for (Collection collection : all_collections) {
-            if (collection.getDishes().contains(dish)) {
-                collections.add(collection);
-            }
-        }
-
-        return collections;
+    public Single<Dish> getDish(long id) {
+        return dishDAO.getDishById(id)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just(new Dish("", "")));
     }
 
-    public ArrayList<Dish> getDishesOrdered() {
-        ArrayList<Dish> name_dishes = new ArrayList<>();
-
-        fileControllerDish.beginTransaction();
-        try {
-            name_dishes = fileControllerDish.getAllDishOrdered();
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        return name_dishes;
+    public Single<ArrayList<Dish>> getDishes(ArrayList<Long> ids) {
+        return Observable.fromIterable(ids)
+                .flatMapSingle(this::getDish)
+                .toList()
+                .map(ArrayList::new);
     }
 
-    public void updateDish(int id_dish, Dish newDish){
-        fileControllerDish.beginTransaction();
-        try {
-            fileControllerDish.update(id_dish, newDish);
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
+    public Single<Long> getIdDishByName(String name) {
+        return dishDAO.getIdByName(name)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just((long) -1));
     }
 
-    public boolean deleteDish(Dish dish) {
-        boolean flag1 = false, flag2 = false, flag3 = false;
+    public Single<ArrayList<Collection>> getCollectionsByDish(Dish dish) {
+        return dishCollectionDAO.getAllIdsCollectionByIdDish(dish.getId())
+                .flatMap(ids_collection -> {
+                    ArrayList<Collection> collections = new ArrayList<>();
 
-        fileControllerDish.beginTransaction();
-        try {
-            flag1 = fileControllerDish.delete(dish.getID());
-            fileControllerDish.setTransactionSuccessful();
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        ArrayList<Ingredient> ingList = fileControllerIngredient.getByDishId(dish.getID());
-        if (!ingList.isEmpty()) {
-            for (Ingredient in : ingList) {
-                flag2 = deleteIngredient(in.getID());
-            }
-        } else {
-            flag2 = true;
-        }
-
-        flag3 = deleteDishCollectionData(dish.getID());
-
-        if (flag1 && flag2 && flag3) {
-            Log.d("RecipeUtils", "Рецепт успішно видалено.");
-            return true;
-        }
-        else {
-            Log.e("RecipeUtils", "Помилка видалення рецепта.");
-            return false;
-        }
+                    return Observable.fromIterable(ids_collection)
+                            .flatMapSingle(this::getCollectionById)
+                            .toList()
+                            .map(collectionsList -> {
+                                collections.addAll(collectionsList);
+                                return collections;
+                            });
+                });
     }
 
-    public boolean deleteRecipe(DataBox box) {
-        ArrayList<Dish> dishes = box.getDishes();
-        boolean flag1 = false, flag2 = false, flag3 = false;
-
-        fileControllerDish.beginTransaction();
-        try {
-            fileControllerDish.delete(dishes.get(0).getID());
-            fileControllerDish.setTransactionSuccessful();
-            flag1 = true;
-        } finally {
-            fileControllerDish.endTransaction();
-        }
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            ArrayList<Ingredient> ingList = fileControllerIngredient.getByDishId(dishes.get(0).getID());
-
-            for (Ingredient in : ingList) {
-                fileControllerIngredient.delete(in.getID());
-            }
-
-            fileControllerIngredient.setTransactionSuccessful();
-            flag2 = true;
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            ArrayList<Integer> id_collections = fileControllerDishCollections.getAllIdCollectionByDish(dishes.get(0).getID());
-
-            for (Integer id : id_collections) {
-                int id_collection = fileControllerDishCollections.getIdByData(dishes.get(0).getID(), id);
-                fileControllerDishCollections.delete(id_collection);
-            }
-
-            fileControllerDishCollections.setTransactionSuccessful();
-            flag3 = true;
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        if (flag1 && flag2 && flag3) {
-            Log.d("RecipeUtils", "Рецепт успішно видалено.");
-            return true;
-        }
-        else {
-            Log.e("RecipeUtils", "Помилка видалення рецепта.");
-            return false;
-        }
+    public Single<List<Dish>> getDishesOrdered() {
+        return dishDAO.getAllDishes();
     }
 
+    public Single<ArrayList<Dish>> getUnusedDishInCollection(Collection collection) {
+        return Single.zip(
+                getDishesOrdered(),
+                getDishesByCollection(collection.getId()),
+                (allDishes, collectionDishes) -> {
+                    ArrayList<Dish> unused_dished = new ArrayList<>();
+                    for (Dish dish : allDishes) {
+                        if (!collectionDishes.contains(dish)) {
+                            unused_dished.add(dish);
+                        }
+                    }
 
-
-
-
-
-
-
-
-
-
-
-
-    public boolean addIngredients(Dish dish, ArrayList<Ingredient> ingredients) {
-        int countFalse = 0;
-
-        for (Ingredient ing : ingredients){
-            fileControllerIngredient.beginTransaction();
-            try {
-                if (!fileControllerIngredient.insert(ing.getName(), ing.getAmount(), ing.getType(), dish.getID())){ countFalse++; }
-                fileControllerIngredient.setTransactionSuccessful();
-            } finally {
-                fileControllerIngredient.endTransaction();
-            }
-        }
-
-        Log.d("RecipeUtils", "Успішно додано інредієнтів: (" + (ingredients.size() - countFalse) + "/" + ingredients.size() + ")");
-        if (countFalse == ingredients.size() && ingredients.isEmpty()) { return false; }
-        else { return true; }
-    }
-
-    public boolean addIngredients(int newID, int oldID, ArrayList<Ingredient> ingredients) {
-        int countFalse = 0;
-
-        for (Ingredient ing : ingredients){
-            if (oldID == ing.getID_Dish()) {
-                fileControllerIngredient.beginTransaction();
-                try {
-                    if (!fileControllerIngredient.insert(ing.getName(), ing.getAmount(), ing.getType(), newID)){ countFalse++; }
-                    fileControllerIngredient.setTransactionSuccessful();
-                } finally {
-                    fileControllerIngredient.endTransaction();
+                    return unused_dished;
                 }
-            }
-        }
-
-        Log.d("RecipeUtils", "Успішно додано інредієнтів: (" + (ingredients.size() - countFalse) + "/" + ingredients.size() + ")");
-        if (countFalse == ingredients.size() && ingredients.isEmpty()) { return false; }
-        else { return true; }
+        );
     }
 
-    public boolean addIngredients(int id_dish, ArrayList<Ingredient> ingredients) {
-        int countFalse = 0;
-
-        for (Ingredient ing : ingredients){
-            fileControllerIngredient.beginTransaction();
-            try {
-                if (!fileControllerIngredient.insert(ing.getName(), ing.getAmount(), ing.getType(), id_dish)){ countFalse++; }
-                fileControllerIngredient.setTransactionSuccessful();
-            } finally {
-                fileControllerIngredient.endTransaction();
-            }
-        }
-
-        Log.d("RecipeUtils", "Успішно додано інредієнтів: (" + (ingredients.size() - countFalse) + "/" + ingredients.size() + ")");
-        if (countFalse == ingredients.size() && ingredients.isEmpty()) { return false; }
-        else { return true; }
+    public Single<Integer> getDishCount() {
+        return dishDAO.getDishCount();
     }
 
-    public int getIngredientId(Ingredient in) {
-        int id = -1;
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            id = fileControllerIngredient.getIdByNameAndDishID(in.getName(), in.getID_Dish());
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return id;
+    public Completable updateDish(Dish newDish){
+        return dishDAO.update(newDish);
     }
 
-    public ArrayList<Ingredient> getIngredients() {
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            ingredients = fileControllerIngredient.getAllIngredient();
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return ingredients;
+    public Completable deleteDish(Dish dish) {
+        return dishDAO.delete(dish);
     }
 
-    public ArrayList<Ingredient> getIngredients(int id_dish) {
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            ingredients = fileControllerIngredient.getByDishId(id_dish);
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return ingredients;
-    }
-
-    public ArrayList<Ingredient> getIngredientsOrdered() {
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            ingredients = fileControllerIngredient.getAllIngredientNameOrdered();
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return ingredients;
-    }
-
-    public ArrayList<Integer> getDishIdsByNameIngredient(String nameIng) {
-        ArrayList <Integer> dish_ids = new ArrayList<>();
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            dish_ids = fileControllerIngredient.getDishIdByName(nameIng);
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return dish_ids;
-    }
-
-    public void deleteIngredient(Ingredient ingredient) {
-        fileControllerIngredient.beginTransaction();
-        try {
-            fileControllerIngredient.delete(getIngredientId(ingredient));
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-    }
-
-    public boolean deleteIngredient(int id_ing) {
-        boolean result;
-
-        fileControllerIngredient.beginTransaction();
-        try {
-            result = fileControllerIngredient.delete(id_ing);
-            fileControllerIngredient.setTransactionSuccessful();
-        } finally {
-            fileControllerIngredient.endTransaction();
-        }
-
-        return result;
+    public Completable deleteRecipe(DataBox box) {
+        ArrayList<Dish> dish = box.getDishes();
+        return dishDAO.delete(dish.get(0));
     }
 
 
@@ -465,389 +261,461 @@ public class RecipeUtils {
 
 
 
-
-
-
-
-
-
-    public boolean addCollection(String name) {
-        boolean result;
-
-        fileControllerCollections.beginTransaction();
-        try {
-            result = fileControllerCollections.insert(name);
-            fileControllerCollections.setTransactionSuccessful();
-        }
-        finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return result;
+    //
+    //
+    //       Ingredient
+    //
+    //
+    public Single<Boolean> addIngredients(long newID, long oldID, ArrayList<Ingredient> ingredients) {
+        return Observable.fromIterable(ingredients)
+                .flatMapSingle(
+                        ing -> {
+                            if (oldID == ing.getId_dish()) {
+                                return ingredientDAO.insert(new Ingredient(ing.getName(), ing.getAmount(), ing.getType(), newID))
+                                        .flatMap(
+                                                id -> Single.just(id > 0),
+                                                throwable -> Single.just(false)
+                                        );
+                            } else {
+                                return Single.just(true);
+                            }
+                        }
+                )
+                .toList()
+                .map(results -> {
+                    for (Boolean result : results) {
+                        if (!result) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .doOnSubscribe(compositeDisposable::add)
+                .doFinally(this::clearDisposables);
     }
 
-    public int getIdCollectionByName(String name) {
-        int id = -1;
-        String customName = setCustomNameSystemCollection(name);
-
-        fileControllerCollections.beginTransaction();
-        try {
-            id = fileControllerCollections.getIdByName(customName);
-            fileControllerCollections.setTransactionSuccessful();
-        }
-        finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return id;
+    public Single<Boolean> addIngredients(long id_dish, ArrayList<Ingredient> ingredients) {
+        return Observable.fromIterable(ingredients)
+                .flatMapSingle(ing -> ingredientDAO.insert(new Ingredient(ing.getName(), ing.getAmount(), ing.getType(), id_dish))
+                        .flatMap(id -> Single.just(id > 0)))
+                .toList()
+                .map(results -> {
+                    for (Boolean result : results) {
+                        if (!result) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
     }
 
-    public Collection getCollectionByName(String name) {
-        int id = getIdCollectionByName(name);
-        Collection collection = null;
-
-        fileControllerCollections.beginTransaction();
-        try {
-            collection = fileControllerCollections.getById(id);
-            fileControllerCollections.setTransactionSuccessful();
-        }
-        finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return collection;
+    public Single<Integer> getIdIngredient(Ingredient in) {
+        return ingredientDAO.getIdByNameAndIdDish(in.getName(), in.getId_dish()).toSingle();
     }
 
-    public String getNameCollection(int id) {
-        String name = "";
-
-        fileControllerCollections.beginTransaction();
-        try {
-            Collection collection = fileControllerCollections.getById(id);
-
-            if (collection != null){
-                name = getCustomNameSystemCollection(collection.getName());
-            }
-
-            fileControllerCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return name;
+    public Single<List<Ingredient>> getIngredients() {
+        return ingredientDAO.getAllIngredients();
     }
 
-    public ArrayList<Collection> getAllCollections() {
-        ArrayList<Collection> collections = new ArrayList<>();
-
-        fileControllerCollections.beginTransaction();
-        try {
-            collections = fileControllerCollections.getAllCollection();
-            fileControllerCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return collections;
+    public Single<List<Ingredient>> getIngredients(int id_dish) {
+        return ingredientDAO.getAllIngredientsByIdDish(id_dish);
     }
 
-    public ArrayList<String> getAllNameCollections() {
+    public Single<List<Ingredient>> getIngredientsOrdered() {
+        return ingredientDAO.getAllIngredientsNameOrdered();
+    }
+
+    public Single<List<Integer>> getDishIdsByNameIngredient(String nameIng) {
+        return ingredientDAO.getIdDishesByName(nameIng);
+    }
+
+    public Single<Integer> getIngredientCount() {
+        return ingredientDAO.getIngredientCount();
+    }
+
+    public Completable updateIngredient(Ingredient ingredient) {
+        return ingredientDAO.delete(ingredient);
+    }
+
+    public Completable deleteIngredient(Ingredient ingredient) {
+        return ingredientDAO.delete(ingredient);
+    }
+
+    public Single<Boolean> deleteIngredient(ArrayList<Ingredient> ingredients) {
+        return Observable.fromIterable(ingredients)
+                .flatMapSingle(ingredient ->
+                            ingredientDAO.delete(ingredient)
+                                    .andThen(Single.just(true))
+                                    .onErrorReturnItem(false)
+                )
+                .toList()
+                .map(results -> {
+                    for (Boolean result : results) {
+                        if (!result) {
+                            Log.d("RecipeUtils", "Помилка. Щось не видалено");
+                            return false;
+                        }
+                    }
+
+                    Log.d("RecipeUtils", "Всі інгредієнти видалено");
+                    return true;
+                })
+                .onErrorReturnItem(false);
+    }
+
+
+
+
+
+
+
+
+    //
+    //
+    //       Collection
+    //
+    //
+    public Single<Boolean> addCollection(Collection collection) {
+        return collectionDAO.insert(collection).map(id -> id > 0);
+    }
+
+    public Single<Collection> getCollectionById(long id_collection) {
+        return collectionDAO.getCollectionById(id_collection)
+                .flatMap(collection -> {
+                    String customName = getCustomNameSystemCollection(collection.getName());
+                    return Maybe.just(new Collection(customName));
+                })
+                .flatMap(collection ->
+                        getDishesByCollection(collection.getId())
+                                .map(dishes -> {
+                                    collection.setDishes(new ArrayList<>(dishes));
+                                    return collection;
+                                })
+                                .toMaybe()
+                )
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just(null));
+    }
+
+
+
+    public Single<Collection> getCollectionByName(String name) {
+        return collectionDAO.getCollectionByName(name)
+                .flatMap(collection -> {
+                    String customName = getCustomNameSystemCollection(collection.getName());
+                    return Maybe.just(new Collection(customName));
+                })
+                .flatMap(collection ->
+                        getDishesByCollection(collection.getId())
+                                .map(dishes -> {
+                                    collection.setDishes(new ArrayList<>(dishes));
+                                    return collection;
+                                })
+                                .toMaybe()
+                )
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just(null));
+    }
+
+    public Single<Long> getIdCollectionByName(String name) {
+        return collectionDAO.getIdByName(name)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just((long) -1));
+    }
+
+    public Single<List<Collection>> getAllCollections() {
+        return collectionDAO.getAllCollections()
+                .flatMap(collections -> Observable.fromIterable(collections)
+                        .flatMapSingle(collection ->
+                            getDishesByCollection(collection.getId())
+                                    .map(dishes -> {
+                                        String customName = getCustomNameSystemCollection(collection.getName());
+                                        collection.setName(customName);
+                                        collection.setDishes(new ArrayList<>(dishes));
+                                        return collection;
+                                    })
+                        )
+                        .toList());
+    }
+
+    public Single<List<String>> getAllNameCollections() {
+        return collectionDAO.getAllNameCollections()
+                .map(names -> {
+                    for (String name : names) {
+                        String customName = getCustomNameSystemCollection(name);
+                        names.set(names.indexOf(name), customName);
+                    }
+                    return names;
+                });
+    }
+
+    public Single<List<Dish>> getDishesByCollection(long id_collection) {
+        return dishCollectionDAO.getAllIdsDishByIdCollection(id_collection)
+                .flatMap(ids -> {
+                    if (ids == null || ids.isEmpty()) {
+                        return Single.just(new ArrayList<>());
+                    } else {
+                        return Observable.fromIterable(ids)
+                                .flatMapSingle(this::getDish)
+                                .toList();
+                    }
+                });
+    }
+
+    public Single<ArrayList<Collection>> getUnusedCollectionInDish(Dish dish) {
+        return Single.zip(
+                getAllCollections(),
+                getCollectionsByDish(dish),
+                (allCollection, dishesCollection) -> {
+                    ArrayList<Collection> unused_collection = new ArrayList<>();
+                    for (Collection collection : allCollection) {
+                        collection.setName(getCustomNameSystemCollection(collection.getName()));
+
+                        if (!dishesCollection.contains(collection)) {
+                            unused_collection.add(collection);
+                        }
+                    }
+
+                    return unused_collection;
+                }
+        );
+    }
+
+    public Single<Integer> getCollectionCount() {
+        return collectionDAO.getCollectionCount();
+    }
+
+    public Completable updateCollection(Collection collection) {
+        return collectionDAO.update(collection);
+    }
+
+    public Completable deleteCollection(Collection collection, boolean mode) {
+        if (mode) {
+            return dishCollectionDAO.getAllIdsDishByIdCollection(collection.getId())
+                    .flatMapCompletable(ids ->
+                            Observable.fromIterable(ids)
+                                    .flatMapSingle(id -> dishDAO.getDishById(id)
+                                            .defaultIfEmpty(new Dish(0, "", ""))
+                                    )
+                                    .filter(dish -> dish.getId() > 0)
+                                    .flatMapCompletable(dish -> dishDAO.delete(dish))
+                    )
+                    .andThen(collectionDAO.delete(collection));
+        } else {
+            return collectionDAO.delete(collection);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    //
+    //
+    //       Dish_Collection
+    //
+    //
+    public Single<Boolean> addDishCollectionData(long id_dish, long id_collection) {
+        return isDishInCollection(id_dish, id_collection)
+                .flatMap(isInCollection -> {
+                    if (!isInCollection) {
+                        return addDishToCollection(id_dish, id_collection);
+                    } else {
+                        return getCollectionById(id_collection)
+                                .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                .flatMap(name -> {
+                                    if (name != null) {
+                                        Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
+                                        Log.d("RecipeUtils", "Страва вже є у колекції");
+                                        return Single.just(true);
+                                    } else {
+                                        return Single.just(false);
+                                    }
+                                });
+                    }
+                });
+    }
+
+    public Single<Boolean> addDishCollectionData(Dish dish, ArrayList<Long> id_collections) {
+        return Observable.fromIterable(id_collections)
+                .flatMapSingle(id_collection -> isDishInCollection(dish.getId(), id_collection)
+                        .concatMap(isInCollection -> {
+                            if (!isInCollection) {
+                                return addDishToCollection(dish.getId(), id_collection);
+                            } else {
+                                return getCollectionById(id_collection)
+                                        .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                        .flatMap(name -> {
+                                            if (name != null) {
+                                                Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
+                                                Log.d("RecipeUtils", "Страва " + dish.getName() + " вже є в колекції " + name);
+                                                return Single.just(true);
+                                            } else {
+                                                return Single.just(false);
+                                            }
+                                        });
+                            }
+                        })
+                )
+                .toList()
+                .map(results -> {
+                    for (Boolean result : results) {
+                        if (!result) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .doOnSubscribe(compositeDisposable::add)
+                .doFinally(this::clearDisposables);
+    }
+
+    public Single<Boolean> addDishCollectionData(ArrayList<Dish> dishes, long id_collection) {
+        return Observable.fromIterable(dishes)
+                .flatMapSingle(dish -> isDishInCollection(dish.getId(), id_collection)
+                        .concatMap(isInCollection -> {
+                            if (!isInCollection) {
+                                return addDishToCollection(dish.getId(), id_collection);
+                            } else {
+                                return getCollectionById(id_collection)
+                                        .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                        .flatMap(name -> {
+                                            if (name != null) {
+                                                Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
+                                                Log.d("RecipeUtils", "Страва " + dish.getName() + " вже є в колекції " + name);
+                                                return Single.just(true);
+                                            } else {
+                                                return Single.just(false);
+                                            }
+                                        });
+                            }
+                        })
+                )
+                .toList()
+                .map(results -> {
+                    for (Boolean result : results) {
+                        if (!result) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .doOnSubscribe(compositeDisposable::add)
+                .doFinally(this::clearDisposables);
+    }
+
+    public Single<Boolean> isDishInCollection(long dishId, long id_collection) {
+        return dishCollectionDAO.getDishCollectionsByIdDishAndIdCollection(dishId, id_collection)
+                .map(dishCollection -> {
+                    Log.d("isDishInCollection", "Страва з айді " + dishId + " знайдена в колекції");
+                    return true;
+                })
+                .defaultIfEmpty(false)
+                .doOnSuccess(result -> Log.d("isDishInCollection", "Result: " + result))
+                .doOnError(throwable -> Log.e("isDishInCollection", "Error: " + throwable.getMessage()));
+    }
+
+
+    public Single<Boolean> addDishToCollection(long dishId, long id_collection) {
+        return dishCollectionDAO.insert(new Dish_Collection(dishId, id_collection)).map(id -> id > 0);
+    }
+
+    public Single<Boolean> copyDishesToAnotherCollections(long id_collection_origin, ArrayList<Long> id_collections) {
+        return getDishesByCollection(id_collection_origin)
+                .flatMap(dishes -> {
+                    if (dishes.isEmpty()) {
+                        return Single.just(false);
+                    }
+                    return Observable.fromIterable(id_collections)
+                            .flatMapSingle(id_collection ->
+                                    Observable.fromIterable(dishes)
+                                            .flatMapSingle(dish ->
+                                                    checkDuplicateDishCollectionData(dish.getId(), id_collection)
+                                                            .flatMap(isDuplicate -> {
+                                                                if (!isDuplicate) {
+                                                                    return addDishCollectionData(dish.getId(), id_collection);
+                                                                } else {
+                                                                    return Single.just(true);
+                                                                }
+                                                            })
+                                            )
+                                            .toList()
+                            )
+                            .toList()
+                            .map(results -> {
+                                for (List<Boolean> resultList : results) {
+                                    for (Boolean result : resultList) {
+                                        if (!result) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                return true;
+                            });
+                })
+                .doOnSubscribe(compositeDisposable::add)
+                .doFinally(this::clearDisposables);
+    }
+
+    public Single<Integer> getDishCollectionCount() {
+        return dishCollectionDAO.getDishCollectionCount();
+    }
+
+    public Single<Boolean> checkDuplicateDishCollectionData (long id_dish, long id_collection) {
+        return dishCollectionDAO.getDishCollectionsByIdDishAndIdCollection(id_dish, id_collection)
+                .map(dishCollection -> true)
+                .defaultIfEmpty(false);
+    }
+
+    public Completable updateDishCollection(Dish_Collection dish_collection) {
+        return dishCollectionDAO.update(dish_collection);
+    }
+
+    public Completable deleteDishCollection(Dish_Collection dish_collection) {
+        return dishCollectionDAO.delete(dish_collection);
+    }
+
+    public Completable deleteDishCollectionData(Collection collection) {
+        return dishCollectionDAO.getAllIdsDishByIdCollection(collection.getId())
+                .flatMapCompletable(ids ->
+                        Observable.fromIterable(ids)
+                                .flatMapMaybe(id -> dishCollectionDAO.getDishCollectionsByIdDishAndIdCollection(id, collection.getId()))
+                                .flatMapCompletable(dishCollection -> dishCollectionDAO.delete(dishCollection))
+                );
+    }
+
+
+
+
+
+
+
+
+
+    //
+    //
+    //       Other
+    //
+    //
+    public ArrayList<String> getAllNameSystemCollection() {
+        String systemTag = context.getString(R.string.system_collection_tag);
         ArrayList<String> names = new ArrayList<>();
-
-        fileControllerCollections.beginTransaction();
-        try {
-            names = getCustomNameSystemCollection(fileControllerCollections.getAllNamesCollection());
-            fileControllerCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerCollections.endTransaction();
-        }
+        names.add(systemTag + "1");
+        names.add(systemTag + "2");
+        names.add(systemTag + "3");
+        names.add(systemTag + "4");
 
         return names;
     }
 
-    public ArrayList<Dish> getDishesByCollection(int id_collection) {
-        ArrayList<Dish> dishes = new ArrayList<>();
-
-        fileControllerCollections.beginTransaction();
-        try {
-            dishes = fileControllerCollections.getDishes(id_collection);
-            fileControllerCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return dishes;
-    }
-
-    public boolean updateCollection(int id_collection, Collection newCollection) {
-        boolean result;
-
-        fileControllerCollections.beginTransaction();
-        try {
-            result = fileControllerCollections.update(id_collection, newCollection);
-            fileControllerCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        return result;
-    }
-
-    public boolean deleteCollection(int id_collection, boolean mode) {
-        boolean statusDelCollection;
-        int countFalse = 0;
-        ArrayList<Dish> dishes = getDishesByCollection(id_collection);
-
-        if (mode) {
-            for (Dish dish : dishes) {
-                if (!deleteDishCollectionData(dish.getID())){ countFalse++; }
-                if (!deleteDish(dish)){ countFalse++; }
-            }
-        }
-
-        fileControllerCollections.beginTransaction();
-        try {
-            statusDelCollection = fileControllerCollections.delete(id_collection);
-            fileControllerCollections.setTransactionSuccessful();
-        }
-        finally {
-            fileControllerCollections.endTransaction();
-        }
-
-        if (mode) {
-            if (countFalse == dishes.size() && !dishes.isEmpty() || !statusDelCollection) { return false; }
-            else {
-                Toast.makeText(context, context.getString(R.string.successful_delete_collection), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        } else {
-            return statusDelCollection;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-    public boolean addDishCollectionData(Dish dish, int id_collection) {
-        boolean result;
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            if (fileControllerDishCollections.getIdByData(dish.getID(), id_collection) == -1) {
-                result = fileControllerDishCollections.insert(dish.getID(), id_collection);
-                fileControllerDishCollections.setTransactionSuccessful();
-            } else {
-                result = false;
-                Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + getNameCollection(id_collection), Toast.LENGTH_SHORT).show();
-                Log.d("RecipeUtils", "Страва вже є у колекції");
-            }
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        return result;
-    }
-
-    public boolean addDishCollectionData(ArrayList<Integer> dish_ids, int id_collection) {
-        int countFalse = 0;
-        ArrayList<Integer> id_dishes_duplicate = new ArrayList<>();
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            for (int id_dish : dish_ids){
-                if (fileControllerDishCollections.getIdByData(id_dish, id_collection) == -1) {
-                    if (!fileControllerDishCollections.insert(id_dish, id_collection)){ countFalse++; }
-                } else {
-                    fileControllerDishCollections.endTransaction();
-                    countFalse++;
-                    Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + getCustomNameSystemCollection(getNameCollection(id_collection)), Toast.LENGTH_SHORT).show();
-                    Log.d("RecipeUtils", "Страва вже є у колекції");
-                    fileControllerDishCollections.beginTransaction();
-                }
-            }
-            fileControllerDishCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        Log.d("RecipeUtils", "Успішно додано записів страва/колекція: (" + (dish_ids.size() - countFalse) + "/" + dish_ids.size() + ")");
-        if (countFalse == dish_ids.size()) { return false; }
-        else { return true; }
-    }
-
-    public boolean addDishCollectionData(Dish dish, ArrayList<Integer> id_collections) {
-        int countFalse = 0;
-        ArrayList<Integer> id_collections_duplicate = new ArrayList<>();
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            for (Integer id_collection : id_collections){
-                if (fileControllerDishCollections.getIdByData(dish.getID(), id_collection) == -1) {
-                    if (!fileControllerDishCollections.insert(dish.getID(), id_collection)){ countFalse++; }
-                } else {
-                    countFalse++;
-                    id_collections_duplicate.add(id_collection);
-                }
-            }
-            fileControllerDishCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        if (!id_collections.isEmpty()) {
-            for (int id_collection : id_collections_duplicate) {
-                Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + getCustomNameSystemCollection(getNameCollection(id_collection)), Toast.LENGTH_SHORT).show();
-                Log.d("RecipeUtils", "Страва вже є у колекції");
-            }
-        }
-
-        Log.d("RecipeUtils", "Успішно додано записів страва/колекція: (" + (id_collections.size() - countFalse) + "/" + id_collections.size() + ")");
-        if (countFalse == id_collections.size()) { return false; }
-        else { return true; }
-    }
-
-    public ArrayList<Dish> getUnusedDishInCollection(Collection collection) {
-        ArrayList<Dish> dishes = getDishesOrdered();
-        ArrayList<Dish> collection_dishes = getDishesByCollection(collection.getId());
-        ArrayList<Dish> unused_dished = new ArrayList<>();
-
-        for (Dish dish : dishes) {
-            if (!collection_dishes.contains(dish)) {
-                unused_dished.add(dish);
-            }
-        }
-
-        return unused_dished;
-    }
-
-    public ArrayList<Collection> getUnusedCollectionInDish(Dish dish) {
-        ArrayList<Collection> all_collections = getAllCollections();
-        ArrayList<Collection> collection_dishes = getCollectionsByDish(dish);
-        ArrayList<Collection> unused_dished = new ArrayList<>();
-
-        for (Collection collection : all_collections) {
-            if (!collection_dishes.contains(collection)) {
-                unused_dished.add(collection);
-            }
-        }
-
-        return unused_dished;
-    }
-
-    public boolean copyDishesToAnotherCollections (int id_collection_origin, ArrayList<Integer> id_collections) {
-        int countFalse = 0;
-        ArrayList<Integer> id_collections_duplicate = new ArrayList<>();
-
-        for (Integer id_collection : id_collections){
-            if (id_collection != id_collection_origin) {
-                ArrayList<Dish> dishes = getDishesByCollection(id_collection_origin);
-                if (dishes.isEmpty()) { return false; }
-
-                for (Dish dish : dishes) {
-                    if (!checkDuplicateDishCollectionData(dish.getID(), id_collection)) {
-                        if (!addDishCollectionData(dish, id_collection)){ countFalse++; }
-                    } else {
-                        countFalse++;
-                        id_collections_duplicate.add(id_collection);
-                    }
-                }
-            }
-        }
-
-        if (!id_collections.isEmpty()) {
-            for (int id_collection : id_collections_duplicate) {
-                Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + getCustomNameSystemCollection(getNameCollection(id_collection)), Toast.LENGTH_SHORT).show();
-                Log.d("RecipeUtils", "Страва вже є у колекції");
-            }
-        }
-
-        Log.d("RecipeUtils", "Успішно копійовано страв у колекцію: (" + (id_collections.size() - countFalse) + "/" + id_collections.size() + ")");
-        if (countFalse == id_collections.size()) { return false; }
-        else { return true; }
-    }
-
-    public boolean checkDuplicateDishCollectionData (int id_dish, int id_collection) {
-        boolean result = true;
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            if (fileControllerDishCollections.getIdByData(id_dish, id_collection) == -1) { return false; }
-            fileControllerDishCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        return result;
-    }
-
-    private boolean deleteDishCollectionData(int id_dish) {
-        int countFalse = 0;
-        ArrayList<Integer> id_collections = new ArrayList<>();
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            id_collections = fileControllerDishCollections.getAllIdCollectionByDish(id_dish);
-
-            for (Integer id_collection : id_collections) {
-                int id_dishCollectionData = fileControllerDishCollections.getIdByData(id_dish, id_collection);
-                if (!fileControllerDishCollections.delete(id_dishCollectionData)){ countFalse++; }
-            }
-
-            fileControllerDishCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        Log.d("RecipeUtils", "Успішно видалено записів страва/колекція: (" + (id_collections.size() - countFalse) + "/" + id_collections.size() + ")");
-        if (countFalse == id_collections.size() && !id_collections.isEmpty()) { return false; }
-        else { return true; }
-    }
-
-    public boolean deleteDishCollectionData(Collection collection) {
-        int countFalse = 0;
-        ArrayList<Dish> dishes = getDishesByCollection(collection.getId());
-
-        fileControllerDishCollections.beginTransaction();
-        try {
-            for (Dish dish : dishes) {
-                int id_dishCollectionData = fileControllerDishCollections.getIdByData(dish.getID(), collection.getId());
-                if (!fileControllerDishCollections.delete(id_dishCollectionData)){ countFalse++; }
-            }
-
-            fileControllerDishCollections.setTransactionSuccessful();
-        } finally {
-            fileControllerDishCollections.endTransaction();
-        }
-
-        Log.d("RecipeUtils", "Успішно видалено записів страва/колекція: (" + (dishes.size() - countFalse) + "/" + dishes.size() + ")");
-        if (countFalse == dishes.size() && !dishes.isEmpty()) { return false; }
-        else { return true; }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    public void close() {
-        fileControllerDish.closeDb();
-        fileControllerIngredient.closeDb();
-        fileControllerCollections.closeDb();
-        fileControllerDishCollections.closeDb();
-    }
-
-    private String getCustomNameSystemCollection(String name) {
+    public String getCustomNameSystemCollection(String name) {
         String systemTag = context.getString(R.string.system_collection_tag);
 
         if (Objects.equals(name, systemTag + "1")) { return context.getString(R.string.favorites); }
@@ -875,5 +743,18 @@ public class RecipeUtils {
         else if (Objects.equals(name, context.getString(R.string.gpt_recipes))) { return systemTag + "3"; }
         else if (Objects.equals(name, context.getString(R.string.import_recipes))) { return systemTag + "4"; }
         else { return name; }
+    }
+
+    public String getNameIngredientType(int id) {
+        PerferencesController controller = new PerferencesController();
+        controller.loadPreferences(context);
+        String[] types = controller.getStringArrayForLocale(R.array.options_array, controller.language);
+        return types[id];
+    }
+
+    private void clearDisposables() {
+        if (!compositeDisposable.isDisposed()) {
+            compositeDisposable.clear();
+        }
     }
 }

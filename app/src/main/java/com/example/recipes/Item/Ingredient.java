@@ -1,14 +1,41 @@
 package com.example.recipes.Item;
 
-public class Ingredient {
-    private int id;
-    private String name;
-    private String amount;
-    private String type;
-    private int id_dish;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.room.Ignore;
+import androidx.room.Index;
+import androidx.room.PrimaryKey;
 
-    public Ingredient(int id, String name, String amount, String type, int id_dish){
+@Entity(
+        tableName = "ingredient",
+        indices = @Index(value = "id_dish"),
+        foreignKeys = {
+        @ForeignKey(
+                entity = Dish.class,
+                parentColumns = "id",
+                childColumns = "id_dish",
+                onDelete = ForeignKey.CASCADE
+        )}
+)
+public class Ingredient {
+    @PrimaryKey(autoGenerate = true) private long id;
+    @ColumnInfo(name = "name") private String name;
+    @ColumnInfo(name = "amount") private String amount;
+    @ColumnInfo(name = "type") private String type;
+    @ColumnInfo(name = "id_dish") private long id_dish;
+
+    @Ignore
+    public Ingredient(long id, String name, String amount, String type, long id_dish){
         this.id = id;
+        this.name = name;
+        this.amount = amount;
+        this.type = type;
+        this.id_dish = id_dish;
+    }
+
+    @Ignore
+    public Ingredient(String name, String amount, String type, long id_dish){
         this.name = name;
         this.amount = amount;
         this.type = type;
@@ -21,11 +48,12 @@ public class Ingredient {
         this.type = type;
     }
 
+    public long getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
-    }
-    public int getID() {
-        return id;
     }
 
     public String getAmount() {
@@ -36,11 +64,11 @@ public class Ingredient {
         return type;
     }
 
-    public int getID_Dish() {
+    public long getId_dish() {
         return id_dish;
     }
 
-    public void setID(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -56,7 +84,7 @@ public class Ingredient {
         this.type = type;
     }
 
-    public void setID_Dish(int id_dish) {
+    public void setId_dish(long id_dish) {
         this.id_dish = id_dish;
     }
 }

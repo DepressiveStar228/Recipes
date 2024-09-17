@@ -19,11 +19,18 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 public class ListDishActivity extends Activity {
     private ArrayList<Dish> dishes = new ArrayList<>();
     private TextView name_ing;
     private ArrayList<Object> listDishResults;
     private RecipeUtils utils;
+    private Disposable disposable;
 
     @Override
     protected void onCreate (Bundle savedInstanceState){
@@ -43,7 +50,9 @@ public class ListDishActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        utils.close();
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+        }
         Log.d("ListDishActivity", "Активність успішно закрита");
     }
 
@@ -68,25 +77,28 @@ public class ListDishActivity extends Activity {
 
     private void setDataRecycleView() {
         String name = getIntent().getStringExtra("ing_name");
-        ArrayList<Integer> dish_ids = new ArrayList<>();
 
-        if (!name.isEmpty()) {
+        if (name != null && !name.isEmpty()) {
             name_ing.setText(name);
 
-            try {
-                dish_ids = utils.getDishIdsByNameIngredient(name);
-
-                for (Integer dish_id : dish_ids){
-                    dishes.add(utils.getDish(dish_id));
-                }
-
-                listDishResults.addAll(dishes);
-                Log.d("ListDishActivity", "Страви успішно завантажені в RecyclerView");
-            } catch (SQLException e) {
-                Toast.makeText(this, getString(R.string.error_get_data), Toast.LENGTH_SHORT).show();
-                Log.d("ListDishActivity", "Помилка завантаження страв у RecyclerView");
-                finish();
-            }
+            disposable = utils.getDishIdsByNameIngredient(name)
+                    .flatMapObservable(ids -> Observable.fromIterable(ids))
+                    .flatMapSingle(id -> utils.getDish(id))
+                    .toList()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            dishes -> {
+                                listDishResults.clear();
+                                listDishResults.addAll(dishes);
+                                Log.d("ListDishActivity", "Страви успішно завантажені в RecyclerView");
+                            },
+                            throwable -> {
+                                Toast.makeText(this, getString(R.string.error_get_data), Toast.LENGTH_SHORT).show();
+                                Log.d("ListDishActivity", "Помилка завантаження страв у RecyclerView", throwable);
+                                finish();
+                            }
+                    );
         } else {
             Log.d("ListDishActivity", "Помилка. Ім'я інгредієнта не було отримано");
         }

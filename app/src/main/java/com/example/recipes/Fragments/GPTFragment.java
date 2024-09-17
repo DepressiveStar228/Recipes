@@ -51,6 +51,12 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import kotlin.Pair;
+
 public class GPTFragment extends Fragment {
     private TextView GPTTextView, GPTTextView2;
     private EditText GPTEditText;
@@ -61,6 +67,7 @@ public class GPTFragment extends Fragment {
     private PerferencesController perferencesController;
     private ChatGPTClient client;
     private String[] themeArray;
+    private CompositeDisposable compositeDisposable;
     private boolean addRecipeStatus = false;
     private boolean networkStatus = true;
 
@@ -422,26 +429,47 @@ public class GPTFragment extends Fragment {
             RecipeUtils utils = new RecipeUtils(getContext());
 
             if (!addRecipeStatus) {
-                if (utils.addRecipe(recipeData, Config.ID_GPT_RECIPE_COLLECTION)) {
-                    if (Objects.equals(perferencesController.theme, themeArray[0])) {
-                        imageView.setImageResource(R.drawable.icon_check_mark);
-                    } else {
-                        imageView.setImageResource(R.drawable.icon_check_mark_darkmode);
-                    }
-                    addRecipeStatus = true;
-                    Toast.makeText(getContext(), getContext().getString(R.string.successful_add_dishes), Toast.LENGTH_SHORT).show();
-                } else {
-                    addRecipeStatus = false;
-                }
+                Disposable disposable = utils.addRecipe(recipeData, Config.ID_GPT_RECIPE_COLLECTION)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                result -> {
+                                    if (result) {
+                                        if (Objects.equals(perferencesController.theme, themeArray[0])) {
+                                            imageView.setImageResource(R.drawable.icon_check_mark);
+                                        } else {
+                                            imageView.setImageResource(R.drawable.icon_check_mark_darkmode);
+                                        }
+                                        addRecipeStatus = true;
+                                        Toast.makeText(getContext(), getContext().getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getContext(), getContext().getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                                        addRecipeStatus = false;
+                                    }
+                                },
+                                throwable -> {
+                                    Toast.makeText(getContext(), getContext().getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
+                                }
+                        );
+
+                compositeDisposable.add(disposable);
             } else {
-                if (utils.deleteRecipe(recipeData)) {
-                    imageView.setImageResource(R.drawable.icon_add_darkmode);
-                    addRecipeStatus = false;
-                    Toast.makeText(getContext(), getContext().getString(R.string.successful_delete_dish), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getContext(), getContext().getString(R.string.error_delete_dish), Toast.LENGTH_SHORT).show();
-                    addRecipeStatus = true;
-                }
+                Disposable disposable = utils.deleteRecipe(recipeData)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                () -> {
+                                    imageView.setImageResource(R.drawable.icon_add_darkmode);
+                                    addRecipeStatus = false;
+                                    Toast.makeText(getContext(), getContext().getString(R.string.successful_delete_dish), Toast.LENGTH_SHORT).show();
+                                },
+                                throwable -> {
+                                    Toast.makeText(getContext(), getContext().getString(R.string.error_delete_dish), Toast.LENGTH_SHORT).show();
+                                    addRecipeStatus = true;
+                                }
+                        );
+
+                compositeDisposable.add(disposable);
             }
         });
 
@@ -461,15 +489,12 @@ public class GPTFragment extends Fragment {
     }
 
     private String parseDataBox(DataBox box) {
-        ArrayList<Dish> dishes = box.getDishes();
-        ArrayList<Ingredient> ingredients = box.getIngredients();
+        ArrayList<Pair<Dish, ArrayList<Ingredient>>> dataList = box.getBox();
         String data = "";
 
-        for (Dish dish : dishes) {
-            data += dish.getName() + "\n\n" + getString(R.string.recipe) + "\n" + dish.getRecipe() + "\n\n" + getString(R.string.ingredients) + "\n";
-        }
+        data += dataList.get(0).getFirst().getName() + "\n\n" + getString(R.string.recipe) + "\n" + dataList.get(0).getFirst().getRecipe() + "\n\n" + getString(R.string.ingredients) + "\n";
 
-        for (Ingredient in : ingredients) {
+        for (Ingredient in : dataList.get(0).getSecond()) {
             if (in.getType() == null) { in.setType(""); }
 
             data += "- " + in.getAmount() + " " + in.getType() + " " + in.getName() + "\n";
