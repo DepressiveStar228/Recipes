@@ -25,8 +25,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
+import com.example.recipes.Adapter.ViewPagerAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.ExportCallbackUri;
 import com.example.recipes.Controller.ImportExportController;
@@ -69,10 +71,11 @@ public class MainActivity extends FragmentActivity {
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
     private ImageView img1, img2, img3, img4;
+    private List<ImageView> imageViews;
     private ImageView add_dish_button;
-    private Fragment searchFragment, randFragment, collectionFragment;
+    private ViewPager2 viewPager;
+    private ViewPagerAdapter viewAdapter;
     private CompositeDisposable compositeDisposable;
-    private int currentActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,34 +89,18 @@ public class MainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState != null) {
-            Fragment currentFragment = getSupportFragmentManager().getFragment(savedInstanceState, "currentFragment");
-            if (currentFragment != null) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, currentFragment).commit();
-            }
+        List<Fragment> fragmentList = new ArrayList<>();
+        fragmentList.add(new SearchDishFragment());
+        fragmentList.add(new RandDishFragment());
+        fragmentList.add(new CollectionsDishFragment());
 
-            currentActivity = savedInstanceState.getInt("currentActivity");
-        } else {
-            switch (currentActivity) {
-                case 1:
-                    openFragment(setSearchFragment());
-                    break;
-                case 2:
-                    openFragment(setRandomFragment());
-                    break;
-                case 4:
-                    openFragment(setCollectionsFragment());
-                    break;
-                default:
-                    openFragment(new SearchDishFragment());
-                    break;
-            }
-        }
+        viewPager = findViewById(R.id.viewPager);
+        viewAdapter = new ViewPagerAdapter(this, fragmentList);
+        viewPager.setAdapter(viewAdapter);
 
         loadItemsActivity();
         loadClickListeners();
     }
-
 
     @Override
     protected void onResume() {
@@ -136,11 +123,11 @@ public class MainActivity extends FragmentActivity {
             flagMayClose = ((OnBackPressedListener) currentFragment).onBackPressed();
         }
 
-        if (flagMayClose || currentActivity != 1) {
+        if (flagMayClose) {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 drawerLayout.closeDrawer(GravityCompat.END);
-            } else if (currentActivity != 1) {
-                openFragment(setSearchFragment());
+            } else if (viewPager.getCurrentItem() != 0) {
+                viewPager.setCurrentItem(0);
             } else {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.exit_app))
@@ -163,8 +150,6 @@ public class MainActivity extends FragmentActivity {
         if (currentFragment != null) {
             getSupportFragmentManager().putFragment(outState, "currentFragment", currentFragment);
         }
-
-        outState.putInt("currentActivity", currentActivity);
     }
 
     public void openSetting() {
@@ -198,9 +183,14 @@ public class MainActivity extends FragmentActivity {
         img4 = linearLayout.findViewById(R.id.main_collections_hub);
         img3 = constraintLayout.findViewById(R.id.setting);
 
+        imageViews = new ArrayList<>();
+        imageViews.add(img1);
+        imageViews.add(img2);
+        imageViews.add(img4);
+
         add_dish_button = constraintLayout.findViewById(R.id.add_dish);
 
-        setCurrentMenuSelect(1);
+        setCurrentMenuSelect(0);
 
         ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(this, android.R.layout.simple_spinner_item, Arrays.asList(getResources().getStringArray(R.array.language_options)));
         languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -224,33 +214,12 @@ public class MainActivity extends FragmentActivity {
         Log.d("MainActivity", "Завантаження всіх об'єктів активності");
     }
 
-    private void setCurrentMenuSelect(int id){
-        switch (id){
-            case 1:
-                img1.setSelected(true);
-                img2.setSelected(false);
-                img4.setSelected(false);
-                currentActivity = 1;
-                break;
-            case 2:
-                img2.setSelected(true);
-                img1.setSelected(false);
-                img4.setSelected(false);
-                currentActivity = 2;
-                break;
-            case 4:
-                img4.setSelected(true);
-                img1.setSelected(false);
-                img2.setSelected(false);
-                currentActivity = 4;
-                break;
-            default:
-                img1.setSelected(true);
-                img2.setSelected(false);
-                img4.setSelected(false);
-                currentActivity = 0;
-                break;
+    private void setCurrentMenuSelect(int id) {
+        for (ImageView view : imageViews) {
+            view.setSelected(false);
         }
+
+        imageViews.get(id).setSelected(true);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -320,28 +289,26 @@ public class MainActivity extends FragmentActivity {
                 Log.d("MainActivity", "Слухач помітив зміну фрагмента");
                 animateImage(v);
 
-                Fragment fragment = null;
                 if (v.getId() == R.id.main_home_hub) {
-                    fragment = setSearchFragment();
+                    viewPager.setCurrentItem(0);
+                    setCurrentMenuSelect(0);
                 } else if (v.getId() == R.id.main_rand_hub) {
-                    fragment = setRandomFragment();
+                    viewPager.setCurrentItem(1);
+                    setCurrentMenuSelect(1);
                 } else if (v.getId() == R.id.setting) {
                     openSetting();
                 } else if (v.getId() == R.id.main_collections_hub) {
-                    fragment = setCollectionsFragment();
+                    viewPager.setCurrentItem(2);
+                    setCurrentMenuSelect(2);
                 } else if (v.getId() == R.id.add_dish) {
                     onAddDishClick();
-                }
-
-                if (fragment != null) {
-                    openFragment(fragment);
                 }
             }
         };
 
         exportLayout.setOnClickListener(v -> {
             Disposable disposable = Single.zip(
-                        utils.getDishesOrdered(),
+                        utils.getAllDishes(),
                         utils.getIngredients(),
                         (dishes, ingredients) -> new Pair<>(dishes, ingredients)
                     )
@@ -402,6 +369,14 @@ public class MainActivity extends FragmentActivity {
             Log.d("MainActivity", "Читання з файлу");
         });
 
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                setCurrentMenuSelect(position);
+            }
+        });
+
         img1.setOnClickListener(imageClickListener);
         img2.setOnClickListener(imageClickListener);
         img3.setOnClickListener(imageClickListener);
@@ -435,9 +410,8 @@ public class MainActivity extends FragmentActivity {
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(status -> {
                                     if (status){
-                                        if (collectionFragment != null && collectionFragment instanceof CollectionsDishFragment) {
-                                            ((CollectionsDishFragment) collectionFragment).updateCounterDishes();
-                                            ((CollectionsDishFragment) collectionFragment).updateCollections();
+                                        if (viewPager.getCurrentItem() == 2) {
+                                            viewAdapter.updateCollectionFragment();
                                         }
                                         Toast.makeText(this, getString(R.string.successful_import) + file.getName(), Toast.LENGTH_SHORT).show();
                                         Log.d("MainActivity", "Рецепти успішно імпортовані із файлу." + file.getName());
@@ -457,54 +431,6 @@ public class MainActivity extends FragmentActivity {
                 Log.e("MainActivity", "Дані або URI дорівнюють null.");
             }
         }
-    }
-
-    private Fragment setSearchFragment() {
-        if (currentActivity != 1) {
-            setCurrentMenuSelect(1);
-            Log.d("MainActivity", "Зміна фрагмента на домашню сторінку пошуку.");
-
-            if (searchFragment == null) {
-                searchFragment = new SearchDishFragment();
-            }
-
-            return searchFragment;
-        } else { return null; }
-    }
-
-    private Fragment setRandomFragment() {
-        if (currentActivity != 2) {
-            setCurrentMenuSelect(2);
-            Log.d("MainActivity", "Зміна фрагмента на рандомну сторінку");
-
-            if (randFragment == null) {
-                randFragment = new RandDishFragment();
-            }
-
-            return randFragment;
-        } else { return null; }
-    }
-
-    private Fragment setCollectionsFragment() {
-        if (currentActivity != 4) {
-            setCurrentMenuSelect(4);
-            Log.d("MainActivity", "Зміна фрагмента на колекцію страв");
-
-            if (collectionFragment == null) {
-                collectionFragment = new CollectionsDishFragment();
-            }
-
-            return collectionFragment;
-        } else { return null; }
-    }
-
-    private void openFragment(Fragment fragment){
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, fragment);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
-        Log.d("MainActivity", "Завантаження нового фрагмента");
     }
 
     private void animateImage(View view) {

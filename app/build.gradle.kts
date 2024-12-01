@@ -56,15 +56,19 @@ dependencies {
     implementation("androidx.preference:preference:1.2.1")
     implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.2")
 
+    testImplementation ("androidx.arch.core:core-testing:2.1.0")
+
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation ("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
     androidTestImplementation ("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation ("androidx.room:room-testing:2.5.0")
-    androidTestImplementation ("androidx.test:runner:1.6.2")
-    androidTestImplementation ("androidx.test:rules:1.6.1")
+    androidTestImplementation ("androidx.test:runner:1.5.2")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
     testImplementation("androidx.test:core:1.6.1")
 
     testImplementation ("org.robolectric:robolectric:4.10.3")
     testImplementation ("io.reactivex.rxjava3:rxjava:3.1.9")
     testImplementation ("io.reactivex.rxjava3:rxandroid:3.0.2")
+
+    implementation ("androidx.viewpager2:viewpager2:1.0.0")
 }

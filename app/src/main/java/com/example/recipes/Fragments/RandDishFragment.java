@@ -59,9 +59,14 @@ public class RandDishFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.rand_dish_activity, container, false);
         loadItemsActivity(view);
-        loadCollection();
         loadClickListeners();
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadCollection();
     }
 
     @Override
@@ -106,7 +111,7 @@ public class RandDishFragment extends Fragment {
 
     public void onClickGetDish(View view) {
         if (Objects.equals(currentNameCollection, getString(R.string.system_collection_tag) + "All")) {
-            Disposable disposable = utils.getDishesOrdered()
+            Disposable disposable = utils.getAllDishes()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(

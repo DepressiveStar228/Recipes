@@ -36,22 +36,19 @@ public interface IngredientDAO {
     Completable delete(Ingredient ingredient);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + ID_DISH + " = :id_dish")
-    Maybe<Integer> getIdByNameAndIdDish(String name, long id_dish);
+    Maybe<Long> getIdByNameAndIdDish(String name, long id_dish);
 
     @Query("SELECT * FROM " + TABLE_NAME)
     Single<List<Ingredient>> getAllIngredients();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    Single<List<Ingredient>> getAllIngredientsByIdDish(int id_dish);
-
-    @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
-    Single<List<String>> getAllNameIngredientsOrdered();
+    Single<List<Ingredient>> getAllIngredientsByIdDish(long id_dish);
 
     @Query("SELECT DISTINCT * FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
     Single<List<Ingredient>> getAllIngredientsNameOrdered();
 
     @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
-    Single<List<Integer>> getIdDishesByName(String name);
+    Single<List<Long>> getIdDishesByName(String name);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getIngredientCount();

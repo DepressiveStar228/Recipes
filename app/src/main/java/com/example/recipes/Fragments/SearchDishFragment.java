@@ -354,7 +354,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
 
     private void updateRecipesData(){
         disposable = Single.zip(
-                        utils.getDishesOrdered(),
+                        utils.getAllDishes(),
                         utils.getIngredients(),
                         (dishes, ingredients) -> new Pair<>(dishes, ingredients)
                 )

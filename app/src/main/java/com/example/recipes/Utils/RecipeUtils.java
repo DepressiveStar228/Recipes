@@ -4,10 +4,6 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.room.Database;
-import androidx.room.Room;
-import androidx.room.Transaction;
-
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.DAO.DishCollectionDAO;
@@ -22,18 +18,14 @@ import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.internal.operators.single.SingleLift;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import kotlin.Pair;
 
 
@@ -53,6 +45,17 @@ public class RecipeUtils {
         } catch (Exception e) {
             Log.e("RecipeUtils", "База даних не створилась", e);
         }
+
+        if (database != null) {
+            dishDAO = database.dishDao();
+            ingredientDAO = database.ingredientDao();
+            collectionDAO = database.collectionDao();
+            dishCollectionDAO = database.dishCollectionDao();
+        }
+    }
+
+    public RecipeUtils(RecipeDatabase database) {
+        this.database = database;
 
         if (database != null) {
             dishDAO = database.dishDao();
@@ -187,6 +190,12 @@ public class RecipeUtils {
                 .onErrorResumeNext(throwable -> Single.just(new Dish("", "")));
     }
 
+    public Single<Dish> getDishByName(String name) {
+        return dishDAO.getDishByName(name)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just(new Dish("", "")));
+    }
+
     public Single<ArrayList<Dish>> getDishes(ArrayList<Long> ids) {
         return Observable.fromIterable(ids)
                 .flatMapSingle(this::getDish)
@@ -215,13 +224,17 @@ public class RecipeUtils {
                 });
     }
 
-    public Single<List<Dish>> getDishesOrdered() {
+    public Single<List<Dish>> getAllDishes() {
         return dishDAO.getAllDishes();
+    }
+
+    public Single<List<Dish>> getDishesOrdered() {
+        return dishDAO.getAllDishesOrdered();
     }
 
     public Single<ArrayList<Dish>> getUnusedDishInCollection(Collection collection) {
         return Single.zip(
-                getDishesOrdered(),
+                getAllDishes(),
                 getDishesByCollection(collection.getId()),
                 (allDishes, collectionDishes) -> {
                     ArrayList<Dish> unused_dished = new ArrayList<>();
@@ -309,7 +322,7 @@ public class RecipeUtils {
                 });
     }
 
-    public Single<Integer> getIdIngredient(Ingredient in) {
+    public Single<Long> getIdIngredient(Ingredient in) {
         return ingredientDAO.getIdByNameAndIdDish(in.getName(), in.getId_dish()).toSingle();
     }
 
@@ -317,7 +330,7 @@ public class RecipeUtils {
         return ingredientDAO.getAllIngredients();
     }
 
-    public Single<List<Ingredient>> getIngredients(int id_dish) {
+    public Single<List<Ingredient>> getIngredients(long id_dish) {
         return ingredientDAO.getAllIngredientsByIdDish(id_dish);
     }
 
@@ -325,7 +338,7 @@ public class RecipeUtils {
         return ingredientDAO.getAllIngredientsNameOrdered();
     }
 
-    public Single<List<Integer>> getDishIdsByNameIngredient(String nameIng) {
+    public Single<List<Long>> getDishIdsByNameIngredient(String nameIng) {
         return ingredientDAO.getIdDishesByName(nameIng);
     }
 
@@ -334,7 +347,7 @@ public class RecipeUtils {
     }
 
     public Completable updateIngredient(Ingredient ingredient) {
-        return ingredientDAO.delete(ingredient);
+        return ingredientDAO.update(ingredient);
     }
 
     public Completable deleteIngredient(Ingredient ingredient) {
@@ -383,7 +396,7 @@ public class RecipeUtils {
         return collectionDAO.getCollectionById(id_collection)
                 .flatMap(collection -> {
                     String customName = getCustomNameSystemCollection(collection.getName());
-                    return Maybe.just(new Collection(customName));
+                    return Maybe.just(new Collection(collection.getId(), customName, collection.getDishes()));
                 })
                 .flatMap(collection ->
                         getDishesByCollection(collection.getId())
@@ -394,7 +407,8 @@ public class RecipeUtils {
                                 .toMaybe()
                 )
                 .toSingle()
-                .onErrorResumeNext(throwable -> Single.just(null));
+                .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
+                .onErrorReturnItem(null);
     }
 
 
@@ -403,7 +417,7 @@ public class RecipeUtils {
         return collectionDAO.getCollectionByName(name)
                 .flatMap(collection -> {
                     String customName = getCustomNameSystemCollection(collection.getName());
-                    return Maybe.just(new Collection(customName));
+                    return Maybe.just(new Collection(collection.getId(), customName, collection.getDishes()));
                 })
                 .flatMap(collection ->
                         getDishesByCollection(collection.getId())
@@ -414,7 +428,8 @@ public class RecipeUtils {
                                 .toMaybe()
                 )
                 .toSingle()
-                .onErrorResumeNext(throwable -> Single.just(null));
+                .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
+                .onErrorReturnItem(null);
     }
 
     public Single<Long> getIdCollectionByName(String name) {

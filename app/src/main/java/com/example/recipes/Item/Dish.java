@@ -59,11 +59,18 @@ public class Dish {
 
         Dish dish = (Dish) obj;
 
-        return id == dish.id;
+        if (id != dish.id) return false;
+        if (!name.equals(dish.name)) return false;
+        return recipe.equals(dish.recipe);
     }
+
 
     @Override
     public int hashCode() {
-        return id;
+        int result = Long.hashCode(id);
+        result = 31 * result + name.hashCode();
+        result = 31 * result + recipe.hashCode();
+        return result;
     }
+
 }
