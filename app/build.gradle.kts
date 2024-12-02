@@ -30,6 +30,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            enableUnitTestCoverage  = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -65,6 +68,10 @@ dependencies {
     androidTestImplementation ("androidx.test:runner:1.5.2")
     androidTestImplementation ("androidx.test:rules:1.5.0")
     testImplementation("androidx.test:core:1.6.1")
+
+    androidTestImplementation ("org.mockito:mockito-android:5.5.0")
+    testImplementation  ("org.mockito:mockito-core:5.5.0")
+
 
     testImplementation ("org.robolectric:robolectric:4.10.3")
     testImplementation ("io.reactivex.rxjava3:rxjava:3.1.9")

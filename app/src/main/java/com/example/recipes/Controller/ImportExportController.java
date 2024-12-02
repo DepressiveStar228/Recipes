@@ -57,27 +57,33 @@ public class ImportExportController {
         Gson gson = new Gson();
         DataBox recipeData = null;
 
-        int firstCurlyBraceIndex = jsonResponse.indexOf('{');
-        int lastCurlyBraceIndex = jsonResponse.lastIndexOf('}');
+        if (jsonResponse == null || jsonResponse.isEmpty()) {
+            return recipeData;
+        } else {
+            int firstCurlyBraceIndex = jsonResponse.indexOf('{');
+            int lastCurlyBraceIndex = jsonResponse.lastIndexOf('}');
 
-        if (firstCurlyBraceIndex != -1 && lastCurlyBraceIndex != -1 && firstCurlyBraceIndex < lastCurlyBraceIndex) {
-            String finalJsonResponse = jsonResponse.substring(firstCurlyBraceIndex, lastCurlyBraceIndex + 1);
-            String recipe = extractRecipe(finalJsonResponse);
+            if (firstCurlyBraceIndex != -1 && lastCurlyBraceIndex != -1 && firstCurlyBraceIndex < lastCurlyBraceIndex) {
+                String finalJsonResponse = jsonResponse.substring(firstCurlyBraceIndex, lastCurlyBraceIndex + 1);
+                String recipe = extractRecipe(finalJsonResponse);
 
-            finalJsonResponse = finalJsonResponse.replaceAll("\n", "")
-                    .replaceAll("\\s*\\{\\s*", "{")
-                    .replaceAll("\\s*\\}\\s*", "}")
-                    .replaceAll(":\\s*", ":")
-                    .replaceAll(",\\s*\"", ",\"");
+                finalJsonResponse = finalJsonResponse.replaceAll("\n", "")
+                        .replaceAll("\\s*\\{\\s*", "{")
+                        .replaceAll("\\s*\\}\\s*", "}")
+                        .replaceAll("\\s*\\[\\s*", "{")
+                        .replaceAll("\\s*\\]\\s*", "}")
+                        .replaceAll(":\\s*", ":")
+                        .replaceAll(",\\s*\"", ",\"");
 
-            finalJsonResponse = replaceRecipe(finalJsonResponse, recipe.replaceAll("\n", ""), recipe);
+                finalJsonResponse = replaceRecipe(finalJsonResponse, recipe.replaceAll("\n", ""), recipe);
 
-            try {
-                Type recipeDataType = new TypeToken<DataBox>() {}.getType();
-                recipeData = gson.fromJson(finalJsonResponse, recipeDataType);
-            } catch (Exception e) {
-                Toast.makeText(context, context.getString(R.string.error_import), Toast.LENGTH_SHORT).show();
-                Log.e("ImportExportController", "Помилка при імпорті рецептів з GPT", e);
+                try {
+                    Type recipeDataType = new TypeToken<DataBox>() {}.getType();
+                    recipeData = gson.fromJson(finalJsonResponse, recipeDataType);
+                } catch (Exception e) {
+                    Toast.makeText(context, context.getString(R.string.error_import), Toast.LENGTH_SHORT).show();
+                    Log.e("ImportExportController", "Помилка при імпорті рецептів з GPT", e);
+                }
             }
         }
 

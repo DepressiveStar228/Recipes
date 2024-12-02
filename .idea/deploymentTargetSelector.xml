@@ -11,16 +11,19 @@
       <SelectionState runConfigName="DishDBTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="IngredientDBTest">
+      <SelectionState runConfigName="UnitTestsPerferencesController">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testGetAllIngredientsByIdDish()">
+      <SelectionState runConfigName="testSavePreferences() (1)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testDeleteIngredient()">
+      <SelectionState runConfigName="testSetLocale()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testGetCollectionByName()">
+      <SelectionState runConfigName="testGetThemeNameBySpinner()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="testSetAppThemeBrownLight()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
