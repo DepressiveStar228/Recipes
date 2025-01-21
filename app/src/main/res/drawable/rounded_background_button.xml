@@ -3,4 +3,8 @@
     <solid android:color="?attr/colorBackgroundButton" />
     <stroke android:width="2dp" />
     <corners android:radius="50dp"/>
+    <padding android:top="5dp"/>
+    <padding android:start="5dp"/>
+    <padding android:end="5dp"/>
+    <padding android:bottom="5dp"/>
 </shape>

@@ -17,7 +17,11 @@
         android:orderInCategory="4"
         android:title="@string/share" />
     <item
-        android:id="@+id/action_delete_dish"
+        android:id="@+id/action_remove_dish"
         android:orderInCategory="5"
+        android:title="@string/remove" />
+    <item
+        android:id="@+id/action_delete_dish"
+        android:orderInCategory="6"
         android:title="@string/delete" />
 </menu>

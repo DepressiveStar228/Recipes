@@ -29,11 +29,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
+import com.example.recipes.Config;
 import com.example.recipes.Controller.ChatGPTTranslate;
-import com.example.recipes.Controller.ExportCallbackUri;
+import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PerferencesController;
-import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Item.Ingredient;
@@ -88,7 +88,7 @@ public class ReadDataDishActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        int dishID = getIntent().getIntExtra("dish_id", -1);
+        long dishID = getIntent().getLongExtra(Config.KEY_DISH, -1);
 
         if (dishID != -1) {
             Disposable disposable = Single.zip(
@@ -244,8 +244,8 @@ public class ReadDataDishActivity extends Activity {
     }
 
     public void editDish() {
-        Intent intent = new Intent(this, EditDishActivity.class);
-        intent.putExtra("dish_id", dish.getId());
+        Intent intent = new Intent(this, EditorDishActivity.class);
+        intent.putExtra(Config.KEY_DISH, dish.getId());
         startActivity(intent);
     }
 
@@ -329,12 +329,15 @@ public class ReadDataDishActivity extends Activity {
                                                                     if (result) {
                                                                         Toast.makeText(this, getString(R.string.successful_add_dish_in_collection), Toast.LENGTH_SHORT).show();
                                                                         Log.d("ReadDataDishActivity", "Страва успішно додана в колекцію(ї)");
+                                                                        selectedCollectionIds.clear();
                                                                     } else {
                                                                         Log.e("ReadDataDishActivity", "Помилка. Страва не додана в колекцію(ї)");
+                                                                        selectedCollectionIds.clear();
                                                                     }
                                                                 },
                                                                 throwable -> {
                                                                     Log.e("ReadDataDishActivity", "Помилка додавання страви в колекцію(ї)", throwable);
+                                                                    selectedCollectionIds.clear();
                                                                 }
                                                         );
                                                 compositeDisposable.add(disposable1);
@@ -348,6 +351,7 @@ public class ReadDataDishActivity extends Activity {
                             }
                         },
                         throwable -> {
+                            Toast.makeText(this, getString(R.string.error_add_dish), Toast.LENGTH_SHORT).show();
                             Log.e("ReadDataDishActivity", "Помилка отримання списку колекцій з бд", throwable);
                         }
                 );

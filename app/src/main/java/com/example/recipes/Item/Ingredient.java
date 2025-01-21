@@ -7,6 +7,8 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import com.example.recipes.Interface.SelectableItem;
+
 @Entity(
         tableName = "ingredient",
         indices = @Index(value = "id_dish"),
@@ -18,7 +20,7 @@ import androidx.room.PrimaryKey;
                 onDelete = ForeignKey.CASCADE
         )}
 )
-public class Ingredient {
+public class Ingredient implements SelectableItem {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
     @ColumnInfo(name = "amount") private String amount;
@@ -48,10 +50,12 @@ public class Ingredient {
         this.type = type;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -72,6 +76,7 @@ public class Ingredient {
         this.id = id;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }

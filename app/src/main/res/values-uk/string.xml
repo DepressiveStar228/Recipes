@@ -63,9 +63,10 @@
         <item>мл.</item>
         <item>шт.</item>
         <item>ч.л</item>
-        <item>с.л</item>
+        <item>ст.л</item>
         <item>щеп.</item>
         <item>стк.</item>
+        <item>по вкс.</item>
         <item> </item>
     </string-array>
     <string-array name="theme_options">
@@ -78,8 +79,8 @@
         <item>Фіолетовий</item>
         <item>Зелений</item>
     </string-array>
-    <string name="add_dish_text">Додайте страву</string>
-    <string name="edit_dish_text">Редагуйте страву</string>
+    <string name="add_dish_text">Додавання страви</string>
+    <string name="edit_dish_text">Редагування страви</string>
     <string name="rand_dish_text">Випадкова страва</string>
     <string name="seach_dish_by_ingredient_text">Знайдені страви:</string>
     <string name="copy_clipboard_text">Скопійовано в буфер обміну</string>
@@ -123,8 +124,8 @@
     <string name="successful_add_collection">Колекція успішно додана</string>
     <string name="hint_text_edit_collection">Впишіть нову назву колекції</string>
     <string name="successful_edit_collection">Колекція успішно редагована</string>
-    <string name="add_collection_dialog">Додати колекцію</string>
-    <string name="edit_collection_dialog">Редагувати колекцію</string>
+    <string name="add_collection">Додати колекцію</string>
+    <string name="edit_collection">Редагувати колекцію</string>
     <string name="warning_dublicate_name_collection">Колекція с такою назвою вже існує</string>
     <string name="add_in_collection">Додати в колекцію</string>
     <string name="dish_dublicate_in_collection">Страва вже знаходить у колекції</string>
@@ -132,7 +133,7 @@
     <string name="error_edit_collection">Помилка редагування колекціх</string>
     <string name="successful_delete_ingredient">Інгредіент успішно видалено</string>
     <string name="error_empty_collection">Помилка. Ця колекція пуста</string>
-    <string name="clear_collection">Очистити колекцію</string>
+    <string name="clear">Очистити</string>
     <string name="warning_clear_collection">Ви точно хочете очистити колекцію? Страви не будуть видалені повністю. Просто колекція стане пустою</string>
     <string name="confirm_clear_collection">Підтвердіть очищення колекції</string>
     <string name="successful_add_dish_in_collection">Страва успішно додана до колекції(й)</string>
@@ -161,4 +162,37 @@
     <string name="error_void_dishes">Помилка. Список страв пустий.</string>
     <string name="error_get_dishes_by_db">Помилка отримання списку страв з бази даних.</string>
     <string name="error_get_ingredients_by_db">Помилка отримання інгредієнтів для вибранної страви з бази даних.</string>
+    <string name="remove">Прибрати</string>
+    <string name="confirm_remove_dish">Підтвердіть прибирання</string>
+    <string name="warning_remove_dish">Ви точно хочете прибрати страву з колекції? Страва не буде видалена повністью, лише з колекції.</string>
+    <string name="successful_remove_collerction">Страва успішно прибрана</string>
+    <string name="filters">Фільтри</string>
+    <string name="sort">Сортування</string>
+    <string name="type_sort">Типи сортування</string>
+    <string name="type_filtrers">Типи фільтрації</string>
+    <string name="ascending_alphabetical_alphabet">За алфавітом</string>
+    <string name="descending_alphabetical_alphabet">Проти алфавіта</string>
+    <string name="apply">Застосувати</string>
+    <string name="ordered_new">Найновіші</string>
+    <string name="ordered_old">Найстаріші</string>
+    <string name="alphabet">Алфавіт</string>
+    <string name="time">Час</string>
+    <string name="reset">Скинути</string>
+    <string name="your_ingredients">Ваші інгредієнти</string>
+    <string name="close">Закрити</string>
+    <string name="empty_names_ingredient">У вас немає інгредієнтів для фільтрування</string>
+    <string name="ingredient_names_hints">Підказки назв інгредієнтів</string>
+    <string name="your_shopLists">Ваші списки покупок</string>
+    <string name="all_shop_lists_text">Всього списків:</string>
+    <string name="hint_text_add_ing_shop_list">Введіть назву інгредієнта</string>
+    <string name="confirm_add_new_shop_list">Підтвердіть створення нового списку</string>
+    <string name="list">Список</string>
+    <string name="empty_data">Немає даних</string>
+    <string name="edit_shop_list">Редагувати список покупок</string>
+    <string name="add_shop_list">Додати список покупок</string>
+    <string name="successful_clear_shop_list">Список успішно очищено</string>
+    <string name="successful_delete_shop_list">Список успішно видалено</string>
+    <string name="warning_delete_shop_list">Ви дійсно хочете видалити список покупків?</string>
+    <string name="confirm_clear_shop_list">Підтвердіть очищення списку</string>
+    <string name="warning_clear_shop_list">Ви дійсно хочете очистити список покупків? Всі пункти будуть видалені</string>
 </resources>

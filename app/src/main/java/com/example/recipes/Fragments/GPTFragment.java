@@ -68,6 +68,7 @@ public class GPTFragment extends Fragment {
     private ChatGPTClient client;
     private String[] themeArray;
     private CompositeDisposable compositeDisposable;
+    private int dxHeightGPTContainer = 300;
     private boolean addRecipeStatus = false;
     private boolean networkStatus = true;
 
@@ -255,7 +256,7 @@ public class GPTFragment extends Fragment {
     }
 
     private void increaseGptContainer() {
-        int heightIncrease = dpToPx(350);
+        int heightIncrease = dpToPx(dxHeightGPTContainer);
 
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) GPT_constraintLayout.getLayoutParams();
         params.height = GPT_constraintLayout.getHeight() + heightIncrease;
@@ -269,7 +270,7 @@ public class GPTFragment extends Fragment {
     }
 
     private void decreaseGptContainer() {
-        int heightDecrease = dpToPx(350);
+        int heightDecrease = dpToPx(dxHeightGPTContainer);
 
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) GPT_constraintLayout.getLayoutParams();
         params.height = GPT_constraintLayout.getHeight() - heightDecrease;
@@ -337,10 +338,11 @@ public class GPTFragment extends Fragment {
                 animationDrawable.stop();
 
                 if (isAdded()){
-                    if (Objects.equals(perferencesController.theme, themeArray[0])) {
+                    if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
                         sendPromptImageView.setImageResource(R.drawable.icon_send);
                     } else {
-                        sendPromptImageView.setImageResource(R.drawable.icon_send_darkmode);
+                        sendPromptImageView.setImageResource(R.drawable.icon_send);
+                        sendPromptImageView.setColorFilter(R.color.white);
                     }
 
                     if (response != null) {
@@ -376,7 +378,7 @@ public class GPTFragment extends Fragment {
         textView.setId(View.generateViewId());
         textView.setText(message);
         textView.setLayoutParams(new ConstraintLayout.LayoutParams(800, ConstraintLayout.LayoutParams.WRAP_CONTENT));
-        if (Objects.equals(perferencesController.theme, themeArray[0])) {
+        if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
             textView.setTextColor(getResources().getColor(R.color.black));
         } else {
             textView.setTextColor(getResources().getColor(R.color.white));
@@ -408,7 +410,7 @@ public class GPTFragment extends Fragment {
         textView.setId(View.generateViewId());
         textView.setText("GPT:\n" + parseDataBox(recipeData));
         textView.setLayoutParams(new ConstraintLayout.LayoutParams(800, ConstraintLayout.LayoutParams.WRAP_CONTENT));
-        if (Objects.equals(perferencesController.theme, themeArray[0])) {
+        if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
             textView.setTextColor(getResources().getColor(R.color.black));
         } else {
             textView.setTextColor(getResources().getColor(R.color.white));
@@ -419,10 +421,11 @@ public class GPTFragment extends Fragment {
         ImageView imageView = new ImageView(getContext());
         imageView.setId(View.generateViewId());
         imageView.setVisibility(View.VISIBLE);
-        if (Objects.equals(perferencesController.theme, themeArray[0])) {
+        if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
             imageView.setImageResource(R.drawable.icon_add);
         } else {
-            imageView.setImageResource(R.drawable.icon_add_darkmode);
+            imageView.setImageResource(R.drawable.icon_add);
+            imageView.setColorFilter(R.color.white);
         }
         imageView.setLayoutParams(new ConstraintLayout.LayoutParams(90, 90));
         imageView.setOnClickListener(v -> {
@@ -435,10 +438,11 @@ public class GPTFragment extends Fragment {
                         .subscribe(
                                 result -> {
                                     if (result) {
-                                        if (Objects.equals(perferencesController.theme, themeArray[0])) {
-                                            imageView.setImageResource(R.drawable.icon_check_mark);
+                                        if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                                            imageView.setImageResource(R.drawable.icon_check);
                                         } else {
-                                            imageView.setImageResource(R.drawable.icon_check_mark_darkmode);
+                                            imageView.setImageResource(R.drawable.icon_check);
+                                            imageView.setColorFilter(R.color.white);
                                         }
                                         addRecipeStatus = true;
                                         Toast.makeText(getContext(), getContext().getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
@@ -459,7 +463,8 @@ public class GPTFragment extends Fragment {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 () -> {
-                                    imageView.setImageResource(R.drawable.icon_add_darkmode);
+                                    imageView.setImageResource(R.drawable.icon_add);
+                                    imageView.setColorFilter(R.color.white);
                                     addRecipeStatus = false;
                                     Toast.makeText(getContext(), getContext().getString(R.string.successful_delete_dish), Toast.LENGTH_SHORT).show();
                                 },

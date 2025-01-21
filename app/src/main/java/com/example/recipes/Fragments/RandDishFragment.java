@@ -1,11 +1,11 @@
 package com.example.recipes.Fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,11 +18,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.recipes.Activity.ReadDataDishActivity;
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
-import com.example.recipes.Adapter.IngredientGetAdapter;
+import com.example.recipes.Config;
+import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
@@ -35,13 +36,13 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class RandDishFragment extends Fragment {
+public class RandDishFragment extends Fragment implements OnBackPressedListener {
     private Random random = new Random();
-    private TextView dish, recipe;
+    private TextView dish_name;
+    private ConstraintLayout dish_name_box;
+    private Dish randDish;
     private Button rand_button;
     private Spinner collectionsSpinner;
-    private RecyclerView ingredientRecyclerView;
-    private IngredientGetAdapter ingredientGetAdapter;
     private String currentNameCollection;
     private RecipeUtils utils;
     private CompositeDisposable compositeDisposable;
@@ -57,10 +58,15 @@ public class RandDishFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.rand_dish_activity, container, false);
+        View view =  inflater.inflate(R.layout.rand_dish_page, container, false);
         loadItemsActivity(view);
         loadClickListeners();
         return view;
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        return true;
     }
 
     @Override
@@ -77,15 +83,10 @@ public class RandDishFragment extends Fragment {
     }
 
     private void loadItemsActivity(View view){
-        dish = view.findViewById(R.id.nameDishTextView);
-        recipe = view.findViewById(R.id.randRecipeTextView);
+        dish_name_box = view.findViewById(R.id.name_rand_dish_box);
+        if (dish_name_box != null) { dish_name = dish_name_box.findViewById(R.id.name_rand_dish); }
+        else { dish_name = new TextView(getContext()); }
         rand_button = view.findViewById(R.id.getRandDishButton);
-
-        ingredientRecyclerView = view.findViewById(R.id.ingredientRecyclerView);
-        ingredientGetAdapter = new IngredientGetAdapter(new ArrayList<>());
-        ingredientRecyclerView.setAdapter(ingredientGetAdapter);
-        ingredientRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
         collectionsSpinner = view.findViewById(R.id.collections_spinner);
 
         rand_button.setOnClickListener(this::onClickGetDish);
@@ -105,6 +106,15 @@ public class RandDishFragment extends Fragment {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 currentNameCollection = getString(R.string.system_collection_tag) + "All";
+            }
+        });
+
+        dish_name_box.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), ReadDataDishActivity.class);
+                intent.putExtra(Config.KEY_DISH, randDish.getId());
+                v.getContext().startActivity(intent);
             }
         });
     }
@@ -170,43 +180,12 @@ public class RandDishFragment extends Fragment {
     }
 
     private void getDataDish(Dish randDish) {
-        dish.setText(randDish.getName());
-        loadIngredients(randDish);
+        dish_name.setText(randDish.getName());
+        this.randDish = randDish;
     }
 
     private Dish getRandomIndex(ArrayList<Dish> dishes) {
         return dishes.get(random.nextInt(dishes.size()));
-    }
-
-    private void loadIngredients(Dish randDish) {
-        if (randDish != null && !randDish.getRecipe().isEmpty()){
-            recipe.setVisibility(View.VISIBLE);
-        }
-
-        Disposable disposable = utils.getIngredients(randDish.getId())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        ingredients -> {
-                            ingredients.add(0, (new Ingredient(getString(R.string.ingredients), "", "")));
-                            ingredients.add((new Ingredient(" ", "", "")));
-                            recipe.setText(getString(R.string.recipe) + "\n" + randDish.getRecipe());
-
-                            if (ingredients != null && !ingredients.isEmpty()) {
-                                ingredientGetAdapter.clear();
-                                ingredientGetAdapter.addAll(new ArrayList<>(ingredients));
-                                Log.d("RandDishFragment", "Успішне отримання списку інгредієнтів для вибраної страви.");
-                            } else {
-                                Log.d("RandDishFragment", "Список інгредієнтів поточної страви пустий.");
-                                Toast.makeText(getContext(), getString(R.string.error_get_ingredients), Toast.LENGTH_SHORT).show();
-                            }
-                        },
-                        throwable -> {
-                            Log.e("RandDishFragment", "Помилка отримання списку інгредієнтів для поточної страви з бд.", throwable);
-                            Toast.makeText(getContext(), getString(R.string.error_get_ingredients_by_db), Toast.LENGTH_SHORT).show();
-                        }
-                );
-        compositeDisposable.add(disposable);
     }
 
     private void loadCollection() {

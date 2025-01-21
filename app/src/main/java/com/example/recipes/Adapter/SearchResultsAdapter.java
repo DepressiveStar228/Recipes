@@ -1,6 +1,6 @@
 package com.example.recipes.Adapter;
 
-import android.content.Intent;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,19 +9,24 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Activity.ListDishActivity;
-import com.example.recipes.Activity.ReadDataDishActivity;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
 
 public class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdapter.ViewHolder> {
     private ArrayList<Object> searchResults;
+    private OnItemClickListener listener;
+    private int positionText;
 
-    public SearchResultsAdapter(ArrayList<Object> searchResults) {
+    public SearchResultsAdapter(ArrayList<Object> searchResults, int positionText, OnItemClickListener listener) {
         this.searchResults = searchResults;
+        this.positionText = positionText;
+        this.listener = listener;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(View view, Object item);
     }
 
     @NonNull
@@ -37,27 +42,13 @@ public class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdap
 
         if (item instanceof Dish) {
             holder.textView.setText(((Dish) item).getName());
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(v.getContext(), ReadDataDishActivity.class);
-                    intent.putExtra("dish_id", ((Dish) item).getId());
-                    v.getContext().startActivity(intent);
-                }
-            });
-        } else if (item instanceof Ingredient) {
-            holder.textView.setText(((Ingredient) item).getName());
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(v.getContext(), ListDishActivity.class);
-                    intent.putExtra("ing_name", ((Ingredient) item).getName());
-                    v.getContext().startActivity(intent);
-                }
-            });
+            holder.textView.setTextAlignment(positionText);
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(v, item));
+        } else if (item instanceof String) {
+            holder.textView.setText(item.toString());
+            holder.textView.setTextAlignment(positionText);
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(v, item));
         }
-
-
     }
 
     @Override
@@ -70,7 +61,7 @@ public class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdap
         notifyDataSetChanged();
     }
 
-    public void addAll(ArrayList<Dish> dishes) {
+    public void addAll(ArrayList<Object> dishes) {
         searchResults.addAll(dishes);
         notifyDataSetChanged();
     }

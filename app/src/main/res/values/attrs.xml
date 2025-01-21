@@ -7,18 +7,5 @@
     <attr name="colorBackgroundItemMainMenu" format="reference|color" />
     <attr name="colorBackgroundButton" format="reference|color" />
     <attr name="colorHintText" format="reference|color" />
-    <attr name="iconHome" format="reference" />
-    <attr name="iconRandom" format="reference" />
-    <attr name="iconSetting" format="reference" />
-    <attr name="iconSearch" format="reference" />
-    <attr name="iconBack" format="reference" />
-    <attr name="iconDelete" format="reference" />
-    <attr name="iconMenu" format="reference" />
-    <attr name="iconEdit" format="reference" />
-    <attr name="iconShare" format="reference" />
-    <attr name="iconDataBase" format="reference" />
-    <attr name="iconGPT" format="reference" />
-    <attr name="iconSend" format="reference" />
-    <attr name="iconBook" format="reference" />
-    <attr name="iconClipboard" format="reference" />
+    <attr name="colorControlNormal" format="reference|color" />
 </resources>

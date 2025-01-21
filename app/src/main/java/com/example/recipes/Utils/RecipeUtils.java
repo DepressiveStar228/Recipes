@@ -4,21 +4,31 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.lifecycle.LiveData;
+import androidx.sqlite.db.SimpleSQLiteQuery;
+
+import com.example.recipes.Config;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.DAO.DishCollectionDAO;
 import com.example.recipes.Database.DAO.DishDAO;
 import com.example.recipes.Database.DAO.IngredientDAO;
+import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Database.RecipeDatabase;
+import com.example.recipes.Database.ViewModels.IngredientShopListViewModel;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Dish_Collection;
 import com.example.recipes.Item.Ingredient;
+import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.R;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import io.reactivex.rxjava3.core.Completable;
@@ -26,6 +36,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
 import kotlin.Pair;
 
 
@@ -36,6 +47,7 @@ public class RecipeUtils {
     private IngredientDAO ingredientDAO;
     private CollectionDAO collectionDAO;
     private DishCollectionDAO dishCollectionDAO;
+    private IngredientShopListDAO ingredientShopListDAO;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public RecipeUtils(Context context) {
@@ -51,6 +63,7 @@ public class RecipeUtils {
             ingredientDAO = database.ingredientDao();
             collectionDAO = database.collectionDao();
             dishCollectionDAO = database.dishCollectionDao();
+            ingredientShopListDAO = database.ingredientShopListDao();
         }
     }
 
@@ -196,9 +209,9 @@ public class RecipeUtils {
                 .onErrorResumeNext(throwable -> Single.just(new Dish("", "")));
     }
 
-    public Single<ArrayList<Dish>> getDishes(ArrayList<Long> ids) {
+    public Single<ArrayList<Dish>> getDishes(ArrayList<Object> ids) {
         return Observable.fromIterable(ids)
-                .flatMapSingle(this::getDish)
+                .flatMapSingle(id -> getDish((Long)id))
                 .toList()
                 .map(ArrayList::new);
     }
@@ -228,8 +241,38 @@ public class RecipeUtils {
         return dishDAO.getAllDishes();
     }
 
-    public Single<List<Dish>> getDishesOrdered() {
-        return dishDAO.getAllDishesOrdered();
+    public Single<List<Dish>> getFilteredAndSortedDishes(ArrayList<Object> ingredientNames, ArrayList<Boolean> sortStatus) {
+        String DISH_TABLE_NAME = "dish";
+        String INGREDIENT_TABLE_NAME = "ingredient";
+
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT d.* FROM " + DISH_TABLE_NAME + " d ");
+
+        if (ingredientNames != null && !ingredientNames.isEmpty()) {
+            query.append("INNER JOIN " + INGREDIENT_TABLE_NAME + " ing ON d.id = ing.id_dish ");
+            query.append("WHERE ing.name IN ('");
+            for (int i = 0; i < ingredientNames.size(); i++) {
+                query.append(ingredientNames.get(i));
+                if (i < ingredientNames.size() - 1) query.append("', '");
+            }
+            query.append("') ");
+            query.append("GROUP BY d.id ");
+            query.append("HAVING COUNT(DISTINCT ing.name) = ").append(ingredientNames.size());
+        }
+
+        query.append(" ORDER BY ");
+        if (sortStatus.get(1) != null) {
+            query.append("d.timestamp ").append(sortStatus.get(1) ? "DESC" : "ASC").append(", ");
+        }
+
+        if (sortStatus.get(0) != null) {
+            query.append("d.name ").append(sortStatus.get(0) ? "ASC" : "DESC");
+        } else {
+            query.setLength(query.length() - 2);
+        }
+
+
+        return dishDAO.getDishesWithFiltersAndSorting(new SimpleSQLiteQuery(query.toString()));
     }
 
     public Single<ArrayList<Dish>> getUnusedDishInCollection(Collection collection) {
@@ -279,37 +322,9 @@ public class RecipeUtils {
     //       Ingredient
     //
     //
-    public Single<Boolean> addIngredients(long newID, long oldID, ArrayList<Ingredient> ingredients) {
-        return Observable.fromIterable(ingredients)
-                .flatMapSingle(
-                        ing -> {
-                            if (oldID == ing.getId_dish()) {
-                                return ingredientDAO.insert(new Ingredient(ing.getName(), ing.getAmount(), ing.getType(), newID))
-                                        .flatMap(
-                                                id -> Single.just(id > 0),
-                                                throwable -> Single.just(false)
-                                        );
-                            } else {
-                                return Single.just(true);
-                            }
-                        }
-                )
-                .toList()
-                .map(results -> {
-                    for (Boolean result : results) {
-                        if (!result) {
-                            return false;
-                        }
-                    }
-                    return true;
-                })
-                .doOnSubscribe(compositeDisposable::add)
-                .doFinally(this::clearDisposables);
-    }
-
     public Single<Boolean> addIngredients(long id_dish, ArrayList<Ingredient> ingredients) {
         return Observable.fromIterable(ingredients)
-                .flatMapSingle(ing -> ingredientDAO.insert(new Ingredient(ing.getName(), ing.getAmount(), ing.getType(), id_dish))
+                .flatMapSingle(ing -> ingredientDAO.insert(new Ingredient(removeEndsVoidInName(ing), ing.getAmount(), ing.getType(), id_dish))
                         .flatMap(id -> Single.just(id > 0)))
                 .toList()
                 .map(results -> {
@@ -332,6 +347,10 @@ public class RecipeUtils {
 
     public Single<List<Ingredient>> getIngredients(long id_dish) {
         return ingredientDAO.getAllIngredientsByIdDish(id_dish);
+    }
+
+    public Single<List<String>> getNameIngredientsUnique() {
+        return ingredientDAO.getNameIngredientsUnique();
     }
 
     public Single<List<Ingredient>> getIngredientsOrdered() {
@@ -396,7 +415,7 @@ public class RecipeUtils {
         return collectionDAO.getCollectionById(id_collection)
                 .flatMap(collection -> {
                     String customName = getCustomNameSystemCollection(collection.getName());
-                    return Maybe.just(new Collection(collection.getId(), customName, collection.getDishes()));
+                    return Maybe.just(new Collection(collection.getId(), customName, Config.COLLECTION_TYPE, collection.getDishes()));
                 })
                 .flatMap(collection ->
                         getDishesByCollection(collection.getId())
@@ -408,7 +427,10 @@ public class RecipeUtils {
                 )
                 .toSingle()
                 .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
-                .onErrorReturnItem(null);
+                .onErrorResumeNext(throwable -> {
+                    Log.e("RxError", "Возврат пустой коллекции из-за ошибки", throwable);
+                    return Single.just(new Collection(-1, "Unknown Collection",  Config.COLLECTION_TYPE, new ArrayList<>()));
+                });
     }
 
 
@@ -417,7 +439,7 @@ public class RecipeUtils {
         return collectionDAO.getCollectionByName(name)
                 .flatMap(collection -> {
                     String customName = getCustomNameSystemCollection(collection.getName());
-                    return Maybe.just(new Collection(collection.getId(), customName, collection.getDishes()));
+                    return Maybe.just(new Collection(collection.getId(), customName, collection.getType(), collection.getDishes()));
                 })
                 .flatMap(collection ->
                         getDishesByCollection(collection.getId())
@@ -427,9 +449,19 @@ public class RecipeUtils {
                                 })
                                 .toMaybe()
                 )
+                .flatMapSingle(collection ->
+                        getIngredientsByCollection(collection.getId())
+                                .map(ingredientShopLists -> {
+                                    collection.setIngredients(new ArrayList<>(ingredientShopLists));
+                                    return collection;
+                                })
+                )
                 .toSingle()
                 .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
-                .onErrorReturnItem(null);
+                .onErrorResumeNext(throwable -> {
+                    Log.e("RxError", "Возврат пустой коллекции из-за ошибки", throwable);
+                    return Single.just(new Collection(-1, "Unknown Collection", Config.COLLECTION_TYPE, new ArrayList<>()));
+                });
     }
 
     public Single<Long> getIdCollectionByName(String name) {
@@ -438,17 +470,33 @@ public class RecipeUtils {
                 .onErrorResumeNext(throwable -> Single.just((long) -1));
     }
 
+    public Single<Long> getIdCollectionByNameAndType(String name, String type) {
+        return collectionDAO.getIdCollectionByNameAndType(name, type)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just((long) -1));
+    }
+
     public Single<List<Collection>> getAllCollections() {
         return collectionDAO.getAllCollections()
                 .flatMap(collections -> Observable.fromIterable(collections)
+                        .flatMapSingle(collection -> {
+                            String customName = getCustomNameSystemCollection(collection.getName());
+                            collection.setName(customName);
+                            return Single.just(collection);
+                        })
                         .flatMapSingle(collection ->
                             getDishesByCollection(collection.getId())
                                     .map(dishes -> {
-                                        String customName = getCustomNameSystemCollection(collection.getName());
-                                        collection.setName(customName);
                                         collection.setDishes(new ArrayList<>(dishes));
                                         return collection;
                                     })
+                        )
+                        .flatMapSingle(collection ->
+                                getIngredientsByCollection(collection.getId())
+                                        .map(ingredientShopLists -> {
+                                            collection.setIngredients(new ArrayList<>(ingredientShopLists));
+                                            return collection;
+                                        })
                         )
                         .toList());
     }
@@ -464,6 +512,31 @@ public class RecipeUtils {
                 });
     }
 
+    public Single<List<Collection>> getAllCollectionsByType(String type) {
+        return collectionDAO.getAllCollectionsByType(type)
+                .flatMap(collections -> Observable.fromIterable(collections)
+                        .flatMapSingle(collection -> {
+                            String customName = getCustomNameSystemCollection(collection.getName());
+                            collection.setName(customName);
+                            return Single.just(collection);
+                        })
+                        .flatMapSingle(collection ->
+                                getDishesByCollection(collection.getId())
+                                        .map(dishes -> {
+                                            collection.setDishes(new ArrayList<>(dishes));
+                                            return collection;
+                                        })
+                        )
+                        .flatMapSingle(collection ->
+                                getIngredientsByCollection(collection.getId())
+                                        .map(ingredientShopLists -> {
+                                            collection.setIngredients(new ArrayList<>(ingredientShopLists));
+                                            return collection;
+                                        })
+                        )
+                        .toList());
+    }
+
     public Single<List<Dish>> getDishesByCollection(long id_collection) {
         return dishCollectionDAO.getAllIdsDishByIdCollection(id_collection)
                 .flatMap(ids -> {
@@ -475,6 +548,15 @@ public class RecipeUtils {
                                 .toList();
                     }
                 });
+    }
+
+    public Single<List<IngredientShopList>> getIngredientsByCollection(long id_collection) {
+        return ingredientShopListDAO.getAllIngredientsShopListByIdCollection(id_collection)
+                .flatMap(ingredientShopLists -> {
+                    if (ingredientShopLists == null) { return Single.just(new ArrayList<IngredientShopList>()); }
+                    else { return Single.just(ingredientShopLists); }
+                })
+                .onErrorReturnItem(new ArrayList<>());
     }
 
     public Single<ArrayList<Collection>> getUnusedCollectionInDish(Dish dish) {
@@ -500,8 +582,25 @@ public class RecipeUtils {
         return collectionDAO.getCollectionCount();
     }
 
+    public Single<Integer> getTypeCollectionCount(String type) {
+        return collectionDAO.getTypeCollectionCount(type);
+    }
+
     public Completable updateCollection(Collection collection) {
         return collectionDAO.update(collection);
+    }
+
+    public Single<Collection> updateAndGetCollection(Collection collection) {
+        return collectionDAO.update(collection)
+                .toSingleDefault(new android.util.Pair<>(true, collection.getName()))
+                .onErrorReturnItem(new android.util.Pair<>(false, ""))
+                .flatMap(pair -> {
+                    if (pair.first) {
+                        return getCollectionByName(pair.second);
+                    } else {
+                        return Single.just(new Collection("", ""));
+                    }
+                });
     }
 
     public Completable deleteCollection(Collection collection, boolean mode) {
@@ -519,6 +618,43 @@ public class RecipeUtils {
         } else {
             return collectionDAO.delete(collection);
         }
+    }
+
+    public Single<String> getUniqueShopListName(String name) {
+        return Single.fromCallable(() -> name)
+                .flatMap(name_ -> getUniqueShopListNameRecursive(name_, 1));
+    }
+
+    private Single<String> getUniqueShopListNameRecursive(String name, int suffix) {
+        return checkDuplicateShopListName(name)
+                .flatMap(isDuplicate -> {
+                    if (isDuplicate) {
+                        String newDishName;
+
+                        if (name.contains("№")) {
+                            int indexNumb = name.indexOf("№");
+                            String firstPart = name.substring(0, indexNumb + 1);
+                            String secondPart = "";
+
+                            try {
+                                secondPart = name.substring(indexNumb + 2);
+                            } catch (Exception e) {}
+
+                            newDishName = firstPart + suffix + secondPart;
+                        } else {
+                            newDishName = name + " №" + suffix;
+                        }
+                        return getUniqueShopListNameRecursive(newDishName, suffix + 1);
+                    } else {
+                        return Single.just(name);
+                    }
+                });
+    }
+
+    public Single<Boolean> checkDuplicateShopListName(String name) {
+        return collectionDAO.getIdByName(name)
+                .map(id -> id != null)
+                .switchIfEmpty(Single.just(false));
     }
 
 
@@ -683,6 +819,12 @@ public class RecipeUtils {
         return dishCollectionDAO.getDishCollectionCount();
     }
 
+    public Single<Dish_Collection> getDishCollection(long id_dish, long id_collection) {
+        return dishCollectionDAO.getDishCollectionsByIdDishAndIdCollection(id_dish, id_collection)
+                .toSingle()
+                .onErrorResumeNext(throwable -> Single.just(new Dish_Collection(0, 0)));
+    }
+
     public Single<Boolean> checkDuplicateDishCollectionData (long id_dish, long id_collection) {
         return dishCollectionDAO.getDishCollectionsByIdDishAndIdCollection(id_dish, id_collection)
                 .map(dishCollection -> true)
@@ -705,6 +847,206 @@ public class RecipeUtils {
                                 .flatMapCompletable(dishCollection -> dishCollectionDAO.delete(dishCollection))
                 );
     }
+
+
+
+
+
+
+
+
+    //
+    //
+    //       Ingredient Shop List
+    //
+    //
+    public ByIngredientShopList ByIngredientShopList() {
+        return new ByIngredientShopList();
+    }
+
+    public class ByIngredientShopList {
+        private final IngredientShopListDAO ingredientShopListDAO;
+        private final IngredientShopListViewModel viewModel;
+
+        public ByIngredientShopList() {
+            this.ingredientShopListDAO = RecipeUtils.this.ingredientShopListDAO;
+            this.viewModel = new IngredientShopListViewModel(ingredientShopListDAO);
+        }
+
+        public Single<Long> addIngredientShopList(long id_collection, IngredientShopList ingredient) {
+            if (ingredient instanceof IngredientShopList) {
+                IngredientShopList ingSH = ingredient;
+                return ingredientShopListDAO.insert(
+                        new IngredientShopList(
+                                removeEndsVoidInName(ingSH),
+                                ingSH.getAmount(),
+                                ingSH.getType(),
+                                0,
+                                id_collection,
+                                ingSH.getIsBuy()
+                        ));
+            } else {
+                return Single.just(-1L);
+            }
+        }
+
+        public <T> Single<Boolean> addIngredientsShopList(long id_collection, ArrayList<T> ingredients, long id_dish) {
+            return Observable.fromIterable(ingredients)
+                    .flatMapSingle(ing -> {
+                        if (ing instanceof IngredientShopList) {
+                            IngredientShopList ingSH = (IngredientShopList) ing;
+                            return ingredientShopListDAO.insert(
+                                    new IngredientShopList(
+                                            removeEndsVoidInName(ingSH),
+                                            ingSH.getAmount(),
+                                            ingSH.getType(),
+                                            id_dish,
+                                            id_collection,
+                                            ingSH.getIsBuy()
+                                    )).flatMap(id -> Single.just(id > 0));
+                        } else if (ing instanceof Ingredient) {
+                            Ingredient ingN = (Ingredient) ing;
+                            return ingredientShopListDAO.insert(
+                                    new IngredientShopList(
+                                            removeEndsVoidInName(ingN),
+                                            ingN.getAmount(),
+                                            ingN.getType(),
+                                            id_dish,
+                                            id_collection,
+                                            false
+                                    )).flatMap(id -> Single.just(id > 0));
+                        } else { return Single.just(-1L).flatMap(id -> Single.just(id > 0)); }
+                    })
+                    .toList()
+                    .map(results -> {
+                        for (Boolean result : results) {
+                            if (!result) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+        }
+
+        public <T> Single<Boolean> addIngredientsShopList(long id_collection, ArrayList<T> ingredients) {
+            return Observable.fromIterable(ingredients)
+                    .flatMapSingle(ing -> {
+                        if (ing instanceof IngredientShopList) {
+                            IngredientShopList ingSH = (IngredientShopList) ing;
+                            return ingredientShopListDAO.insert(
+                                    new IngredientShopList(
+                                            removeEndsVoidInName(ingSH),
+                                            ingSH.getAmount(),
+                                            ingSH.getType(),
+                                            0,
+                                            id_collection,
+                                            ingSH.getIsBuy()
+                                    )).flatMap(id -> Single.just(id > 0));
+                        } else if (ing instanceof Ingredient) {
+                            Ingredient ingN = (Ingredient) ing;
+                            return ingredientShopListDAO.insert(
+                                    new IngredientShopList(
+                                            removeEndsVoidInName(ingN),
+                                            ingN.getAmount(),
+                                            ingN.getType(),
+                                            0,
+                                            id_collection,
+                                            false
+                                    )).flatMap(id -> Single.just(id > 0));
+                        } else { return Single.just(-1L).flatMap(id -> Single.just(id > 0)); }
+                    })
+                    .toList()
+                    .map(results -> {
+                        for (Boolean result : results) {
+                            if (!result) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+        }
+
+        public Single<IngredientShopList> getIngredientsShopListById(long id) {
+            return ingredientShopListDAO.getIngredientsShopListById(id);
+        }
+
+        public Single<Long> getIdIngredientShopList(IngredientShopList in) {
+            return ingredientShopListDAO.getIdIngredientShopListByNameAndIdDish(in.getName(), in.getId_dish()).toSingle();
+        }
+
+        public Single<List<IngredientShopList>> getIngredientsShopList() {
+            return ingredientShopListDAO.getAllIngredientsShopList();
+        }
+
+        public Single<List<IngredientShopList>> getIngredientsShopListByIdDish(long id_dish) {
+            return ingredientShopListDAO.getAllIngredientsShopListByIdDish(id_dish);
+        }
+
+        public Single<List<IngredientShopList>> getIngredientsShopListByIdCollection(long id_collection) {
+            return ingredientShopListDAO.getAllIngredientsShopListByIdCollection(id_collection);
+        }
+
+        public Single<List<String>> getNameIngredientsShopListUnique() {
+            return ingredientShopListDAO.getNameIngredientsUnique();
+        }
+
+        public Single<List<IngredientShopList>> getIngredientsShopListOrdered() {
+            return ingredientShopListDAO.getAllIngredientsShopListNameOrdered();
+        }
+
+        public Single<List<Long>> getDishIdsByNameIngredientShopList(String nameIng) {
+            return ingredientShopListDAO.getIdDishesByNameIngredientShopList(nameIng);
+        }
+
+        public Single<Integer> getIngredientShopListCount() {
+            return ingredientShopListDAO.getIngredientShopListCount();
+        }
+
+        public Single<ArrayList<IngredientShopList>> convertIngredientsToIngredientShopList(ArrayList<Ingredient> ingredients) {
+            ArrayList<IngredientShopList> ingredientShopLists = new ArrayList<>();
+
+            for (Ingredient ing : ingredients) {
+                ingredientShopLists.add(new IngredientShopList(ing, false));
+            }
+
+            return Single.just(ingredientShopLists);
+        }
+
+        public IngredientShopListViewModel getViewModel() {
+            return viewModel;
+        }
+
+        public Completable updateIngredientShopList(IngredientShopList ingredient) {
+            return ingredientShopListDAO.update(ingredient);
+        }
+
+        public Completable deleteIngredientShopList(IngredientShopList ingredient) {
+            return ingredientShopListDAO.delete(ingredient);
+        }
+
+        public Single<Boolean> deleteIngredientShopList(ArrayList<IngredientShopList> ingredients) {
+            return Observable.fromIterable(ingredients)
+                    .flatMapSingle(ingredient ->
+                            ingredientShopListDAO.delete(ingredient)
+                                    .andThen(Single.just(true))
+                                    .onErrorReturnItem(false)
+                    )
+                    .toList()
+                    .map(results -> {
+                        for (Boolean result : results) {
+                            if (!result) {
+                                Log.d("RecipeUtils", "Помилка. Щось не видалено");
+                                return false;
+                            }
+                        }
+
+                        Log.d("RecipeUtils", "Всі інгредієнти видалено");
+                        return true;
+                    })
+                    .onErrorReturnItem(false);
+        }
+    }
+
 
 
 
@@ -763,8 +1105,30 @@ public class RecipeUtils {
     public String getNameIngredientType(int id) {
         PerferencesController controller = new PerferencesController();
         controller.loadPreferences(context);
-        String[] types = controller.getStringArrayForLocale(R.array.options_array, controller.language);
+        String[] types = controller.getStringArrayForLocale(R.array.options_array, controller.getLanguage());
         return types[id];
+    }
+
+    private String removeEndsVoidInName(Ingredient in) {
+        return in.getName().replaceFirst("\\s+$", "");
+    }
+
+    private String removeEndsVoidInName(IngredientShopList in) {
+        return in.getName().replaceFirst("\\s+$", "");
+    }
+
+    public Single<List<Pair<Dish, ArrayList<Ingredient>>>> getListPairDishIng(List<Dish> dishes) {
+        return Observable.fromIterable(dishes)
+                .flatMapSingle(dish ->
+                        getIngredients(dish.getId()).map(ingredients -> new Pair<>(dish, new ArrayList<>(ingredients)))
+                )
+                .toList();
+    }
+
+    public Single<String> generateUniqueNameForShopList() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        String baseName  = "(" + dateFormat.format(new Date()) + ")";
+        return getUniqueShopListName(baseName);
     }
 
     private void clearDisposables() {

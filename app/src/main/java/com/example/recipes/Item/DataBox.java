@@ -8,24 +8,8 @@ import kotlin.Pair;
 public class DataBox {
     private ArrayList<Pair<Dish, ArrayList<Ingredient>>> box;
 
-    public DataBox(ArrayList<Dish> dishes, ArrayList<Ingredient> ingredients) {
+    public DataBox() {
         this.box = new ArrayList<>();
-
-        if (!dishes.isEmpty()) {
-            for (Dish dish : dishes) {
-                ArrayList<Ingredient> dishIngredients = new ArrayList<>();
-
-                if (!ingredients.isEmpty()) {
-                    for (Ingredient in : ingredients) {
-                        if (dish.getId() == in.getId_dish()) {
-                            dishIngredients.add(in);
-                        }
-                    }
-                }
-
-                box.add(new Pair<>(dish, dishIngredients));
-            }
-        }
     }
 
     public ArrayList<Pair<Dish, ArrayList<Ingredient>>> getBox() {
@@ -42,6 +26,14 @@ public class DataBox {
             dishes.add(pair.getFirst());
         }
         return dishes;
+    }
+
+    public void addRecipe(Dish dish, ArrayList<Ingredient> ingredients) {
+        box.add(new Pair<>(dish, ingredients));
+    }
+
+    public void addRecipe(Pair<Dish, ArrayList<Ingredient>> pair) {
+        box.add(pair);
     }
 
     public boolean isEmpty() {

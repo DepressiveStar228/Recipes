@@ -60,7 +60,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
             if (isChecked) {
                 selectedCollectionIds.add((long) collection.getId());
             } else {
-                selectedCollectionIds.remove(Integer.valueOf(collection.getId()));
+                selectedCollectionIds.remove(Long.valueOf(collection.getId()));
             }
         });
     }
@@ -76,16 +76,29 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
 
     private static void setImage(CollectionViewHolder holder, Collection collection) {
         if (Objects.equals(collection.getName(), context.getString(R.string.favorites))) {
-            if (Objects.equals(perferencesController.theme, themeArray[0])) {
-                holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
-            } else {
-                holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star_darkmode));
+            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
+            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                holder.collection_img.setColorFilter(R.color.white);
+            }
+        } else if (Objects.equals(collection.getName(), context.getString(R.string.my_recipes))) {
+            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_a));
+            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                holder.collection_img.setColorFilter(R.color.white);
+            }
+        } else if (Objects.equals(collection.getName(), context.getString(R.string.gpt_recipes))) {
+            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_neurology));
+            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                holder.collection_img.setColorFilter(R.color.white);
+            }
+        } else if (Objects.equals(collection.getName(), context.getString(R.string.import_recipes))) {
+            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_download));
+            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                holder.collection_img.setColorFilter(R.color.white);
             }
         } else {
-            if (Objects.equals(perferencesController.theme, themeArray[0])) {
-                holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
-            } else {
-                holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_darkmode));
+            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
+            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+                holder.collection_img.setColorFilter(R.color.white);
             }
         }
     }
@@ -128,7 +141,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
                     if (isChecked) {
                         selectedCollectionIds.add((long) collections.get(position).getId());
                     } else {
-                        selectedCollectionIds.remove(Integer.valueOf(collections.get(position).getId()));
+                        selectedCollectionIds.remove(Long.valueOf(collections.get(position).getId()));
                     }
                 }
             });

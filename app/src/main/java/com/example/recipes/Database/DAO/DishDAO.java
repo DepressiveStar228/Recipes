@@ -4,8 +4,10 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.RawQuery;
 import androidx.room.Transaction;
 import androidx.room.Update;
+import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.example.recipes.Item.Dish;
 
@@ -21,6 +23,7 @@ public interface DishDAO {
     String ID = "id";
     String NAME = "name";
     String RECIPE = "recipe";
+    String TIMESTAMP = "timestamp";
 
     @Insert
     Single<Long> insert(Dish dish);
@@ -34,8 +37,8 @@ public interface DishDAO {
     @Query("SELECT * FROM " + TABLE_NAME)
     Single<List<Dish>> getAllDishes();
 
-    @Query("SELECT * FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC")
-    Single<List<Dish>> getAllDishesOrdered();
+    @RawQuery(observedEntities = { Dish.class })
+    Single<List<Dish>> getDishesWithFiltersAndSorting(SimpleSQLiteQuery query);
 
     @Query("SELECT " + NAME + " FROM " + TABLE_NAME)
     Single<List<String>> getAllNameDishes();

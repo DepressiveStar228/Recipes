@@ -12,8 +12,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.example.recipes.Controller.PerferencesController;
 
 import org.junit.Before;
@@ -22,7 +20,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-@RunWith(AndroidJUnit4.class)
 public class UnitTestPerferencesController {
     @Mock Context mockContext;
     @Mock SharedPreferences mockSharedPreferences;
@@ -51,9 +48,9 @@ public class UnitTestPerferencesController {
         setPreferences("en", "Dark", "Blue");
         controller.loadPreferences(mockContext);
 
-        assertEquals("en", controller.language);
-        assertEquals("Dark", controller.theme);
-        assertEquals("Blue", controller.palette);
+        assertEquals("en", controller.getLanguage());
+        assertEquals("Dark", controller.getTheme());
+        assertEquals("Blue", controller.getPalette());
     }
 
     @Test
@@ -62,9 +59,9 @@ public class UnitTestPerferencesController {
         controller.loadPreferences(mockContext);
         controller.savePreferences("uk", "Light", "Brown");
 
-        verify(mockEditor).putString("language", "uk");
-        verify(mockEditor).putString("theme", "Light");
-        verify(mockEditor).putString("palette", "Brown");
+        verify(mockEditor).putString(controller.language_key, "uk");
+        verify(mockEditor).putString(controller.theme_key, "Light");
+        verify(mockEditor).putString(controller.palette_key, "Brown");
         verify(mockEditor).apply();
     }
 

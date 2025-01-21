@@ -27,17 +27,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Activity.AddDishActivity"
-            android:screenOrientation="portrait"
-            android:exported="false"
-            tools:ignore="AppLinkUrlError">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <data android:scheme="http"/>
-                <category android:name="android.intent.category.DEFAULT"
-                    tools:ignore="AppLinkUrlError"/>
-            </intent-filter>
-        </activity>
         <activity android:name=".Activity.ReadDataDishActivity"
             android:screenOrientation="portrait"
             android:exported="false"
@@ -49,7 +38,7 @@
                     tools:ignore="AppLinkUrlError"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Activity.EditDishActivity"
+        <activity android:name=".Activity.EditorDishActivity"
             android:screenOrientation="portrait"
             android:exported="false"
             tools:ignore="AppLinkUrlError">

@@ -22,6 +22,7 @@ public interface CollectionDAO {
     String TABLE_NAME = "collection";
     String ID = "id";
     String NAME = "name";
+    String TYPE = "type";
 
     @Insert
     Single<Long> insert(Collection collection);
@@ -47,6 +48,15 @@ public interface CollectionDAO {
     @Query("SELECT " + NAME + " FROM " + TABLE_NAME)
     Single<List<String>> getAllNameCollections();
 
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
+    Single<List<Collection>> getAllCollectionsByType(String type);
+
+    @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + TYPE + " = :type")
+    Maybe<Long> getIdCollectionByNameAndType(String name, String type);
+
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCollectionCount();
+
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + TYPE + " =:type")
+    Single<Integer> getTypeCollectionCount(String type);
 }

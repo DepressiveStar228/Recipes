@@ -125,6 +125,28 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ingredient_hints_settingContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/border"
+                android:orientation="horizontal"
+                android:paddingStart="10dp">
+
+                <Switch
+                    android:id="@+id/ingredient_hints_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="@string/ingredient_names_hints"
+                    android:textColor="?attr/colorText"
+                    android:textSize="18sp"
+                    tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -148,12 +170,13 @@
                 android:padding="5dp">
 
 
-                <ImageView
+                <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/importImageView"
                     android:layout_width="35dp"
                     android:layout_height="35dp"
                     android:layout_weight="1"
-                    android:src="?attr/iconDataBase" />
+                    android:src="@drawable/icon_download"
+                    app:tint="?attr/colorControlNormal" />
 
                 <TextView
                     android:id="@+id/textView16"
@@ -178,12 +201,13 @@
                 android:padding="5dp">
 
 
-                <ImageView
+                <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/exportImageView"
                     android:layout_width="35dp"
                     android:layout_height="35dp"
                     android:layout_weight="1"
-                    android:src="?attr/iconDataBase" />
+                    android:src="@drawable/icon_upload"
+                    app:tint="?attr/colorControlNormal" />
 
                 <TextView
                     android:id="@+id/textView17"
@@ -207,6 +231,7 @@
             android:layout_marginBottom="20dp"
             android:background="@drawable/rounded_background_button"
             android:text="@string/confirm_settings"
+            android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"

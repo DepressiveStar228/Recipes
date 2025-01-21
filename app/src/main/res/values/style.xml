@@ -22,21 +22,6 @@
         <item name="colorText">@color/black</item>
         <item name="colorHintText">@color/grey2</item>
         <item name="colorBackground">@color/white</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home</item>
-        <item name="iconRandom">@drawable/icon_game_cube</item>
-        <item name="iconSetting">@drawable/icon_setting</item>
-        <item name="iconSearch">@drawable/icon_search</item>
-        <item name="iconBack">@drawable/icon_back</item>
-        <item name="iconDelete">@drawable/icon_trash</item>
-        <item name="iconMenu">@drawable/icon_menu</item>
-        <item name="iconEdit">@drawable/icon_edit</item>
-        <item name="iconShare">@drawable/icon_share</item>
-        <item name="iconDataBase">@drawable/icon_data_base</item>
-        <item name="iconGPT">@drawable/icon_gpt</item>
-        <item name="iconSend">@drawable/icon_send</item>
-        <item name="iconBook">@drawable/icon_book</item>
-        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -62,21 +47,6 @@
         <item name="colorText">@color/white</item>
         <item name="colorHintText">@color/grey</item>
         <item name="colorBackground">@color/back_dark</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home_darkmode</item>
-        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
-        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
-        <item name="iconSearch">@drawable/icon_search_darkmode</item>
-        <item name="iconBack">@drawable/icon_back_darkmode</item>
-        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
-        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
-        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
-        <item name="iconShare">@drawable/icon_share_darkmode</item>
-        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
-        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
-        <item name="iconSend">@drawable/icon_send_darkmode</item>
-        <item name="iconBook">@drawable/icon_book_darkmode</item>
-        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -106,21 +76,6 @@
         <item name="colorText">@color/black</item>
         <item name="colorHintText">@color/grey2</item>
         <item name="colorBackground">@color/white</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home</item>
-        <item name="iconRandom">@drawable/icon_game_cube</item>
-        <item name="iconSetting">@drawable/icon_setting</item>
-        <item name="iconSearch">@drawable/icon_search</item>
-        <item name="iconBack">@drawable/icon_back</item>
-        <item name="iconDelete">@drawable/icon_trash</item>
-        <item name="iconMenu">@drawable/icon_menu</item>
-        <item name="iconEdit">@drawable/icon_edit</item>
-        <item name="iconShare">@drawable/icon_share</item>
-        <item name="iconDataBase">@drawable/icon_data_base</item>
-        <item name="iconGPT">@drawable/icon_gpt</item>
-        <item name="iconSend">@drawable/icon_send</item>
-        <item name="iconBook">@drawable/icon_book</item>
-        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -146,21 +101,6 @@
         <item name="colorText">@color/white</item>
         <item name="colorHintText">@color/grey</item>
         <item name="colorBackground">@color/back_dark</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home_darkmode</item>
-        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
-        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
-        <item name="iconSearch">@drawable/icon_search_darkmode</item>
-        <item name="iconBack">@drawable/icon_back_darkmode</item>
-        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
-        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
-        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
-        <item name="iconShare">@drawable/icon_share_darkmode</item>
-        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
-        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
-        <item name="iconSend">@drawable/icon_send_darkmode</item>
-        <item name="iconBook">@drawable/icon_book_darkmode</item>
-        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -191,21 +131,6 @@
         <item name="colorText">@color/black</item>
         <item name="colorHintText">@color/grey2</item>
         <item name="colorBackground">@color/white</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home</item>
-        <item name="iconRandom">@drawable/icon_game_cube</item>
-        <item name="iconSetting">@drawable/icon_setting</item>
-        <item name="iconSearch">@drawable/icon_search</item>
-        <item name="iconBack">@drawable/icon_back</item>
-        <item name="iconDelete">@drawable/icon_trash</item>
-        <item name="iconMenu">@drawable/icon_menu</item>
-        <item name="iconEdit">@drawable/icon_edit</item>
-        <item name="iconShare">@drawable/icon_share</item>
-        <item name="iconDataBase">@drawable/icon_data_base</item>
-        <item name="iconGPT">@drawable/icon_gpt</item>
-        <item name="iconSend">@drawable/icon_send</item>
-        <item name="iconBook">@drawable/icon_book</item>
-        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -231,21 +156,6 @@
         <item name="colorText">@color/white</item>
         <item name="colorHintText">@color/grey</item>
         <item name="colorBackground">@color/back_dark</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home_darkmode</item>
-        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
-        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
-        <item name="iconSearch">@drawable/icon_search_darkmode</item>
-        <item name="iconBack">@drawable/icon_back_darkmode</item>
-        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
-        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
-        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
-        <item name="iconShare">@drawable/icon_share_darkmode</item>
-        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
-        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
-        <item name="iconSend">@drawable/icon_send_darkmode</item>
-        <item name="iconBook">@drawable/icon_book_darkmode</item>
-        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>
@@ -275,21 +185,6 @@
         <item name="colorText">@color/black</item>
         <item name="colorHintText">@color/grey2</item>
         <item name="colorBackground">@color/white</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home</item>
-        <item name="iconRandom">@drawable/icon_game_cube</item>
-        <item name="iconSetting">@drawable/icon_setting</item>
-        <item name="iconSearch">@drawable/icon_search</item>
-        <item name="iconBack">@drawable/icon_back</item>
-        <item name="iconDelete">@drawable/icon_trash</item>
-        <item name="iconMenu">@drawable/icon_menu</item>
-        <item name="iconEdit">@drawable/icon_edit</item>
-        <item name="iconShare">@drawable/icon_share</item>
-        <item name="iconDataBase">@drawable/icon_data_base</item>
-        <item name="iconGPT">@drawable/icon_gpt</item>
-        <item name="iconSend">@drawable/icon_send</item>
-        <item name="iconBook">@drawable/icon_book</item>
-        <item name="iconClipboard">@drawable/icon_clipboard</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/black</item>
     </style>
@@ -315,21 +210,6 @@
         <item name="colorText">@color/white</item>
         <item name="colorHintText">@color/grey</item>
         <item name="colorBackground">@color/back_dark</item>
-        <!-- Drawable -->
-        <item name="iconHome">@drawable/icon_home_darkmode</item>
-        <item name="iconRandom">@drawable/icon_game_cube_darkmode</item>
-        <item name="iconSetting">@drawable/icon_setting_darkmode</item>
-        <item name="iconSearch">@drawable/icon_search_darkmode</item>
-        <item name="iconBack">@drawable/icon_back_darkmode</item>
-        <item name="iconDelete">@drawable/icon_trash_darkmode</item>
-        <item name="iconMenu">@drawable/icon_menu_darkmode</item>
-        <item name="iconEdit">@drawable/icon_edit_darkmode</item>
-        <item name="iconShare">@drawable/icon_share_darkmode</item>
-        <item name="iconDataBase">@drawable/icon_data_base_darkmode</item>
-        <item name="iconGPT">@drawable/icon_gpt_darkmode</item>
-        <item name="iconSend">@drawable/icon_send_darkmode</item>
-        <item name="iconBook">@drawable/icon_book_darkmode</item>
-        <item name="iconClipboard">@drawable/icon_clipboard_darkmode</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>
     </style>

@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,6 +15,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -23,18 +23,16 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.recipes.Adapter.CustomSpinnerAdapter;
 import com.example.recipes.Adapter.ViewPagerAdapter;
 import com.example.recipes.Config;
-import com.example.recipes.Controller.ExportCallbackUri;
+import com.example.recipes.Fragments.ShoplistFragment;
+import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Controller.ImportExportController;
-import com.example.recipes.Controller.OnBackPressedListener;
+import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
-import com.example.recipes.Database.RecipeDatabase;
 import com.example.recipes.Fragments.CollectionsDishFragment;
 import com.example.recipes.Fragments.RandDishFragment;
 import com.example.recipes.Fragments.SearchDishFragment;
@@ -55,10 +53,10 @@ import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import kotlin.Pair;
 
 public class MainActivity extends FragmentActivity {
     private DrawerLayout drawerLayout;
@@ -67,12 +65,12 @@ public class MainActivity extends FragmentActivity {
     private PerferencesController perferencesController;
     private RecipeUtils utils;
     private Spinner languageSpinner, themeSpinner, paletteSpinner;
+    private Switch status_ing_hints_Switch;
     private String[] languageArray, themeArray, paletteArray;
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
-    private ImageView img1, img2, img3, img4;
+    private ImageView img1, img2, img3, img4, img5;
     private List<ImageView> imageViews;
-    private ImageView add_dish_button;
     private ViewPager2 viewPager;
     private ViewPagerAdapter viewAdapter;
     private CompositeDisposable compositeDisposable;
@@ -93,6 +91,7 @@ public class MainActivity extends FragmentActivity {
         fragmentList.add(new SearchDishFragment());
         fragmentList.add(new RandDishFragment());
         fragmentList.add(new CollectionsDishFragment());
+        fragmentList.add(new ShoplistFragment());
 
         viewPager = findViewById(R.id.viewPager);
         viewAdapter = new ViewPagerAdapter(this, fragmentList);
@@ -116,7 +115,7 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        Fragment currentFragment = viewAdapter.getFragmentList().get(viewPager.getCurrentItem());
         boolean flagMayClose = false;
 
         if (currentFragment instanceof OnBackPressedListener) {
@@ -142,16 +141,6 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        if (currentFragment != null) {
-            getSupportFragmentManager().putFragment(outState, "currentFragment", currentFragment);
-        }
-    }
-
     public void openSetting() {
         if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawer(GravityCompat.END);
@@ -161,6 +150,7 @@ public class MainActivity extends FragmentActivity {
             languageSpinner.setSelection(perferencesController.getIndexLanguage());
             themeSpinner.setSelection(perferencesController.getIndexTheme());
             paletteSpinner.setSelection(perferencesController.getIndexPalette());
+            status_ing_hints_Switch.setChecked(perferencesController.getStatus_ing_hints());
         }
     }
 
@@ -174,6 +164,7 @@ public class MainActivity extends FragmentActivity {
         languageSpinner = headerView.findViewById(R.id.language_spinner);
         themeSpinner = headerView.findViewById(R.id.theme_spinner);
         paletteSpinner = headerView.findViewById(R.id.palette_spinner);
+        status_ing_hints_Switch = headerView.findViewById(R.id.ingredient_hints_switch);
         confirmButton = headerView.findViewById(R.id.confirm_button);
         importLayout = headerView.findViewById(R.id.importContainer);
         exportLayout = headerView.findViewById(R.id.exportContainer);
@@ -181,14 +172,14 @@ public class MainActivity extends FragmentActivity {
         img1 = linearLayout.findViewById(R.id.main_home_hub);
         img2 = linearLayout.findViewById(R.id.main_rand_hub);
         img4 = linearLayout.findViewById(R.id.main_collections_hub);
+        img5 = linearLayout.findViewById(R.id.main_shopList_hub);
         img3 = constraintLayout.findViewById(R.id.setting);
 
         imageViews = new ArrayList<>();
         imageViews.add(img1);
         imageViews.add(img2);
         imageViews.add(img4);
-
-        add_dish_button = constraintLayout.findViewById(R.id.add_dish);
+        imageViews.add(img5);
 
         setCurrentMenuSelect(0);
 
@@ -206,6 +197,8 @@ public class MainActivity extends FragmentActivity {
         paletteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         paletteSpinner.setAdapter(paletteAdapter);
         paletteSpinner.setSelection(perferencesController.getIndexPalette());
+
+        status_ing_hints_Switch.setChecked(perferencesController.getStatus_ing_hints());
 
         languageArray = perferencesController.getStringArrayForLocale(R.array.language_values, "en");
         themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options,"en");
@@ -268,6 +261,7 @@ public class MainActivity extends FragmentActivity {
             perferencesController.setLocale(selectedLanguage);
             perferencesController.setAppTheme(selectedTheme, selectedPalette);
             perferencesController.savePreferences(selectedLanguage, selectedTheme, selectedPalette);
+            perferencesController.savePreferences(status_ing_hints_Switch.isChecked());
             drawerLayout.closeDrawer(GravityCompat.END);
 
             if (android.os.Build.VERSION.SDK_INT >= 11){
@@ -300,64 +294,64 @@ public class MainActivity extends FragmentActivity {
                 } else if (v.getId() == R.id.main_collections_hub) {
                     viewPager.setCurrentItem(2);
                     setCurrentMenuSelect(2);
-                } else if (v.getId() == R.id.add_dish) {
-                    onAddDishClick();
+                } else if (v.getId() == R.id.main_shopList_hub) {
+                    viewPager.setCurrentItem(3);
+                    setCurrentMenuSelect(3);
                 }
             }
         };
 
         exportLayout.setOnClickListener(v -> {
-            Disposable disposable = Single.zip(
-                        utils.getAllDishes(),
-                        utils.getIngredients(),
-                        (dishes, ingredients) -> new Pair<>(dishes, ingredients)
-                    )
+            Disposable disposable = utils.getAllDishes()
+                    .flatMap(dishes -> utils.getListPairDishIng(dishes))
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
-                    result -> {
-                        ArrayList<Dish> dishes = (ArrayList<Dish>) result.first;
-                        ArrayList<Ingredient> ingredients = (ArrayList<Ingredient>) result.second;
+                        list -> {
+                            if (!list.isEmpty()) {
+                                new AlertDialog.Builder(this)
+                                        .setTitle(getString(R.string.confirm_export))
+                                        .setMessage(getString(R.string.warning_export))
+                                        .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                                            DataBox recipeData = new DataBox();
 
-                        if (!dishes.isEmpty()) {
-                            new AlertDialog.Builder(this)
-                                    .setTitle(getString(R.string.confirm_export))
-                                    .setMessage(getString(R.string.warning_export))
-                                    .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                                        DataBox recipeData = new DataBox(dishes, ingredients);
-                                        ImportExportController.exportRecipeData(MainActivity.this, recipeData, new ExportCallbackUri() {
-                                            @Override
-                                            public void onSuccess(Uri uri) {
-                                                if (uri != null) {
-                                                    FileUtils.sendFileByUri(MainActivity.this, uri);
-                                                    Log.d("ImportExportController", "Рецепти успішно експортовані");
+                                            for (Pair<Dish, ArrayList<Ingredient>> pair : list) {
+                                                recipeData.addRecipe(pair);
+                                            }
+
+                                            ImportExportController.exportRecipeData(MainActivity.this, recipeData, new ExportCallbackUri() {
+                                                @Override
+                                                public void onSuccess(Uri uri) {
+                                                    if (uri != null) {
+                                                        FileUtils.sendFileByUri(MainActivity.this, uri);
+                                                        Log.d("ImportExportController", "Рецепти успішно експортовані");
+                                                    }
+
+                                                    FileUtils.deleteFileByUri(MainActivity.this, uri);
                                                 }
 
-                                                FileUtils.deleteFileByUri(MainActivity.this, uri);
-                                            }
+                                                @Override
+                                                public void onError(Throwable throwable) {
+                                                    Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
+                                                    Log.e("ImportExportController", "Помилка при експорті рецептів", throwable);
+                                                }
 
-                                            @Override
-                                            public void onError(Throwable throwable) {
-                                                Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
-                                                Log.e("ImportExportController", "Помилка при експорті рецептів", throwable);
-                                            }
+                                                @Override
+                                                public void getDisposable(Disposable disposable) {
 
-                                            @Override
-                                            public void getDisposable(Disposable disposable) {
-
-                                            }
-                                        });
-                                    })
-                                    .setNegativeButton(getString(R.string.no), null).show();
-                        } else {
-                            Toast.makeText(this, getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
-                            Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
+                                                }
+                                            });
+                                        })
+                                        .setNegativeButton(getString(R.string.no), null).show();
+                            } else {
+                                Toast.makeText(this, getString(R.string.error_void_dish), Toast.LENGTH_SHORT).show();
+                                Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
+                            }
+                        },
+                        throwable -> {
+                            Log.d("ImportExportController", "Помилка отримання страв та інгредієнтів");
                         }
-                    },
-                    throwable -> {
-                        Log.d("ImportExportController", "Помилка отримання страв та інгредієнтів");
-                    }
-            );
+                    );
 
             compositeDisposable.add(disposable);
         });
@@ -381,7 +375,7 @@ public class MainActivity extends FragmentActivity {
         img2.setOnClickListener(imageClickListener);
         img3.setOnClickListener(imageClickListener);
         img4.setOnClickListener(imageClickListener);
-        add_dish_button.setOnClickListener(imageClickListener);
+        img5.setOnClickListener(imageClickListener);
 
         Log.d("MainActivity", "Завантаження всіх слухачів активності");
     }
@@ -455,11 +449,6 @@ public class MainActivity extends FragmentActivity {
         scale.start();
     }
 
-    private void onAddDishClick(){
-        Intent intent = new Intent(this, AddDishActivity.class);
-        startActivity(intent);
-    }
-
     private void initialDB() {
         Disposable disposable = utils.getAllCollections()
                 .subscribeOn(Schedulers.io())
@@ -468,7 +457,7 @@ public class MainActivity extends FragmentActivity {
                     if (collections.isEmpty()) {
                         ArrayList<String> names = utils.getAllNameSystemCollection();
                         Disposable disposable1 = Observable.fromIterable(names)
-                                .concatMap(name -> utils.addCollection(new Collection(name))
+                                .concatMap(name -> utils.addCollection(new Collection(name, Config.COLLECTION_TYPE))
                                         .subscribeOn(Schedulers.io())
                                         .toObservable()
                                         .onErrorComplete()

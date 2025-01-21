@@ -7,11 +7,12 @@
     android:orientation="horizontal"
     android:paddingBottom="10dp">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/collection_imageView_checkItem"
         android:layout_width="45dp"
         android:layout_height="45dp"
-        android:src="?attr/iconBook"
+        android:src="@drawable/icon_book"
+        app:tint="?attr/colorControlNormal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

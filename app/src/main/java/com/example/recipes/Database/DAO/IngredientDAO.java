@@ -44,6 +44,9 @@ public interface IngredientDAO {
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
     Single<List<Ingredient>> getAllIngredientsByIdDish(long id_dish);
 
+    @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
+    Single<List<String>> getNameIngredientsUnique();
+
     @Query("SELECT DISTINCT * FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
     Single<List<Ingredient>> getAllIngredientsNameOrdered();
 

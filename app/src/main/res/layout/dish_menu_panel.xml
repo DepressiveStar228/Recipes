@@ -48,12 +48,13 @@
         app:layout_constraintTop_toBottomOf="@+id/setting_dish_add_to_collection">
 
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageView"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_weight="1"
-            android:src="?attr/iconEdit" />
+            android:src="@drawable/icon_edit"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -83,12 +84,13 @@
         app:layout_constraintTop_toBottomOf="@+id/setting_dish_share">
 
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageView3"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_weight="1"
-            android:src="?attr/iconDelete" />
+            android:src="@drawable/icon_delete"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -118,12 +120,13 @@
         app:layout_constraintTop_toBottomOf="@+id/setting_dish_edit">
 
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageView6"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_weight="1"
-            android:src="?attr/iconClipboard" />
+            android:src="@drawable/icon_copy"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -153,12 +156,13 @@
         app:layout_constraintTop_toBottomOf="@+id/setting_dish_copy_as_text">
 
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageView4"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_weight="1"
-            android:src="?attr/iconShare" />
+            android:src="@drawable/icon_share"
+            app:tint="?attr/colorControlNormal"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -188,12 +192,13 @@
         app:layout_constraintTop_toBottomOf="@+id/optionNameContainer">
 
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageView5"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_weight="1"
-            android:src="?attr/iconBook" />
+            android:src="@drawable/icon_book"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:layout_width="wrap_content"

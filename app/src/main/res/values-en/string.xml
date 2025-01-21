@@ -66,6 +66,7 @@
         <item>tbsp</item>
         <item>pinch</item>
         <item>cup</item>
+        <item>taste</item>
         <item> </item>
     </string-array>
     <string-array name="theme_options">
@@ -123,8 +124,8 @@
     <string name="successful_add_collection">Collection successfully added</string>
     <string name="hint_text_edit_collection">Enter a new name for the collection</string>
     <string name="successful_edit_collection">Collection successfully edited</string>
-    <string name="add_collection_dialog">Add collection</string>
-    <string name="edit_collection_dialog">Edit collection</string>
+    <string name="add_collection">Add collection</string>
+    <string name="edit_collection">Edit collection</string>
     <string name="warning_dublicate_name_collection">A collection with this name already exists</string>
     <string name="add_in_collection">Add to collection</string>
     <string name="dish_dublicate_in_collection">The dish is already in collection 111</string>
@@ -132,7 +133,7 @@
     <string name="error_edit_collection">Error updating collection</string>
     <string name="successful_delete_ingredient">Ingredient successfully deleted</string>
     <string name="error_empty_collection">Error. This collection is empty</string>
-    <string name="clear_collection">Clear the collection</string>
+    <string name="clear">Clear</string>
     <string name="warning_clear_collection">Are you sure you want to clear the collection? The dishes will not be removed completely. The collection will simply become empty</string>
     <string name="confirm_clear_collection">Confirm to clear the collection</string>
     <string name="successful_add_dish_in_collection">Dish successfully added to collection(s)</string>
@@ -161,4 +162,37 @@
     <string name="error_void_dishes">Error. The list dishes is empty.</string>
     <string name="error_get_dishes_by_db">Error retrieving dish list from database.</string>
     <string name="error_get_ingredients_by_db">Error retrieving the ingredients for the selected dish from the database.</string>
+    <string name="remove">Remove</string>
+    <string name="confirm_remove_dish">Confirm remove</string>
+    <string name="warning_remove_dish">Are you sure you want to remove the dish from the collection? The dish will not be completely removed, only from the collection.</string>
+    <string name="successful_remove_collerction">The dish was successfully removed.</string>
+    <string name="filters">Filters</string>
+    <string name="sort">Sort</string>
+    <string name="type_sort">Type sort</string>
+    <string name="type_filtrers">Type filters</string>
+    <string name="ascending_alphabetical_alphabet">Ascending Alphabetical Order</string>
+    <string name="descending_alphabetical_alphabet">Descending Alphabetical Order</string>
+    <string name="apply">Apply</string>
+    <string name="ordered_new">Newest</string>
+    <string name="ordered_old">Oldest</string>
+    <string name="alphabet">Alphabet</string>
+    <string name="time">Time</string>
+    <string name="reset">Reset</string>
+    <string name="your_ingredients">Your ingredients</string>
+    <string name="close">Close</string>
+    <string name="empty_names_ingredient">You have no ingredients to filter.</string>
+    <string name="ingredient_names_hints">Hints on the name of the ingredients</string>
+    <string name="your_shopLists">Your shopping lists</string>
+    <string name="all_shop_lists_text">All shop lists:</string>
+    <string name="hint_text_add_ing_shop_list">Enter the ingredient name</string>
+    <string name="confirm_add_new_shop_list">Confirm creation of new list</string>
+    <string name="list">List</string>
+    <string name="empty_data">No data</string>
+    <string name="edit_shop_list">Edit shopping list</string>
+    <string name="add_shop_list">Add shopping list</string>
+    <string name="successful_clear_shop_list">List successfully cleared</string>
+    <string name="successful_delete_shop_list">List successfully deleted</string>
+    <string name="warning_delete_shop_list">Are you sure you want to delete the shopping list?</string>
+    <string name="confirm_clear_shop_list">Confirm clearing the list</string>
+    <string name="warning_clear_shop_list">Are you sure you want to clear your shopping list? All items will be deleted.</string>
 </resources>

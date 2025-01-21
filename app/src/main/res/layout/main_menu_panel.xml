@@ -1,33 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_menu"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="5dp"
     android:background="@drawable/rounded_background_main_menu">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/main_home_hub"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_weight="1"
         android:background="@drawable/selector_item_main_menu"
-        android:src="?attr/iconHome" />
+        android:src="@drawable/icon_home"
+        app:tint="?attr/colorControlNormal" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/main_rand_hub"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_weight="1"
         android:background="@drawable/selector_item_main_menu"
-        android:src="?attr/iconRandom" />
+        android:src="@drawable/icon_game_cube"
+        app:tint="?attr/colorControlNormal" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/main_collections_hub"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_weight="1"
         android:background="@drawable/selector_item_main_menu"
-        android:src="?attr/iconBook" />
+        android:src="@drawable/icon_collections"
+        app:tint="?attr/colorControlNormal" />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/main_shopList_hub"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:background="@drawable/selector_item_main_menu"
+        android:src="@drawable/icon_shopping_cart"
+        android:tint="?attr/colorControlNormal" />
 </LinearLayout>

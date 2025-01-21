@@ -15,27 +15,39 @@ import java.util.Objects;
 
 public class PerferencesController {
     private SharedPreferences preferences;
-    public String language, theme, palette;
+    public final String language_key = "language";
+    public final String theme_key = "theme";
+    public final String palette_key = "palette";
+    private final String status_ing_hints_key = "ing_hints";
+    private String language, theme, palette;
+    private Boolean status_ing_hints;
     private Context context;
 
     public void loadPreferences(Context context){
         this.context = context;
         preferences = context.getSharedPreferences("setting", Context.MODE_PRIVATE);
-        language = preferences.getString("language", "uk");
-        theme = preferences.getString("theme", "Light");
-        palette = preferences.getString("palette", "Brown");
+        language = preferences.getString(language_key, "uk");
+        theme = preferences.getString(theme_key, "Light");
+        palette = preferences.getString(palette_key, "Brown");
+        status_ing_hints = preferences.getBoolean(status_ing_hints_key, true);
         setLocale(language);
         setAppTheme(theme, palette);
-        Log.d(getActivityName(context), "Загруженные настройки: язык - " + language + ", тема - " + theme + ", палитра - " + palette);
+        Log.d(getActivityName(context), "Завантаження налаштувань: мова - " + language + ", тема - " + theme + ", палітра - " + palette);
     }
 
     public void savePreferences(String language, String theme, String palette) {
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("language", language);
-        editor.putString("theme", theme);
-        editor.putString("palette", palette);
+        editor.putString(language_key, language);
+        editor.putString(theme_key, theme);
+        editor.putString(palette_key, palette);
         editor.apply();
-        Log.d(getActivityName(context), "Сохранение настроек: язык - " + language + ", тема - " + theme + ", палитра - " + palette);
+        Log.d(getActivityName(context), "Збереження налаштувань: мова - " + language + ", тема - " + theme + ", палітра - " + palette);
+    }
+
+    public void savePreferences(Boolean status_ing_hints) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(status_ing_hints_key, status_ing_hints).apply();
+        Log.d(getActivityName(context), "Збереження налаштувань: статус підказок назв інгредієнтів - " + status_ing_hints);
     }
 
     public void setLocale(String lang) {
@@ -44,7 +56,7 @@ public class PerferencesController {
         Configuration config = new Configuration();
         config.setLocale(locale);
         context.getResources().updateConfiguration(config, context.getResources().getDisplayMetrics());
-        Log.d(getActivityName(context), "Смена языка");
+        Log.d(getActivityName(context), "Зміна мови");
     }
 
     public void setAppTheme(String theme, String palette) {
@@ -134,6 +146,22 @@ public class PerferencesController {
         config.setLocale(new Locale(locate));
         Resources localizedResources = context.createConfigurationContext(config).getResources();
         return localizedResources.getStringArray(resId);
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public String getTheme() {
+        return theme;
+    }
+
+    public String getPalette() {
+        return palette;
+    }
+
+    public Boolean getStatus_ing_hints() {
+        return status_ing_hints;
     }
 
     private String getActivityName(Context context) {

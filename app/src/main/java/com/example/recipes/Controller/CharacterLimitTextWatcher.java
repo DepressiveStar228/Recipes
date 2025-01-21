@@ -42,7 +42,7 @@ public class CharacterLimitTextWatcher implements TextWatcher {
             editText.setSelection(maxCharacters);
             editText.addTextChangedListener(this);
         } else if (flagLimit && s.length() <= maxCharacters) {
-            editText.setBackgroundTintList(getColorFromAttr(context, com.google.android.material.R.attr.colorControlNormal));
+            editText.setBackgroundTintList(getColorFromAttr(context, R.attr.colorHintText));
             flagLimit = false;
         }
     }

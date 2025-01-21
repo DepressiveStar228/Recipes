@@ -30,7 +30,7 @@ public class ChatGPTTranslate {
         OkHttpClient client = new OkHttpClient();
         PerferencesController perferencesController = new PerferencesController();
         perferencesController.loadPreferences(context);
-        String lang = perferencesController.language;
+        String lang = perferencesController.getLanguage();
         String[] langArray = context.getResources().getStringArray(R.array.language_options);
         String[] langValArray = context.getResources().getStringArray(R.array.language_values);
         int index = Arrays.asList(langValArray).indexOf(lang);

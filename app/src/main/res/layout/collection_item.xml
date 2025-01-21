@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
-        android:background="@drawable/border"
+        android:background="@drawable/border_day_night"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,13 +26,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/collection_imageView"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:src="?attr/iconBook"
+                android:layout_marginStart="5dp"
+                android:src="@drawable/icon_book"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="?attr/colorControlNormal" />
 
             <TextView
                 android:id="@+id/collection_name"
@@ -46,11 +48,12 @@
                 app:layout_constraintStart_toEndOf="@+id/collection_imageView"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/menu_collection_imageView"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:src="?attr/iconMenu"
+                android:src="@drawable/icon_more"
+                app:tint="?attr/colorControlNormal"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

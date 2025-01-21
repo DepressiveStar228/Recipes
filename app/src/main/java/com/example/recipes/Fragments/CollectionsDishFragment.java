@@ -11,13 +11,15 @@ import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,15 +30,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Activity.EditDishActivity;
+import com.example.recipes.Activity.EditorDishActivity;
 import com.example.recipes.Activity.ReadDataDishActivity;
 import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
-import com.example.recipes.Adapter.AddDishesToCollectionAdapter;
+import com.example.recipes.Adapter.AddChooseObjectsAdapter;
 import com.example.recipes.Adapter.CollectionGetAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.ExportCallbackUri;
+import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Controller.ImportExportController;
+import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
@@ -46,21 +49,21 @@ import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class CollectionsDishFragment extends Fragment {
+public class CollectionsDishFragment extends Fragment implements OnBackPressedListener {
     private TextView counter_dishes;
     private PerferencesController perferencesController;
     private RecyclerView collectionsRecyclerView;
-    private Button addCollectionButton;
+    private ImageView addCollectionButton;
     private ArrayList<Collection> collections;
     private CollectionGetAdapter adapter;
     private String[] themeArray;
@@ -80,10 +83,15 @@ public class CollectionsDishFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.collections_activity, container, false);
+        View view =  inflater.inflate(R.layout.collections_page, container, false);
         loadItemsActivity(view);
         loadClickListeners();
         return view;
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        return true;
     }
 
     @Override
@@ -132,19 +140,19 @@ public class CollectionsDishFragment extends Fragment {
             @Override
             public void onDishClick(Dish dish, View v) {
                 Intent intent = new Intent(v.getContext(), ReadDataDishActivity.class);
-                intent.putExtra("dish_id", dish.getId());
+                intent.putExtra(Config.KEY_DISH, dish.getId());
                 v.getContext().startActivity(intent);
             }
 
             @Override
-            public void onDishMenuIconClick(Dish dish, View v) {
+            public void onDishMenuIconClick(Dish dish, Collection collection, View v) {
                 PopupMenu popupMenu = new PopupMenu(getContext(), v, Gravity.END);
                 popupMenu.getMenuInflater().inflate(R.menu.context_menu_dish, popupMenu.getMenu());
 
                 for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                     MenuItem item = popupMenu.getMenu().getItem(i);
                     SpannableString spannableString = new SpannableString(item.getTitle());
-                    if (!Objects.equals(perferencesController.theme, themeArray[0])) {
+                    if (!Objects.equals(perferencesController.getTheme(), themeArray[0])) {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.white)), 0, spannableString.length(), 0);
                     } else {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.black)), 0, spannableString.length(), 0);
@@ -155,6 +163,9 @@ public class CollectionsDishFragment extends Fragment {
                 popupMenu.setOnMenuItemClickListener(item -> {
                     if (item.getItemId() == R.id.action_edit_dish) {
                         handleEditDishAction(dish);
+                        return true;
+                    } else if (item.getItemId() == R.id.action_remove_dish) {
+                        handleRemoveDishAction(collection, dish);
                         return true;
                     } else if (item.getItemId() == R.id.action_delete_dish) {
                         handleDeleteDishAction(dish);
@@ -193,7 +204,7 @@ public class CollectionsDishFragment extends Fragment {
                 for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                     MenuItem item = popupMenu.getMenu().getItem(i);
                     SpannableString spannableString = new SpannableString(item.getTitle());
-                    if (!Objects.equals(perferencesController.theme, themeArray[0])) {
+                    if (!Objects.equals(perferencesController.getTheme(), themeArray[0])) {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.white)), 0, spannableString.length(), 0);
                     } else {
                         spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.black)), 0, spannableString.length(), 0);
@@ -254,7 +265,7 @@ public class CollectionsDishFragment extends Fragment {
     }
 
     public void updateCollections() {
-        Disposable disposable = utils.getAllCollections()
+        Disposable disposable = utils.getAllCollectionsByType(Config.COLLECTION_TYPE)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -279,7 +290,7 @@ public class CollectionsDishFragment extends Fragment {
         editText.setText(collection.getName());
         CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
         builder.setView(dialogView)
-                .setTitle(R.string.edit_collection_dialog)
+                .setTitle(R.string.edit_collection)
                 .setPositiveButton(R.string.edit, (dialog, which) -> {
                     String collectionName = editText.getText().toString().trim();
                     if (collectionName.isEmpty()) {
@@ -287,17 +298,38 @@ public class CollectionsDishFragment extends Fragment {
                     }
 
                     Disposable disposable = utils.getIdCollectionByName(collectionName)
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(id -> {
+                            .flatMap(id -> {
                                         if (id != -1) {
                                             Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
+                                            return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));
                                         } else {
-                                            editCollection(collection, collectionName);
+                                            collection.setName(collectionName);
+                                            return utils.updateCollection(collection).toSingleDefault(collection);
                                         }
                                     },
                                     throwable -> {
                                         Log.d("CollectionsDishFragment", "Помилка виконання запиту отримання айді колекції за ім'ям");
+                                        return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));
+                                    }
+                            )
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    updatedCollection -> {
+                                        Toast.makeText(getContext(), R.string.successful_edit_collection, Toast.LENGTH_SHORT).show();
+
+                                        int index = collections.indexOf(collection);
+                                        if (index != -1) {
+                                            collections.set(index, updatedCollection);
+                                            adapter.notifyItemChanged(index);
+                                        }
+                                    },
+                                    throwable -> {
+                                        if (throwable.getMessage() != null && throwable.getMessage().equals(getString(R.string.warning_dublicate_name_collection))) {
+                                            Toast.makeText(getContext(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(getContext(), R.string.error_edit_collection, Toast.LENGTH_SHORT).show();
+                                        }
                                     }
                             );
 
@@ -325,8 +357,10 @@ public class CollectionsDishFragment extends Fragment {
                                         adapter.delCollection(collection);
                                         updateCounterDishes();
                                         updateCollections();
+                                        Toast.makeText(getContext(), getContext().getString(R.string.successful_delete_collection), Toast.LENGTH_SHORT).show();
                                     },
                                     throwable -> {
+                                        Toast.makeText(getContext(), getContext().getString(R.string.error_delete_collection), Toast.LENGTH_SHORT).show();
                                         Log.e("CollectionsDishFragment", "Помилка видалення колекції: " + throwable.getMessage());
                                     });
 
@@ -347,7 +381,7 @@ public class CollectionsDishFragment extends Fragment {
                                 if (uri != null) {
                                     FileUtils.sendFileByUri(getContext(), uri);
                                     FileUtils.deleteFileByUri(getContext(), uri);
-                                    Toast.makeText(getContext(), getContext().getString(R.string.successful_export) + uri.toString(), Toast.LENGTH_LONG).show();
+                                    Toast.makeText(getContext(), getContext().getString(R.string.successful_export) + uri, Toast.LENGTH_LONG).show();
                                     Log.d("CollectionsDishFragment", "Рецепти успішно експортовані");
                                 }
                             }
@@ -401,7 +435,7 @@ public class CollectionsDishFragment extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
 
-        Disposable disposable = utils.getAllCollections()
+        Disposable disposable = utils.getAllCollectionsByType(Config.COLLECTION_TYPE)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -447,8 +481,10 @@ public class CollectionsDishFragment extends Fragment {
     private void handleAddDishesToCollectionAction(Collection collection) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_dishes_in_collection, null);
-        RecyclerView dishesRecyclerView = dialogView.findViewById(R.id.dishes_check_RecyclerView);
+        View dialogView = inflater.inflate(R.layout.dialog_choose_items, null);
+        TextView textView = dialogView.findViewById(R.id.textView22);
+        if (textView != null) { textView.setText(R.string.your_dish); }
+        RecyclerView dishesRecyclerView = dialogView.findViewById(R.id.items_check_RecyclerView);
         Disposable disposable = utils.getUnusedDishInCollection(collection)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -456,12 +492,23 @@ public class CollectionsDishFragment extends Fragment {
                 .doOnSuccess(unused_dishes -> Log.d("CollectionsDishFragment", "Fetched unused dishes: " + unused_dishes))
                 .doOnError(throwable -> Log.e("CollectionsDishFragment", "Error fetching unused dishes", throwable))
                 .subscribe(unused_dishes -> {
-                            AddDishesToCollectionAdapter adapter = new AddDishesToCollectionAdapter(getContext(), unused_dishes);
+                            AddChooseObjectsAdapter adapter = new AddChooseObjectsAdapter(getContext(), (ArrayList) unused_dishes, new AddChooseObjectsAdapter.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(CheckBox checkBox, ArrayList<Object> selectedItem, Object item) {
+                                    if (!checkBox.isChecked()) {
+                                        selectedItem.add(((Dish)item).getId());
+                                        checkBox.setChecked(true);
+                                    } else {
+                                        selectedItem.remove(((Dish)item).getId());
+                                        checkBox.setChecked(false);
+                                    }
+                                }
+                            });
                             dishesRecyclerView.setAdapter(adapter);
                             dishesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                             builder.setView(dialogView)
                                     .setPositiveButton(R.string.button_copy, (dialog, which) -> {
-                                        ArrayList<Long> selectedDishIds = adapter.getSelectedDishIds();
+                                        ArrayList<Object> selectedDishIds = adapter.getSelectedItem();
                                         if (!selectedDishIds.isEmpty()) {
                                             Disposable disposable1 = utils.getDishes(selectedDishIds)
                                                     .subscribeOn(Schedulers.io())
@@ -493,50 +540,6 @@ public class CollectionsDishFragment extends Fragment {
         compositeDisposable.add(disposable);
     }
 
-    private void addCollection(String name) {
-        Disposable disposable = utils.addCollection(new Collection(name))
-                .flatMap(status -> utils.getCollectionByName(name))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(collection -> {
-                            if (collection != null) {
-                                adapter.addCollection(collection);
-                                collectionsRecyclerView.scrollToPosition(collections.size() - 1);
-                                Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
-                                Log.d("CollectionsDishFragment", "Колекція успішно створена");
-                            } else {
-                                Log.e("CollectionsDishFragment", "Помилка створення колекції");
-                            }
-                        },
-                        throwable -> {
-                            Log.d("CollectionsDishFragment", "Помилка отримання колекції за ім'ям");
-                        }
-                );
-
-        compositeDisposable.add(disposable);
-    }
-
-
-    private void editCollection(Collection collection, String name) {
-        Collection newCollection = new Collection(name, collection.getDishes());
-
-        int index = collections.indexOf(collection);
-        if (index != -1) {
-            collections.set(index, newCollection);
-        }
-        adapter.notifyDataSetChanged();
-
-        Disposable disposable = utils.updateCollection(newCollection)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        () -> {Toast.makeText(getContext(), R.string.successful_edit_collection, Toast.LENGTH_SHORT).show();},
-                        throwable -> {Toast.makeText(getContext(), R.string.error_edit_collection, Toast.LENGTH_SHORT).show();}
-                );
-
-        compositeDisposable.add(disposable);
-    }
-
     private void showAddCollectionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
@@ -545,27 +548,63 @@ public class CollectionsDishFragment extends Fragment {
         CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Config.CHAR_LIMIT_NAME_COLLECTION);
 
         builder.setView(dialogView)
-                .setTitle(R.string.add_collection_dialog)
+                .setTitle(R.string.add_collection)
                 .setPositiveButton(R.string.button_add, (dialog, which) -> {
                     String collectionName = editText.getText().toString().trim();
                     if (collectionName.isEmpty()) {
                         Toast.makeText(getContext(), R.string.error_empty_name, Toast.LENGTH_SHORT).show();
                     } else {
                         Disposable disposable = utils.getIdCollectionByName(collectionName)
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        id -> {
+                                .flatMap(id -> {
                                             if (id != -1) {
                                                 Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
+                                                return Single.just(null);
                                             } else {
-                                                addCollection(collectionName);
+                                                return Single.just(collectionName);
                                             }
                                         },
                                         throwable -> {
                                             Log.d("CollectionsDishFragment", "Помилка отримання айді колекції за ім'ям");
+                                            return Single.just(null);
+                                        }
+                                )
+                                .flatMap(name -> {
+                                    if (name != null) {
+                                        return utils.addCollection(new Collection(name, Config.COLLECTION_TYPE))
+                                                .map(result -> new Pair<>(result, name));
+                                    } else {
+                                        return Single.just(new Pair<>(false, name));
+                                    }
+                                })
+                                .flatMap(pair -> {
+                                    if (pair.first) {
+                                        Single<Collection> collectionSingle = utils.getCollectionByName(pair.second);
+                                        if (collectionSingle == null) {
+                                            return Single.just(new Collection("", Config.COLLECTION_TYPE, new ArrayList<>()));
+                                        } else {
+                                            return collectionSingle;
+                                        }
+                                    } else {
+                                        return Single.just(new Collection("", Config.COLLECTION_TYPE, new ArrayList<>()));
+                                    }
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(collection -> {
+                                            if (collection != null && collection.getId() != -1) {
+                                                adapter.addCollection(collection);
+                                                collectionsRecyclerView.scrollToPosition(collections.size() - 1);
+                                                Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
+                                                Log.d("CollectionsDishFragment", "Колекція успішно створена");
+                                            } else {
+                                                Log.e("CollectionsDishFragment", "Помилка створення колекції");
+                                            }
+                                        },
+                                        throwable -> {
+                                            Log.d("CollectionsDishFragment", "Помилка отримання колекції за ім'ям");
                                         }
                                 );
+
                         compositeDisposable.add(disposable);
                     }
                 })
@@ -575,10 +614,41 @@ public class CollectionsDishFragment extends Fragment {
     }
 
     private void handleEditDishAction(Dish dish) {
-        Intent intent = new Intent(getContext(), EditDishActivity.class);
-        intent.putExtra("dish_id", dish.getId());
+        Intent intent = new Intent(getContext(), EditorDishActivity.class);
+        intent.putExtra(Config.KEY_DISH, dish.getId());
         startActivity(intent);
         updateCollectionRecyclerView();
+    }
+
+    private void handleRemoveDishAction(Collection collection, Dish dish) {
+        new AlertDialog.Builder(getContext())
+                .setTitle(getString(R.string.confirm_remove_dish))
+                .setMessage(getString(R.string.warning_remove_dish))
+                .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
+                    Disposable disposable = utils.getDishCollection(dish.getId(), collection.getId())
+                            .flatMapCompletable(dish_collection -> {
+                                if (dish_collection.getId_dish() == 0 || dish_collection.getId_collection() == 0) {
+                                    return Completable.error(new Throwable("Error. Dish_collection was not found"));
+                                } else {
+                                    return utils.deleteDishCollection(dish_collection);
+                                }
+                            })
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    () -> {
+                                        updateCollections();
+                                        Toast.makeText(getContext(), R.string.successful_remove_collerction, Toast.LENGTH_SHORT).show();
+                                        Log.d("CollectionsDishFragment", "Страва успішно прибрана з колекції");
+                                    },
+                                    throwable -> {
+                                        Log.e("CollectionsDishFragment", "Помилка прибирання страви з колекції", throwable);
+                                    }
+                            );
+
+                    compositeDisposable.add(disposable);
+                })
+                .setNegativeButton(getString(R.string.no), null).show();
     }
 
     private void handleDeleteDishAction(Dish dish) {
