@@ -6,26 +6,27 @@ import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.SearchController;
+import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 
@@ -43,21 +44,23 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdapter.IngredientViewHolder> {
     private Context context;
+    private ConstraintLayout empty;
     private ArrayList<Ingredient> ingredients;
     private ArrayList<String> allNameIngredients;
     private RecyclerView recyclerView;
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
-    private PerferencesController perferencesController;
+    private PreferencesController preferencesController;
     private int currentFocusedPosition = RecyclerView.NO_POSITION;
 
-    public IngredientSetAdapter(Context context, ArrayList<String> allNameIngredients, RecyclerView recyclerView) {
+    public IngredientSetAdapter(Context context, ConstraintLayout empty, RecyclerView recyclerView) {
         this.context = context;
         this.recyclerView = recyclerView;
-        this.allNameIngredients = allNameIngredients;
+        this.empty = empty;
         this.ingredients = new ArrayList<>();
-        this.perferencesController = new PerferencesController();
-        perferencesController.loadPreferences(context);
+        this.allNameIngredients = new ArrayList<>();
+        this.preferencesController = new PreferencesController();
+        preferencesController.loadPreferences(context);
     }
 
     @NonNull
@@ -86,10 +89,29 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         }
     }
 
+    public void setNamesIngredient(ArrayList<String> names) {
+        allNameIngredients.clear();
+        allNameIngredients.addAll(names);
+        notifyDataSetChanged();
+    }
+
+    public void setIngredients(ArrayList<Ingredient> ingredients) {
+        if ((ingredients.size() + this.ingredients.size()) < Config.COUNT_LIMIT_INGREDIENT) {
+            this.ingredients.clear();
+            this.ingredients.addAll(ingredients);
+            notifyDataSetChanged();
+            checkEmpty();
+        } else {
+            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
+            Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
+        }
+    }
+
     public void addIngredient(Ingredient ingredient) {
         if (ingredients.size() < Config.COUNT_LIMIT_INGREDIENT) {
             ingredients.add(ingredient);
             notifyItemInserted(ingredients.size() - 1);
+            checkEmpty();
         } else {
             Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
             Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
@@ -99,10 +121,15 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
     public void delIngredient(int position) {
         ingredients.remove(position);
         notifyItemRemoved(position);
+        checkEmpty();
     }
 
     public ArrayList<Ingredient> getIngredients() {
         return ingredients;
+    }
+
+    public int getPositionItem(Ingredient ingredient) {
+        return ingredients.indexOf(ingredient);
     }
 
     public void updateIngredients() {
@@ -115,6 +142,14 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 ingredient.setType(holder.spinnerTypeIngredient.getSelectedItem().toString());
             }
         }
+        checkEmpty();
+    }
+
+    private void checkEmpty() {
+        if (empty != null) {
+            if (ingredients.isEmpty()) empty.setVisibility(View.VISIBLE);
+            else empty.setVisibility(View.GONE);
+        }
     }
 
     class IngredientViewHolder extends RecyclerView.ViewHolder {
@@ -126,7 +161,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         RecyclerView popupRecyclerView;
         SearchController searchController;
         Disposable disposable;
-        PerferencesController controller;
+        PreferencesController controller;
         boolean accessShowPopup = false, isTouch = false;
 
         IngredientViewHolder(@NonNull View itemView) {
@@ -139,7 +174,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Config.CHAR_LIMIT_NAME_INGREDIENT);
             CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, Config.CHAR_LIMIT_AMOUNT_INGREDIENT);
 
-            controller = new PerferencesController();
+            controller = new PreferencesController();
             controller.loadPreferences(context);
 
             ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(context, android.R.layout.simple_spinner_item, Arrays.asList(context.getResources().getStringArray(R.array.options_array)));
@@ -147,13 +182,14 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             spinnerTypeIngredient.setAdapter(languageAdapter);
 
             popupRecyclerView = new RecyclerView(context);
-            searchController = new SearchController(context, new ArrayList<>(allNameIngredients), nameIngredientEditText, popupRecyclerView, (view, item) -> {
+            searchController = new SearchController(context, nameIngredientEditText, popupRecyclerView, (view, item) -> {
                 accessShowPopup = false;
                 nameIngredientEditText.setText(item.toString());
                 hidePopup();
             });
+            searchController.setArrayData(new ArrayList<>(allNameIngredients));
             popupWindow = new PopupWindow(searchController.getRecyclerView(), ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-            if (Objects.equals(perferencesController.getThemeNameBySpinner(perferencesController.getIndexTheme()), "Dark")) {
+            if (Objects.equals(preferencesController.getThemeNameBySpinner(preferencesController.getIndexTheme()), "Dark")) {
                 popupWindow.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
             } else {
                 popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));

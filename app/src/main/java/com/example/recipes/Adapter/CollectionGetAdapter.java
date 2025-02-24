@@ -10,31 +10,33 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdapter.ViewHolder>{
+public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetAdapter.ViewHolder> {
     private final Context context;
     private static String[] themeArray;
-    private ArrayList<Collection> collections;
-    private PerferencesController perferencesController;
+    private PreferencesController preferencesController;
     private CollectionClickListener collectionClickListener;
 
-    public CollectionGetAdapter(Context context, ArrayList<Collection> collections, CollectionClickListener clickListener) {
+    public CollectionGetAdapter(Context context, CollectionClickListener clickListener) {
+        super(DIFF_CALLBACK);
         this.context = context;
-        this.collections = collections;
         this.collectionClickListener = clickListener;
-        perferencesController = new PerferencesController();
-        perferencesController.loadPreferences(context);
-        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options, "en");
+        preferencesController = new PreferencesController();
+        preferencesController.loadPreferences(context);
+        themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
     }
 
     @NonNull
@@ -46,45 +48,40 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Collection collection = collections.get(position);
+        int currentPosition = holder.getBindingAdapterPosition();
+        if (currentPosition == RecyclerView.NO_POSITION) return;
+        Collection collection = getItem(currentPosition);
+
         holder.collection_name.setText(collection.getName());
 
         if (Objects.equals(collection.getName(), context.getString(R.string.favorites))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.my_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_a));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.gpt_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_neurology));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.import_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_download));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         }
 
-        ArrayList<Dish> dishes = new ArrayList<>();
-        int counter_dishes = 0;
-
-        try {
-            dishes = collection.getDishes();
-            counter_dishes = dishes.size();
-        } catch (Exception e) {
-            Log.e("CollectionGetAdapter", "Адаптер не зміг рахувати страви колекції");
-        }
+        int counter_dishes = collection.getDishes().size();
 
         holder.counter_dishes.setText(String.valueOf(counter_dishes));
         holder.collection_name.setPadding(0,0,countDigits(counter_dishes),0);
@@ -100,35 +97,32 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
                 collectionClickListener.onCollectionClick(collection, holder.childRecyclerView);
             }
         });
-
-        ChildItemAdapter childItemAdapter = new ChildItemAdapter(context, collection, dishes, collectionClickListener);
-        holder.childRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-        holder.childRecyclerView.setAdapter(childItemAdapter);
     }
 
-    @Override
-    public int getItemCount() {
-        return collections.size();
-    }
-
-    public void addCollection(Collection collection) {
-        collections.add(collection);
-        notifyItemInserted(collections.size() - 1);
-        Log.d("CollectionGetAdapter", "Адаптер додав колекцію");
-    }
-
-    public void delCollection(Collection collection) {
-        int position = collections.indexOf(collection);
-        if (position != -1) {
-            collections.remove(position);
-            notifyItemRemoved(position);
-            Log.d("CollectionGetAdapter", "Адаптер видалив колекцію");
+    public void setItems(ArrayList<Collection> newItems) {
+        ArrayList<Collection> newList = new ArrayList<>(newItems.size());
+        for (Collection item : newItems) {
+            newList.add(new Collection(item));
         }
+
+        submitList(newList);
+        notifyDataSetChanged();
     }
 
-    public void updateCollection(ArrayList<Collection> collections) {
-        this.collections = collections;
-    }
+    public static final DiffUtil.ItemCallback<Collection> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<Collection>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull Collection oldItem, @NonNull Collection newItem) {
+                    boolean box = oldItem.getId() == newItem.getId();
+                    return box;
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull Collection oldItem, @NonNull Collection newItem) {
+                    boolean box = oldItem.equals(newItem);
+                    return box;
+                }
+            };
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView collection_img, menu_img;
@@ -151,67 +145,6 @@ public class CollectionGetAdapter extends RecyclerView.Adapter<CollectionGetAdap
 
     public interface CollectionClickListener {
         void onCollectionClick(Collection collection, RecyclerView childRecyclerView);
-        void onDishClick(Dish item, View v);
         void onMenuIconClick(Collection collection, View anchorView);
-        void onDishMenuIconClick(Dish item, Collection collection, View v);
-    }
-
-    class ChildItemAdapter extends RecyclerView.Adapter<ChildItemAdapter.ViewHolder> {
-        private final Context context;
-        private final Collection collection;
-        private final ArrayList<Dish> dishes;
-        private final CollectionGetAdapter.CollectionClickListener commandClickListener;
-
-        public ChildItemAdapter(Context context, Collection collection, ArrayList<Dish> dishes, CollectionGetAdapter.CollectionClickListener clickListener) {
-            this.context = context;
-            this.collection = collection;
-            this.dishes = dishes;
-            this.commandClickListener = clickListener;
-        }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dish_item, parent, false);
-            return new ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Dish dish = dishes.get(position);
-            holder.child_item_name.setText(dish.getName());
-            holder.child_item_image.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_more));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
-                holder.child_item_image.setColorFilter(R.color.white);
-            }
-
-            holder.child_item_image.setOnClickListener(v -> {
-                if (collectionClickListener != null) {
-                    collectionClickListener.onDishMenuIconClick(dish, collection, holder.child_item_image);
-                }
-            });
-
-            holder.itemView.setOnClickListener(v -> {
-                if (commandClickListener != null) {
-                    commandClickListener.onDishClick(dish, v);
-                }
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return dishes.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            TextView child_item_name;
-            ImageView child_item_image;
-
-            ViewHolder(View itemView) {
-                super(itemView);
-                child_item_name = itemView.findViewById(R.id.dish_name);
-                child_item_image = itemView.findViewById(R.id.menu_dish_imageView);
-            }
-        }
     }
 }

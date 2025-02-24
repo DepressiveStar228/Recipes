@@ -36,23 +36,26 @@ public interface IngredientDAO {
     Completable delete(Ingredient ingredient);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + ID_DISH + " = :id_dish")
-    Maybe<Long> getIdByNameAndIdDish(String name, long id_dish);
+    Maybe<Long> getIDByNameAndIDDish(String name, long id_dish);
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    Single<List<Ingredient>> getAllIngredients();
+    Single<List<Ingredient>> getAll();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    Single<List<Ingredient>> getAllIngredientsByIdDish(long id_dish);
+    Single<List<Ingredient>> getAllByIDDish(long id_dish);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
+    LiveData<List<Ingredient>> getAllByIDDishLive(long id_dish);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
+    Maybe<Ingredient> getByID(long id);
 
     @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
-    Single<List<String>> getNameIngredientsUnique();
+    Single<List<String>> getNamesUnique();
 
-    @Query("SELECT DISTINCT * FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
-    Single<List<Ingredient>> getAllIngredientsNameOrdered();
-
-    @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
-    Single<List<Long>> getIdDishesByName(String name);
+    @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
+    LiveData<List<String>> getNamesUniqueLive();
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
-    Single<Integer> getIngredientCount();
+    Single<Integer> getCount();
 }

@@ -8,25 +8,26 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.recipes.Config;
 import com.example.recipes.R;
 
 import java.util.Locale;
 import java.util.Objects;
 
-public class PerferencesController {
+public class PreferencesController {
     private SharedPreferences preferences;
     public final String language_key = "language";
     public final String theme_key = "theme";
     public final String palette_key = "palette";
     private final String status_ing_hints_key = "ing_hints";
     private String language, theme, palette;
-    private Boolean status_ing_hints;
+    private Boolean status_ing_hints, tip_shop_list_buttons;
     private Context context;
 
     public void loadPreferences(Context context){
         this.context = context;
         preferences = context.getSharedPreferences("setting", Context.MODE_PRIVATE);
-        language = preferences.getString(language_key, "uk");
+        language = preferences.getString(language_key, "ua");
         theme = preferences.getString(theme_key, "Light");
         palette = preferences.getString(palette_key, "Brown");
         status_ing_hints = preferences.getBoolean(status_ing_hints_key, true);
@@ -97,6 +98,12 @@ public class PerferencesController {
         Log.d(getActivityName(context), "Поточний режим: " + AppCompatDelegate.getDefaultNightMode());
     }
 
+    public void useTip(String tip) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(tip, true).apply();
+        Log.d(getActivityName(context), "Підказка " + tip + " використана");
+    }
+
     public String getLanguageNameBySpinner(int position) {
         String[] langArray = context.getResources().getStringArray(R.array.language_values);
         return langArray[position];
@@ -108,6 +115,10 @@ public class PerferencesController {
     public String getPaletteNameBySpinner(int position) {
         String[] paletteArray = getStringArrayForLocale(R.array.palette_options, "en");
         return paletteArray[position];
+    }
+
+    public boolean getStatusUsedTip(String tip) {
+        return preferences.getBoolean(tip, false);
     }
 
     public int getIndexLanguage() {

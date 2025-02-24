@@ -1,5 +1,6 @@
 package com.example.recipes.Database.DAO;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -22,7 +23,7 @@ public interface DishDAO {
     String TABLE_NAME = "dish";
     String ID = "id";
     String NAME = "name";
-    String RECIPE = "recipe";
+    String PORTION = "portion";
     String TIMESTAMP = "timestamp";
 
     @Insert
@@ -35,23 +36,29 @@ public interface DishDAO {
     Completable delete(Dish dish);
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    Single<List<Dish>> getAllDishes();
+    Single<List<Dish>> getAll();
+
+    @Query("SELECT * FROM " + TABLE_NAME)
+    LiveData<List<Dish>> getAll_Live();
 
     @RawQuery(observedEntities = { Dish.class })
-    Single<List<Dish>> getDishesWithFiltersAndSorting(SimpleSQLiteQuery query);
-
-    @Query("SELECT " + NAME + " FROM " + TABLE_NAME)
-    Single<List<String>> getAllNameDishes();
+    Single<List<Dish>> getWithFiltersAndSorting(SimpleSQLiteQuery query);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id_dish")
-    Maybe<Dish> getDishById(long id_dish);
+    Maybe<Dish> getByID(long id_dish);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id_dish")
+    LiveData<Dish> getByIDLive(long id_dish);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name_dish")
-    Maybe<Long> getIdByName(String name_dish);
+    Maybe<Long> getIDByName(String name_dish);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :name_dish")
-    Maybe<Dish> getDishByName(String name_dish);
+    Maybe<Dish> getByName(String name_dish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
-    Single<Integer> getDishCount();
+    Single<Integer> getCount();
+
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
+    LiveData<Integer> getCountLive();
 }

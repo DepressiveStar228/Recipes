@@ -14,7 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
@@ -28,15 +28,15 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
     private static String[] themeArray;
     private static ArrayList<Collection> collections;
     private static ArrayList<Long> selectedCollectionIds = new ArrayList<>();
-    private static PerferencesController perferencesController;
+    private static PreferencesController preferencesController;
 
     public AddDishToCollectionsAdapter(Context context, ArrayList<Collection> collections) {
         this.context = context;
         this.collections = collections;
         utils = new RecipeUtils(context);
-        perferencesController = new PerferencesController();
-        perferencesController.loadPreferences(context);
-        themeArray = perferencesController.getStringArrayForLocale(R.array.theme_options, "en");
+        preferencesController = new PreferencesController();
+        preferencesController.loadPreferences(context);
+        themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
     }
 
     @NonNull
@@ -77,27 +77,27 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
     private static void setImage(CollectionViewHolder holder, Collection collection) {
         if (Objects.equals(collection.getName(), context.getString(R.string.favorites))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.my_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_a));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.gpt_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_neurology));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else if (Objects.equals(collection.getName(), context.getString(R.string.import_recipes))) {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_download));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         } else {
             holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
-            if (Objects.equals(perferencesController.getTheme(), themeArray[0])) {
+            if (Objects.equals(preferencesController.getTheme(), themeArray[0])) {
                 holder.collection_img.setColorFilter(R.color.white);
             }
         }

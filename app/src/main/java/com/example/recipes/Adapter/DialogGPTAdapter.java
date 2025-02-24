@@ -1,0 +1,82 @@
+package com.example.recipes.Adapter;
+
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.recipes.R;
+import com.example.recipes.ViewItem.DialogItemContainer;
+
+import java.util.ArrayList;
+
+public class DialogGPTAdapter extends RecyclerView.Adapter<DialogGPTAdapter.DialogGPTItemViewHolder> {
+    private ArrayList<DialogItemContainer> containers;
+    private AddDishListener listener;
+
+    public DialogGPTAdapter(AddDishListener listener) {
+        this.listener = listener;
+        this.containers = new ArrayList<>();
+    }
+
+    @NonNull
+    @Override
+    public DialogGPTItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dialog_item_container, parent, false);
+        return new DialogGPTAdapter.DialogGPTItemViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DialogGPTAdapter.DialogGPTItemViewHolder holder, int position) {
+        DialogItemContainer container = containers.get(position);
+        holder.role.setText(container.getRole_item());
+        holder.contentText.setText(container.getText_item());
+
+        if (container.isDishIsAdded()) holder.addDishButton.setImageResource(R.drawable.icon_check);
+        else holder.addDishButton.setImageResource(R.drawable.icon_add);
+
+        holder.addDishButton.setVisibility(container.getVisibilityAddButton());
+        holder.addDishButton.setOnClickListener(view -> {
+            if (!container.isDishIsAdded()) listener.addDishClick(container.getOriginalText(), position);
+        });
+    }
+
+    public void addContainer(DialogItemContainer container) {
+        containers.add(container);
+        notifyItemInserted(containers.size() - 1);
+    }
+
+    public void dishAdded(int position) {
+        if (position < containers.size()) {
+            containers.get(position).setDishIsAdded(true);
+            notifyItemChanged(position);
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return containers.size();
+    }
+
+    public static class DialogGPTItemViewHolder extends RecyclerView.ViewHolder {
+        TextView role, contentText;
+        AppCompatImageView addDishButton;
+
+        public DialogGPTItemViewHolder(@NonNull View itemView) {
+            super(itemView);
+            role = itemView.findViewById(R.id.roleItem);
+            contentText = itemView.findViewById(R.id.textItem);
+            addDishButton = itemView.findViewById(R.id.addDishButton);
+        }
+    }
+
+    public interface AddDishListener { void addDishClick(String text, int position); }
+}

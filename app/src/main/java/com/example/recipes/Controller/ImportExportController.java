@@ -3,6 +3,7 @@ package com.example.recipes.Controller;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import kotlin.Pair;
 
 public class ImportExportController {
     public static DataBox importRecipeDataToFile(Context context, File file) {
@@ -89,8 +89,8 @@ public class ImportExportController {
 
     public static void exportRecipeData(Context context, Collection collection, ExportCallbackUri callback) {
         RecipeUtils utils = new RecipeUtils(context);
-        Disposable disposable = utils.getDishesByCollection(collection.getId())
-                .flatMap(dishes -> utils.getListPairDishIng(dishes))
+        Disposable disposable = utils.ByCollection().getDishes(collection.getId())
+                .flatMap(utils::getListPairDishIng)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -146,7 +146,7 @@ public class ImportExportController {
         RecipeUtils utils = new RecipeUtils(context);
         DataBox box = new DataBox();
 
-        Disposable disposable = utils.getIngredients(dish.getId())
+        Disposable disposable = utils.ByIngredient().getAllByIDDish(dish.getId())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(

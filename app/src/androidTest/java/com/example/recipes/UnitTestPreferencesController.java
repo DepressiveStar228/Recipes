@@ -12,21 +12,20 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 
-import com.example.recipes.Controller.PerferencesController;
+import com.example.recipes.Controller.PreferencesController;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class UnitTestPerferencesController {
+public class UnitTestPreferencesController {
     @Mock Context mockContext;
     @Mock SharedPreferences mockSharedPreferences;
     @Mock SharedPreferences.Editor mockEditor;
     @Mock Resources mockResources;
 
-    private PerferencesController controller;
+    private PreferencesController controller;
 
     @Before
     public void setUp() {
@@ -40,7 +39,7 @@ public class UnitTestPerferencesController {
         when(mockResources.getStringArray(R.array.theme_options)).thenReturn(new String[]{"Light", "Dark"});
         when(mockResources.getStringArray(R.array.palette_options)).thenReturn(new String[]{"Brown", "Blue", "Green", "Purple"});
 
-        controller = new PerferencesController();
+        controller = new PreferencesController();
     }
 
     @Test

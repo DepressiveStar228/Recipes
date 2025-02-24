@@ -13,6 +13,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.recipes.Config;
 import com.example.recipes.Controller.DataControllerForAdapter;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
@@ -51,7 +52,7 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
 
         utils.ByIngredientShopList()
                 .getViewModel()
-                .getBoughtIngredientShopListCountByIdCollection(collection.getId())
+                .getBoughtCountByIdCollection(collection.getId())
                 .observe(lifecycleOwner, data -> {
                     if (data != null) {
                         holder.boughtItem.setText(data.toString());
@@ -61,7 +62,7 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
 
         utils.ByIngredientShopList()
                 .getViewModel()
-                .getIngredientShopListCountByIdCollection(collection.getId())
+                .getCountByIdCollection(collection.getId())
                 .observe(lifecycleOwner, data -> {
                             if (data != null) {
                                 holder.allItem.setText(data.toString());
@@ -110,23 +111,13 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
 
     @Override
     public void addItems(RecyclerView recyclerView, ArrayList<Collection> items) {
-        collections.addAll(0, items);
-        int position = 0;
-        notifyItemInserted(position);
-
-        recyclerView.postDelayed(() -> {
-            RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
-            if (holder != null) {
-                holder.itemView.setAlpha(0f);
-                holder.itemView.animate()
-                        .alpha(1f)
-                        .setDuration(250)
-                        .start();
+        if (items.size() + collections.size() > Config.COUNT_LIMIT_SHOP_LIST) {
+            for (Collection collection : items) {
+                addItem(recyclerView, collection);
             }
-            checkEmptyList();
-        }, 50);
 
-        Log.d("ShopListGetAdapter", "Адаптер додав колекцію");
+            Log.d("ShopListGetAdapter", "Адаптер додав колекцію");
+        }
     }
 
     @Override
@@ -146,7 +137,6 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
                             Log.d("ShopListGetAdapter", "Адаптер видалив колекцію");
                         })
                         .start();
-                Log.d("ShopListGetAdapter", "Адаптер видалив колекцію");
             }
         }
     }

@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
@@ -27,7 +29,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -36,18 +37,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.recipes.Activity.EditorDishActivity;
-import com.example.recipes.Activity.ReadDataDishActivity;
+import com.example.recipes.Activity.GPTActivity;
 import com.example.recipes.Adapter.AddChooseObjectsAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
+import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Interface.OnBackPressedListener;
-import com.example.recipes.Controller.PerferencesController;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
@@ -56,33 +58,33 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class SearchDishFragment extends Fragment implements OnBackPressedListener {
     private EditText searchEditText;
-    private ArrayList<Object> dishes;
+    private PreferencesController preferencesController;
     private ArrayList<Object> ingredients;
     private RecyclerView searchResultsRecyclerView;
-    private AddChooseObjectsAdapter addChooseObjectsAdapter;
     private Button filtersButton, sortButton;
     private TextView head_textView;
-    private ConstraintLayout mainLayout, mainArea;
-    private GPTFragment childFragment;
-    private FrameLayout gptFragment;
+    private ConstraintLayout mainLayout, gptFragment;
     private RecipeUtils utils;
     private CompositeDisposable compositeDisposable;
     private ImageView add_dish_button;
     private ArrayList<Boolean> sortStatus;
-    private SearchController searchControllerFilters;
-    private boolean flagOpenGPTContainer = false, flagOpenSearch = false, flagUseAnimSearch = true;
+    private final int durationAnimation = 200;
+    private AtomicBoolean flagAccessAnimation = new AtomicBoolean(true);
+    private boolean flagOpenSearch = false;
 
-    private SearchController searchController;
+    private SearchController searchControllerForDish;
+    private SearchController searchControllerForFiltersIngredient;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
         preferences.edit().remove("scroll_position").apply();
-        PerferencesController perferencesController = new PerferencesController();
-        perferencesController.loadPreferences(getContext());
+        preferencesController = new PreferencesController();
+        preferencesController.loadPreferences(getContext());
         utils = new RecipeUtils(getContext());
         sortStatus = new ArrayList<>();
+        ingredients = new ArrayList<>();
         sortStatus.add(true);
         sortStatus.add(null);
         compositeDisposable = new CompositeDisposable();
@@ -93,29 +95,12 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         View view = inflater.inflate(R.layout.search_page, container, false);
         loadItemsActivity(view);
         loadClickListeners();
-
-        if (savedInstanceState == null) {
-            try {
-                childFragment = new GPTFragment();
-                getChildFragmentManager().beginTransaction()
-                        .replace(R.id.fragmen_GPT_container, childFragment)
-                        .commit();
-                Log.d("SearchDishFragment", "Фрагмент GPT успішно вставлено.");
-            } catch (Exception e) {
-                Log.e("SearchDishFragment", "Не вдалося вставити фрагмент GPT.");
-            }
-        }
-
         return view;
     }
 
     @Override
     public boolean onBackPressed() {
-        if (flagOpenGPTContainer) {
-            flagOpenGPTContainer = false;
-            childFragment.closeGPTContainer();
-            return false;
-        } else if (flagOpenSearch) {
+        if (flagOpenSearch && searchEditText != null) {
             searchEditText.clearFocus();
             hideRecyclerView();
             hideSort();
@@ -154,16 +139,22 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private void loadItemsActivity(View view){
         mainLayout = view.findViewById(R.id.mainLayout);
         ConstraintLayout linearLayout = view.findViewById(R.id.search_LinearLayout);
-        gptFragment = view.findViewById(R.id.fragmen_GPT_container);
+        gptFragment = view.findViewById(R.id.gpt_container);
+        if (gptFragment != null) gptFragment.setOnClickListener(view1 -> onGPTClick());
 
         searchEditText = linearLayout.findViewById(R.id.search_edit_text_my_dish);
 
         head_textView = view.findViewById(R.id.head_textView);
         searchResultsRecyclerView = view.findViewById(R.id.searchResultsRecyclerView_my_dish);
+        if (searchResultsRecyclerView != null) {
+            setSearchController();
+        }
+
         sortButton = view.findViewById(R.id.sort_search_button);
         filtersButton = view.findViewById(R.id.filters_search_button);
 
         add_dish_button = mainLayout.findViewById(R.id.add_dish);
+
         Log.d("SearchDishFragment", "Об'єкти фрагмента успішно завантажені.");
     }
 
@@ -171,281 +162,119 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private void loadClickListeners(){
         CharacterLimitTextWatcher.setCharacterLimit(getContext(), searchEditText, Config.CHAR_LIMIT_NAME_DISH);
 
-        searchEditText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (flagUseAnimSearch) {
-                    hideHeadText();
-                    showRecyclerView();
-                    showSort();
-                    showFilters();
-                    flagOpenSearch = true;
+        if (searchEditText != null) {
+            searchEditText.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    if (flagAccessAnimation.get()) {
+                        flagAccessAnimation.set(false);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            flagAccessAnimation.set(true);
+                        }, durationAnimation);
+
+                        hideHeadText();
+                        showRecyclerView();
+                        showSort();
+                        showFilters();
+                        flagOpenSearch = true;
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        mainLayout.setOnTouchListener((v, event) -> {
-            int[] location = new int[2];
-            gptFragment.getLocationOnScreen(location);
-            int x = location[0];
-            int y = location[1];
-            int w = gptFragment.getWidth();
-            int h = gptFragment.getHeight();
+        if (mainLayout != null) {
+            mainLayout.setOnTouchListener((v, event) -> {
+                int[] location = new int[2];
 
-            if (event.getRawX() >= x && event.getRawX() <= (x + w) &&
-                    event.getRawY() >= y && event.getRawY() <= (y + h)) {
+                if (gptFragment != null) {
+                    gptFragment.getLocationOnScreen(location);
+                    int x = location[0];
+                    int y = location[1];
+                    int w = gptFragment.getWidth();
+                    int h = gptFragment.getHeight();
 
-                if (!flagOpenGPTContainer) {
-                    flagOpenGPTContainer = true;
-                    childFragment.openGPTContainer();
+                    if (event.getRawX() >= x && event.getRawX() <= (x + w) &&
+                            event.getRawY() >= y && event.getRawY() <= (y + h)) {
+
+                    } else {
+
+                    }
+
+                    if (searchEditText != null && searchEditText.hasFocus()) {
+                        if (flagAccessAnimation.get()) {
+                            flagAccessAnimation.set(false);
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                flagAccessAnimation.set(true);
+                            }, durationAnimation);
+
+                            searchEditText.clearFocus();
+                            showHeadText();
+                            hideRecyclerView();
+                            hideSort();
+                            hideFilters();
+                            hideKeyboard(v);
+                            flagOpenSearch = false;
+                        }
+                    }
                 }
-            } else {
-                if (flagOpenGPTContainer){
-                    flagOpenGPTContainer = false;
-                    childFragment.closeGPTContainer();
-                }
+
+                return false;
+            });
+        }
+
+        if (sortButton != null) { sortButton.setOnClickListener(v -> onSortClick()); }
+        if (filtersButton != null) { filtersButton.setOnClickListener(v -> onFiltersClick()); }
+        if (add_dish_button != null) { add_dish_button.setOnClickListener(v -> {
+            if (v.getId() == R.id.add_dish) {
+                Intent intent = new Intent(getContext(), EditorDishActivity.class);
+                intent.putExtra(Config.KEY_DISH, Config.ADD_MODE);
+                startActivity(intent);
             }
-
-            if (searchEditText.hasFocus()) {
-                searchEditText.clearFocus();
-                showHeadText();
-                hideRecyclerView();
-                hideSort();
-                hideFilters();
-                hideKeyboard(v);
-                flagOpenSearch = false;
-            }
-
-            return false;
-        });
-
-        View.OnClickListener imageClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (v.getId() == R.id.add_dish) {
-                    onAddDishClick();
-                }
-            }
-        };
-
-        sortButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSortClick();
-            }
-        });
-
-        filtersButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onFiltersClick();
-            }
-        });
-
-        add_dish_button.setOnClickListener(imageClickListener);
-
+        });}
         Log.d("SearchDishFragment", "Слухачі фрагмента успішно завантажені.");
     }
 
     private void restoreFocus() {
         if (flagOpenSearch) {
-            flagUseAnimSearch = false;
+            flagAccessAnimation.set(false);
             searchEditText.setFocusable(true);
             searchEditText.requestFocus();
-            flagUseAnimSearch = true;
+            flagAccessAnimation.set(true);
         }
     }
 
-    private void hideKeyboard(View view) {
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
-        Log.d("SearchDishFragment", "Клавіатура схована.");
-    }
-
-    private void showSort() {
-        if (sortButton != null) {
-            sortButton.setAlpha(0f);
-            sortButton.setVisibility(View.VISIBLE);
-
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 0f, 1f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", -50f, 0f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.start();
-            Log.d("SearchDishFragment", "Кнопка сортування з'явилася.");
-        }
-    }
-
-    private void showFilters() {
-        if (filtersButton != null) {
-            filtersButton.setAlpha(0f);
-            filtersButton.setVisibility(View.VISIBLE);
-
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 0f, 1f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", -50f, 0f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.start();
-            Log.d("SearchDishFragment", "Кнопка фільтрів з'явилася.");
-        }
-    }
-
-    private void showHeadText() {
-        if (head_textView != null) {
-            head_textView.setAlpha(0f);
-            head_textView.setVisibility(View.VISIBLE);
-
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 0f, 1f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", -50f, 0f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.start();
-            Log.d("SearchDishFragment", "Головний текст з'явилася.");
-        }
-    }
-
-    private void showRecyclerView() {
-        searchResultsRecyclerView.setAlpha(0f);
-        searchResultsRecyclerView.setVisibility(View.VISIBLE);
-        searchResultsRecyclerView.animate()
-                .alpha(1f)
-                .setDuration(300)
-                .setListener(null)
-                .start();
-        Log.d("SearchDishFragment", "Список страв/інгредієнтів з'явився.");
-    }
-
-    private void hideHeadText() {
-        if (head_textView != null) {
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 1f, 0f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", 0f, -50f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    head_textView.setVisibility(View.INVISIBLE);
-                }
+    private void setSearchController() {
+        if (searchControllerForDish == null) {
+            searchControllerForDish = new SearchController(getContext(), searchEditText, searchResultsRecyclerView, (view, item) -> {
+                Dish dish = (Dish) item;
+                Intent intent = new Intent(getContext(), EditorDishActivity.class);
+                intent.putExtra(Config.KEY_DISH, dish.getId());
+                startActivity(intent);
             });
-            animatorSet.start();
-
-            Log.d("SearchDishFragment", "Головний текст захований.");
-        }
-    }
-
-    private void hideSort() {
-        if (sortButton != null) {
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 1f, 0f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", 0f, -50f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    sortButton.setVisibility(View.INVISIBLE);
-                }
-            });
-            animatorSet.start();
-
-            Log.d("SearchDishFragment", "Кнопка сортування захована.");
-        }
-    }
-
-    private void hideFilters() {
-        if (filtersButton != null) {
-            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 1f, 0f);
-            alphaAnimator.setDuration(300);
-
-            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", 0f, -50f);
-            translationAnimator.setDuration(300);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    filtersButton.setVisibility(View.INVISIBLE);
-                }
-            });
-            animatorSet.start();
-
-            Log.d("SearchDishFragment", "Кнопка фільтрів захований.");
-        }
-    }
-
-    private void hideRecyclerView() {
-        if (searchResultsRecyclerView != null) {
-            searchResultsRecyclerView.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            searchResultsRecyclerView.setVisibility(View.GONE);
-                        }
-                    })
-                    .start();
-
-            Log.d("SearchDishFragment", "Список страв/інгредієнтів захований.");
-        }
-    }
-
-    private void updateResults(SearchController controller, ArrayList<Object> dishes) {
-        if (controller != null) {
-            controller.getSearchResults().clear();
-            controller.getSearchResults().addAll(dishes);
         }
     }
 
     private void updateRecipesData() {
-        Disposable disposable = utils.getFilteredAndSortedDishes(ingredients, sortStatus)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(array_dishes -> {
-                    dishes = new ArrayList<>(array_dishes) ;
-                    searchController = new SearchController(getContext(), dishes, searchEditText, searchResultsRecyclerView, (view, item) -> {
-                        Dish dish = (Dish) item;
-                        Intent intent = new Intent(view.getContext(), ReadDataDishActivity.class);
-                        intent.putExtra(Config.KEY_DISH, dish.getId());
-                        view.getContext().startActivity(intent);
-                    });
-                    updateResults(searchController, new ArrayList<>(dishes));
+        utils.ByDish().getViewModel().getAll().observe(this, data -> {
+            if (data != null && searchControllerForDish != null) {
+                Disposable disposable = utils.ByDish().getFilteredAndSorted(ingredients, sortStatus)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(array_dishes -> {
+                            if (searchControllerForDish != null) {
+                                searchControllerForDish.setArrayData(new ArrayList<>(array_dishes));
+                                searchControllerForDish.search();
+                            }
 
-                    LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
-                    if (layoutManager != null) {
-                        int position = getActivity().getPreferences(Context.MODE_PRIVATE).getInt("scroll_position", 0);
-                        layoutManager.scrollToPositionWithOffset(position, 0);
-                    }
-                });
+                            LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
+                            if (layoutManager != null) {
+                                int position = getActivity().getPreferences(Context.MODE_PRIVATE).getInt("scroll_position", 0);
+                                layoutManager.scrollToPositionWithOffset(position, 0);
+                            }
+                        });
 
-        compositeDisposable.add(disposable);
-    }
-
-    private void onAddDishClick() {
-        Intent intent = new Intent(getContext(), EditorDishActivity.class);
-        intent.putExtra(Config.KEY_DISH, -2L);
-        startActivity(intent);
+                compositeDisposable.add(disposable);
+            }
+        });
     }
 
     private void onSortClick() {
@@ -495,43 +324,49 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private void onFiltersClick() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_filters, null);
+        View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
         TextView textView = dialogView.findViewById(R.id.textView22);
         ConstraintLayout constraintLayout = dialogView.findViewById(R.id.search_filters_LinearLayout);
-        RecyclerView filtersRecyclerView = dialogView.findViewById(R.id.items_filters_check_RecyclerView);
+        RecyclerView filtersRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
 
         if (textView != null) { textView.setText(R.string.your_ingredients); }
         if (constraintLayout != null) {
-            EditText editText = constraintLayout.findViewById(R.id.search_edit_text_filters);
+            EditText editText = constraintLayout.findViewById(R.id.search_edit_text);
 
             if (editText != null) {
                 CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, 30);
 
-                Disposable disposable = utils.getNameIngredientsUnique()
+                Disposable disposable = utils.ByIngredient().getNamesUnique()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 names -> {
                                     if (names != null && !names.isEmpty()){
-                                        searchControllerFilters = new SearchController(getContext(), new ArrayList<>(names), editText, filtersRecyclerView, (checkBox, selectedItem, item) -> {
-                                            if (!checkBox.isChecked()) {
-                                                selectedItem.add(item);
-                                                checkBox.setChecked(true);
-                                            } else {
-                                                selectedItem.remove(item);
-                                                checkBox.setChecked(false);
-                                            }
-                                        });
-                                        updateResults(searchControllerFilters, new ArrayList<>(names));
+                                        if (searchControllerForFiltersIngredient == null) {
+                                            searchControllerForFiltersIngredient = new SearchController(getContext(), editText, filtersRecyclerView, (checkBox, selectedItem, item) -> {
+                                                if (!checkBox.isChecked()) {
+                                                    selectedItem.add(item);
+                                                    checkBox.setChecked(true);
+                                                } else {
+                                                    selectedItem.remove(item);
+                                                    checkBox.setChecked(false);
+                                                }
+                                            });
+                                        }
+
+                                        searchControllerForFiltersIngredient.setArrayData(new ArrayList<>(names));
+                                        searchControllerForFiltersIngredient.setSearchEditText(editText);
+                                        searchControllerForFiltersIngredient.setSearchResultsRecyclerView(filtersRecyclerView);
+
+                                        AddChooseObjectsAdapter addChooseObjectsAdapter = (AddChooseObjectsAdapter) searchControllerForFiltersIngredient.getAdapter();
 
                                         builder.setView(dialogView)
                                                 .setPositiveButton(R.string.apply, (dialog, which) -> {
-                                                    addChooseObjectsAdapter = (AddChooseObjectsAdapter) searchControllerFilters.getAdapter();
                                                     ingredients = addChooseObjectsAdapter.getSelectedItem();
                                                     updateRecipesData();
                                                 })
                                                 .setNeutralButton(R.string.reset, (dialog, which) -> {
-                                                    resetFilters();
+                                                    resetFilters(addChooseObjectsAdapter);
                                                 })
                                                 .setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
 
@@ -549,6 +384,11 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    private void onGPTClick() {
+        Intent intent = new Intent(getContext(), GPTActivity.class);
+        startActivity(intent);
+    }
+
     private void checkRadioButton(ArrayList<Pair<RadioGroup, ArrayList<RadioButton>>> dataRadioGroup) {
         int i = 0;
 
@@ -563,13 +403,169 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    private void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+        Log.d("SearchDishFragment", "Клавіатура схована.");
+    }
+
+    private void showSort() {
+        if (sortButton != null) {
+            sortButton.setAlpha(0f);
+            sortButton.setVisibility(View.VISIBLE);
+
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 0f, 1f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", -50f, 0f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.start();
+            Log.d("SearchDishFragment", "Кнопка сортування з'явилася.");
+        }
+    }
+
+    private void showFilters() {
+        if (filtersButton != null) {
+            filtersButton.setAlpha(0f);
+            filtersButton.setVisibility(View.VISIBLE);
+
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 0f, 1f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", -50f, 0f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.start();
+            Log.d("SearchDishFragment", "Кнопка фільтрів з'явилася.");
+        }
+    }
+
+    private void showHeadText() {
+        if (head_textView != null) {
+            head_textView.setAlpha(0f);
+            head_textView.setVisibility(View.VISIBLE);
+
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 0f, 1f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", -50f, 0f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.start();
+            Log.d("SearchDishFragment", "Головний текст з'явилася.");
+        }
+    }
+
+    private void showRecyclerView() {
+        searchResultsRecyclerView.setAlpha(0f);
+        searchResultsRecyclerView.setVisibility(View.VISIBLE);
+        searchResultsRecyclerView.animate()
+                .alpha(1f)
+                .setDuration(durationAnimation)
+                .setListener(null)
+                .start();
+        Log.d("SearchDishFragment", "Список страв/інгредієнтів з'явився.");
+    }
+
+    private void hideHeadText() {
+        if (head_textView != null) {
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 1f, 0f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", 0f, -50f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    head_textView.setVisibility(View.INVISIBLE);
+                }
+            });
+            animatorSet.start();
+
+            Log.d("SearchDishFragment", "Головний текст захований.");
+        }
+    }
+
+    private void hideSort() {
+        if (sortButton != null) {
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 1f, 0f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", 0f, -50f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    sortButton.setVisibility(View.INVISIBLE);
+                }
+            });
+            animatorSet.start();
+
+            Log.d("SearchDishFragment", "Кнопка сортування захована.");
+        }
+    }
+
+    private void hideFilters() {
+        if (filtersButton != null) {
+            ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 1f, 0f);
+            alphaAnimator.setDuration(durationAnimation);
+
+            ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", 0f, -50f);
+            translationAnimator.setDuration(durationAnimation);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.playTogether(alphaAnimator, translationAnimator);
+            animatorSet.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    filtersButton.setVisibility(View.INVISIBLE);
+                }
+            });
+            animatorSet.start();
+
+            Log.d("SearchDishFragment", "Кнопка фільтрів захований.");
+        }
+    }
+
+    private void hideRecyclerView() {
+        if (searchResultsRecyclerView != null) {
+            searchResultsRecyclerView.animate()
+                    .alpha(0f)
+                    .setDuration(durationAnimation)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            searchResultsRecyclerView.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+
+            Log.d("SearchDishFragment", "Список страв/інгредієнтів захований.");
+        }
+    }
+
     private void resetSorting() {
         sortStatus.set(0, true);
         sortStatus.set(1, null);
         updateRecipesData();
     }
 
-    private void resetFilters() {
+    private void resetFilters(AddChooseObjectsAdapter addChooseObjectsAdapter) {
         ingredients = new ArrayList<>();
         if (addChooseObjectsAdapter != null) { addChooseObjectsAdapter.resetSelection(); }
         updateRecipesData();

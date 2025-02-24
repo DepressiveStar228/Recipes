@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:background="@drawable/border_day_night_with_backgroud"
+    android:padding="10dp">
+
+    <LinearLayout
+        android:id="@+id/photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/border_day_night_with_corner"
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="30dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/photoImageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@android:color/transparent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_photo"
+            app:tint="?attr/colorControlNormal" />
+
+        <TextView
+            android:id="@+id/photoTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorBackground"
+            android:text="@string/photo"
+            android:textColor="?attr/colorText"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/border_day_night_with_corner"
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="30dp"
+        android:gravity="center">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/galleryImageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="6dp"
+            android:background="@android:color/transparent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_gallery"
+            app:tint="?attr/colorControlNormal" />
+
+        <TextView
+            android:id="@+id/galleryTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorBackground"
+            android:text="@string/gallery"
+            android:textColor="?attr/colorText"
+            android:textSize="16sp"/>
+    </LinearLayout>
+</LinearLayout>

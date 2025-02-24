@@ -1,8 +1,12 @@
 package com.example.recipes.Adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,140 +29,97 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
-public class IngredientShopListGetAdapter extends RecyclerView.Adapter<IngredientShopListGetAdapter.ViewHolder> implements DataControllerForAdapter<IngredientShopList> {
+public class IngredientShopListGetAdapter extends ListAdapter<IngredientShopList, IngredientShopListGetAdapter.ViewHolder> {
     private final Context context;
-    private final IngredientShopListClickListener ingredientShopListClickListener;
-    private ArrayList<IngredientShopList> ingredients;
+    private int boughtItem, unBoughtItem;
+    private final IngredientShopListClickListener clickListener;
 
-    public IngredientShopListGetAdapter(Context context, ArrayList<IngredientShopList> ingredients, IngredientShopListGetAdapter.IngredientShopListClickListener clickListener) {
+    public IngredientShopListGetAdapter(Context context, IngredientShopListClickListener clickListener) {
+        super(DIFF_CALLBACK);
         this.context = context;
-        this.ingredients = ingredients;
-        this.ingredientShopListClickListener = clickListener;
+        this.clickListener = clickListener;
+        getColors();
     }
 
     @NonNull
     @Override
-    public IngredientShopListGetAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.ingredient_shop_list_item, parent, false);
-        return new IngredientShopListGetAdapter.ViewHolder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.ingredient_shop_list_item, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        IngredientShopList ingredientShopList = ingredients.get(position);
+        int currentPosition = holder.getBindingAdapterPosition();
+        if (currentPosition == RecyclerView.NO_POSITION) return;
+        IngredientShopList ingredientShopList = getItem(currentPosition);
+
         holder.isBuy.setChecked(ingredientShopList.getIsBuy());
         holder.ingredientName.setText(ingredientShopList.getName());
-        holder.ingredientCountType.setText(String.format("%s %s", ingredientShopList.getAmount(), ingredientShopList.getType()));
+        holder.ingredientCountType.setText(ingredientShopList.getGroupedAmountTypeToString());
         updateStrikeThrough(holder.line, ingredientShopList.getIsBuy());
 
-        holder.itemView.setOnClickListener(v -> {
-            holder.isBuy.setChecked(!holder.isBuy.isChecked());
-            updateStrikeThrough(holder.line, holder.isBuy.isChecked());
-            ingredients.get(position).setIsBuy(!ingredientShopList.getIsBuy());
-            ingredientShopList.setIsBuy(!ingredientShopList.getIsBuy());
+        if (ingredientShopList.getIsBuy()) {
+            holder.ingredientName.setTextColor(boughtItem);
+            holder.ingredientCountType.setTextColor(boughtItem);
+            holder.delete.setColorFilter(boughtItem);
+        } else {
+            holder.ingredientName.setTextColor(unBoughtItem);
+            holder.ingredientCountType.setTextColor(unBoughtItem);
+            holder.delete.setColorFilter(unBoughtItem);
+        }
 
-            if (ingredientShopListClickListener != null) {
-                ingredientShopListClickListener.onIngredientShopListClick(ingredientShopList, holder.itemView);
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onIngredientShopListClick(ingredientShopList);
             }
         });
 
         holder.delete.setOnClickListener(v -> {
-            ingredients.remove(position);
-            notifyItemRemoved(position);
-            Log.d("IngredientShopListGetAdapter", "Адаптер видалив інгредієнт");
-
-            if (ingredientShopListClickListener != null) {
-                ingredientShopListClickListener.onDeleteClick(ingredientShopList, holder.delete);
+            if (clickListener != null) {
+                clickListener.onDeleteClick(ingredientShopList);
             }
         });
     }
 
-    @Override
-    public int getItemCount() {
-        return ingredients.size();
-    }
-
-    @Override
-    public void addItem(RecyclerView recyclerView, IngredientShopList item) {
-        if (ingredients.size() < Config.COUNT_LIMIT_INGREDIENT) {
-            ingredients.add(item);
-            notifyItemInserted(ingredients.size() - 1);
-
-            recyclerView.postDelayed(() -> {
-                RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(getPosition(item));
-                if (holder != null) {
-                    holder.itemView.setAlpha(0f);
-                    holder.itemView.animate()
-                            .alpha(1f)
-                            .setDuration(250)
-                            .start();
-                }
-            }, 50);
-
-            Log.d("ShopListGetAdapter", "Адаптер додав колекцію");
-        } else {
-            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
+    public void setItems(ArrayList<IngredientShopList> newItems) {
+        ArrayList<IngredientShopList> newList = new ArrayList<>(newItems.size());
+        for (IngredientShopList item : newItems) {
+            newList.add(new IngredientShopList(item));
         }
-    }
 
-    @Override
-    public void addItems(RecyclerView recyclerView, ArrayList<IngredientShopList> items) {
-        if ((ingredients.size() + items.size()) < Config.COUNT_LIMIT_INGREDIENT) {
-            for (IngredientShopList ing : items) {
-                addItem(recyclerView, ing);
-            }
-        } else {
-            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public void delItem(RecyclerView recyclerView, IngredientShopList item) {
-        int position = getPosition(item);
-        if (position != -1) {
-            RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
-
-            if (holder != null) {
-                holder.itemView.animate()
-                        .alpha(0f)
-                        .setDuration(250)
-                        .withEndAction(() -> {
-                            ingredients.remove(position);
-                            notifyItemRemoved(position);
-                        })
-                        .start();
-                Log.d("IngredientShopListGetAdapter", "Адаптер видалив інгредієнт");
-            }
-        }
-    }
-
-    @Override
-    public void upItem(RecyclerView recyclerView, IngredientShopList item) {
-        int position = getPosition(item);
-        if (position != -1) {
-            ingredients.set(position, item);
-            notifyItemChanged(position);
-        }
-    }
-
-    @Override
-    public void setItems(ArrayList<IngredientShopList> items) {
-        this.ingredients = items;
+        submitList(newList);
         notifyDataSetChanged();
     }
 
-    @Override
-    public int getPosition(IngredientShopList item) {
-        return ingredients.indexOf(item);
+    private void updateStrikeThrough(View line, boolean isStriked) {
+        line.setVisibility(isStriked ? View.VISIBLE : View.INVISIBLE);
     }
 
-    private void updateStrikeThrough(View line, boolean isStriked) {
-        if (isStriked) {
-            line.setVisibility(View.VISIBLE);
-        } else {
-            line.setVisibility(View.INVISIBLE);
-        }
+    @SuppressLint("ResourceType")
+    private void getColors() {
+        boughtItem = context.getResources().getColor(R.color.grey2, context.getTheme());
+
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.colorText, typedValue, true);
+        unBoughtItem = typedValue.data;
     }
+
+    public static final DiffUtil.ItemCallback<IngredientShopList> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<IngredientShopList>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull IngredientShopList oldItem, @NonNull IngredientShopList newItem) {
+                    boolean box = oldItem.getId() == newItem.getId();
+                    return box;
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull IngredientShopList oldItem, @NonNull IngredientShopList newItem) {
+                    boolean box = oldItem.equals(newItem);
+                    return box;
+                }
+            };
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         CheckBox isBuy;
@@ -176,7 +138,7 @@ public class IngredientShopListGetAdapter extends RecyclerView.Adapter<Ingredien
     }
 
     public interface IngredientShopListClickListener {
-        void onIngredientShopListClick(IngredientShopList ingredientShopList, View view);
-        void onDeleteClick(IngredientShopList ingredientShopList, View view);
+        void onIngredientShopListClick(IngredientShopList ingredient);
+        void onDeleteClick(IngredientShopList ingredient);
     }
 }

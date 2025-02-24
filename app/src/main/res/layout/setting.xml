@@ -12,10 +12,9 @@
         android:background="?attr/colorBackground">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settingNameContainer"
+            android:id="@+id/headerTextSetting"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="30dp"
             android:padding="10dp"
             android:background="?attr/colorPrimaryVariant"
             app:layout_constraintEnd_toEndOf="parent"
@@ -27,6 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
+                android:layout_marginTop="30dp"
                 android:text="@string/settings"
                 android:textColor="@color/white"
                 android:textSize="24sp"
@@ -35,119 +35,153 @@
                 app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <LinearLayout
-            android:id="@+id/settingContainer"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/generallySettingContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/settingNameContainer">
+            app:layout_constraintTop_toBottomOf="@+id/headerTextSetting">
 
             <LinearLayout
-                android:id="@+id/language_settingContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
-                android:orientation="horizontal"
-                android:paddingStart="10dp">
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:id="@+id/textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="9"
-                    android:text="@string/language"
-                    android:textColor="?attr/colorText"
-                    android:textSize="18sp" />
-
-                <Spinner
-                    android:id="@+id/language_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/theme_settingConteiner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
-                android:orientation="horizontal"
-                android:paddingStart="10dp">
-
-                <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="9"
-                    android:text="@string/theme"
-                    android:textColor="?attr/colorText"
-                    android:textSize="18sp" />
-
-                <Spinner
-                    android:id="@+id/theme_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/palette_settingConteiner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
-                android:orientation="horizontal"
-                android:paddingStart="10dp">
-
-                <TextView
-                    android:id="@+id/palette_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="9"
-                    android:text="@string/palette"
-                    android:textColor="?attr/colorText"
-                    android:textSize="18sp" />
-
-                <Spinner
-                    android:id="@+id/palette_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/ingredient_hints_settingContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
-                android:orientation="horizontal"
-                android:paddingStart="10dp">
-
-                <Switch
-                    android:id="@+id/ingredient_hints_switch"
+                <LinearLayout
+                    android:id="@+id/language_settingContainer"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="@string/ingredient_names_hints"
-                    android:textColor="?attr/colorText"
-                    android:textSize="18sp"
-                    tools:ignore="UseSwitchCompatOrMaterialXml" />
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/border_day_night"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp">
 
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="9"
+                        android:text="@string/language"
+                        android:textColor="?attr/colorText"
+                        android:textSize="18sp" />
+
+                    <Spinner
+                        android:id="@+id/language_spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/theme_settingConteiner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/border_day_night"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp">
+
+                    <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="9"
+                        android:text="@string/theme"
+                        android:textColor="?attr/colorText"
+                        android:textSize="18sp" />
+
+                    <Spinner
+                        android:id="@+id/theme_spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/palette_settingConteiner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/border_day_night"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp">
+
+                    <TextView
+                        android:id="@+id/palette_textView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="9"
+                        android:text="@string/palette"
+                        android:textColor="?attr/colorText"
+                        android:textSize="18sp" />
+
+                    <Spinner
+                        android:id="@+id/palette_spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ingredient_hints_settingContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/border_day_night"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp">
+
+                    <Switch
+                        android:id="@+id/ingredient_hints_switch"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/ingredient_names_hints"
+                        android:textColor="?attr/colorText"
+                        android:textSize="18sp"
+                        tools:ignore="UseSwitchCompatOrMaterialXml" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ingredient_black_list_settingContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/border_day_night"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp">
+
+                    <TextView
+                        android:id="@+id/ingredient_black_listText"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/ingredient_black_list"
+                        android:textColor="?attr/colorText"
+                        android:textSize="18sp" />
+                </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
             android:id="@+id/importExportContainer"
@@ -156,7 +190,7 @@
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/settingContainer">
+            app:layout_constraintTop_toBottomOf="@+id/generallySettingContainer">
 
             <LinearLayout
                 android:id="@+id/importContainer"
@@ -165,7 +199,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="20dp"
                 android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
+                android:background="@drawable/border_day_night"
                 android:orientation="horizontal"
                 android:padding="5dp">
 
@@ -196,7 +230,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="20dp"
                 android:layout_marginEnd="5dp"
-                android:background="@drawable/border"
+                android:background="@drawable/border_day_night"
                 android:orientation="horizontal"
                 android:padding="5dp">
 

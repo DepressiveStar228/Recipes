@@ -8,4 +8,9 @@
     <attr name="colorBackgroundButton" format="reference|color" />
     <attr name="colorHintText" format="reference|color" />
     <attr name="colorControlNormal" format="reference|color" />
+
+    <declare-styleable name="MenuItemView">
+        <attr name="iconSrc" format="reference"/>
+        <attr name="textTitle" format="string"/>
+    </declare-styleable>
 </resources>

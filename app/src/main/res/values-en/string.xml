@@ -4,7 +4,7 @@
     <string name="warning_void_name_dish">Cannot add a dish without a name</string>
     <string name="warning_dublicate_name_dish">A dish with this name already exists</string>
     <string name="warning_delete_dish">Do you really want to delete this dish?</string>
-    <string name="warning_set_all_data">Fill in all ingredient fields</string>
+    <string name="warning_set_all_data">Fill in all fields</string>
     <string name="confirm_delete_dish">Confirm deletion</string>
     <string name="default_recipe_text">Empty recipe</string>
     <string name="successful_add_dish">Dish successfully added</string>
@@ -158,7 +158,7 @@
     <string name="error_void_list_dish">Error: Dish list is empty</string>
     <string name="exit_app">Exit application</string>
     <string name="confirm_exit_app">Are you sure you want to exit?</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading</string>
     <string name="error_void_dishes">Error. The list dishes is empty.</string>
     <string name="error_get_dishes_by_db">Error retrieving dish list from database.</string>
     <string name="error_get_ingredients_by_db">Error retrieving the ingredients for the selected dish from the database.</string>
@@ -195,4 +195,28 @@
     <string name="warning_delete_shop_list">Are you sure you want to delete the shopping list?</string>
     <string name="confirm_clear_shop_list">Confirm clearing the list</string>
     <string name="warning_clear_shop_list">Are you sure you want to clear your shopping list? All items will be deleted.</string>
+    <string name="error_read_get_shop_list">Error transferring shop list for reading</string>
+    <string name="tip_for_shop_list_buttons">Tip: To add one item to the list, press the left button. To make a list based on your dishes, click the right button.</string>
+    <string name="interface_text">Interface</string>
+    <string name="ingredient">Ingredient</string>
+    <string name="data_base">Data base</string>
+    <string name="ingredient_black_list">Blacklist of ingredients</string>
+    <string name="confirm">Confirm</string>
+    <string name="successful_add_ingredients">Successful add ingredients</string>
+    <string name="error_add_ingedients">Error add ingedients</string>
+    <string name="successfully_made_changes">Changes made successfully</string>
+    <string name="successful_reset">Reset successful</string>
+    <string name="error_reset">Error. Failed to reset</string>
+    <string name="click_open_dish">(click to open the dish)</string>
+    <string name="portionship">Portionship</string>
+    <string name="get_history_messages">Retrieve message history</string>
+    <string name="wait_load_assistant">Wait for the assistant to load</string>
+    <string name="confirm_save_translate_dish">Confirm saving the translation</string>
+    <string name="warning_save_translate_dish">Are you sure you want to save the dish translation? The current dish will be overwritten with this translation. Check the translation for errors. This action cannot be undone.</string>
+    <string name="successful_update_dish">Dish successfully updated</string>
+    <string name="error_update_dish">Error updating dish</string>
+    <string name="saving">Saving</string>
+    <string name="photo">Photo</string>
+    <string name="gallery">Gallery</string>
+    <string name="error_access_translation">Error: Translator not loaded yet</string>
 </resources>

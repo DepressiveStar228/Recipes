@@ -34,29 +34,38 @@ public interface CollectionDAO {
     Completable delete(Collection collection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
-    Maybe<Collection> getCollectionById(long id);
+    Single<Collection> getById(long id);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
+    LiveData<Collection> getByID_Live(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
-    Maybe<Collection> getCollectionByName(String name);
+    Single<Collection> getByName(String name);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
     Maybe<Long> getIdByName(String name);
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    Single<List<Collection>> getAllCollections();
+    Single<List<Collection>> getAll();
 
     @Query("SELECT " + NAME + " FROM " + TABLE_NAME)
-    Single<List<String>> getAllNameCollections();
+    Single<List<String>> getAllName();
+
+    @Query("SELECT " + NAME + " FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
+    Single<List<String>> getAllNameByType(String type);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
-    Single<List<Collection>> getAllCollectionsByType(String type);
+    Single<List<Collection>> getAllByType(String type);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
+    LiveData<List<Collection>> getAllByTypeLive(String type);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + TYPE + " = :type")
-    Maybe<Long> getIdCollectionByNameAndType(String name, String type);
+    Maybe<Long> getIdByNameAndType(String name, String type);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
-    Single<Integer> getCollectionCount();
+    Single<Integer> getCount();
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + TYPE + " =:type")
-    Single<Integer> getTypeCollectionCount(String type);
+    Single<Integer> getCountByType(String type);
 }

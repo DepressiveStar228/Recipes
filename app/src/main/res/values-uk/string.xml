@@ -4,7 +4,7 @@
     <string name="warning_void_name_dish">Не можна додати страву без назви</string>
     <string name="warning_dublicate_name_dish">Страва з такою назвою вже існує</string>
     <string name="warning_delete_dish">Ви дійсно хочете видалити цю страву?</string>
-    <string name="warning_set_all_data">Заповніть всі поля інгредієнтів</string>
+    <string name="warning_set_all_data">"Заповніть всі поля "</string>
     <string name="confirm_delete_dish">Підтвердіть видалення</string>
     <string name="default_recipe_text">Рецепту немає</string>
     <string name="successful_add_dish">Страва успішно додана</string>
@@ -158,7 +158,7 @@
     <string name="error_void_list_dish">Помилка: Список страв пустий</string>
     <string name="exit_app">Вийти з додатка</string>
     <string name="confirm_exit_app">Ви точно хочете вийти?</string>
-    <string name="loading">Завантаження...</string>
+    <string name="loading">Завантаження</string>
     <string name="error_void_dishes">Помилка. Список страв пустий.</string>
     <string name="error_get_dishes_by_db">Помилка отримання списку страв з бази даних.</string>
     <string name="error_get_ingredients_by_db">Помилка отримання інгредієнтів для вибранної страви з бази даних.</string>
@@ -195,4 +195,28 @@
     <string name="warning_delete_shop_list">Ви дійсно хочете видалити список покупків?</string>
     <string name="confirm_clear_shop_list">Підтвердіть очищення списку</string>
     <string name="warning_clear_shop_list">Ви дійсно хочете очистити список покупків? Всі пункти будуть видалені</string>
+    <string name="error_read_get_shop_list">Помилка передачі списку покупок для читання</string>
+    <string name="tip_for_shop_list_buttons">Підказка: Щоб додати один елемент до списку, натисніть ліву кнопку. Щоб скласти список на основі страв, натисніть праву кнопку.</string>
+    <string name="interface_text">Інтерфейс</string>
+    <string name="ingredient">Інгредієнти</string>
+    <string name="data_base">Сховище даних</string>
+    <string name="ingredient_black_list">Чорний список інгредієнтів</string>
+    <string name="confirm">Підтвердити</string>
+    <string name="successful_add_ingredients">Інгредієнти успішно додані</string>
+    <string name="error_add_ingedients">Помилка додавання інгредієнтів</string>
+    <string name="successfully_made_changes">Зміни успішно внесені</string>
+    <string name="successful_reset">Успішно скинуто</string>
+    <string name="error_reset">Помилка. Не вдалося скинути</string>
+    <string name="click_open_dish">(натисніть, щоб відкрити страву)</string>
+    <string name="portionship">Порційність</string>
+    <string name="get_history_messages">Отримання історії повідомлень</string>
+    <string name="wait_load_assistant">Дочекайтеся завантаження асистента</string>
+    <string name="confirm_save_translate_dish">Підтвердіть зберігання перекладу</string>
+    <string name="warning_save_translate_dish">Ви дійсно хочете зберігти переклад страви? Поточна страва буде перезаписана цим перекладом. Перевірте переклад на наявність помилок. Цю дію не можна буде відминити.</string>
+    <string name="successful_update_dish">Страва успішно оновлена</string>
+    <string name="error_update_dish">Помилка оновлення страви</string>
+    <string name="saving">Зберігання</string>
+    <string name="photo">Фото</string>
+    <string name="gallery">Галерея</string>
+    <string name="error_access_translation">Помилка. Перекладач ще не завантажено</string>
 </resources>

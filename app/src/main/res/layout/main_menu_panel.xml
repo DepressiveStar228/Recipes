@@ -17,15 +17,6 @@
         app:tint="?attr/colorControlNormal" />
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/main_rand_hub"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_weight="1"
-        android:background="@drawable/selector_item_main_menu"
-        android:src="@drawable/icon_game_cube"
-        app:tint="?attr/colorControlNormal" />
-
-    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/main_collections_hub"
         android:layout_width="40dp"
         android:layout_height="40dp"

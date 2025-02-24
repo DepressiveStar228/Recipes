@@ -1,4 +1,4 @@
-package com.example.recipes.Adapter;
+package com.example.recipes.Decoration;
 
 import android.content.Context;
 import android.util.TypedValue;

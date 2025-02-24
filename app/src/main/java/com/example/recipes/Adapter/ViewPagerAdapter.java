@@ -28,11 +28,6 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
         return fragmentList.size();
     }
 
-    public void updateCollectionFragment() {
-        ((CollectionsDishFragment) fragmentList.get(2)).updateCounterDishes();
-        ((CollectionsDishFragment) fragmentList.get(2)).updateCollections();
-    }
-
     public List<Fragment> getFragmentList() {
         return fragmentList;
     }

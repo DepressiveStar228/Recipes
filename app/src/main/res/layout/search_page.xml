@@ -64,31 +64,37 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchResultsRecyclerView_my_dish"
         android:layout_width="match_parent"
-        android:layout_height="533dp"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="15dp"
+        android:layout_height="0dp"
+        android:layout_margin="15dp"
+        android:background="@drawable/border_day_night_with_corner"
         android:visibility="gone"
-        android:background="@drawable/rounded_background_recycler_view"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintVertical_bias="0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/search_LinearLayout" />
 
-    <FrameLayout
-        android:id="@+id/fragmen_GPT_container"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/gpt_container"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxHeight="450dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="20dp"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
+        android:layout_marginTop="20dp"
+        android:paddingHorizontal="40dp"
+        android:paddingVertical="10dp"
         android:background="@drawable/border_day_night"
+        app:layout_constraintTop_toBottomOf="@+id/searchResultsRecyclerView_my_dish"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchResultsRecyclerView_my_dish" />
+        app:layout_constraintStart_toStartOf="parent" >
+
+        <include
+            layout="@layout/gpt_fragment"
+            android:background="@drawable/border_day_night"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/add_dish"

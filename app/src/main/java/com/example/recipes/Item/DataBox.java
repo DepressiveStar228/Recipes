@@ -1,9 +1,8 @@
 package com.example.recipes.Item;
 
-import java.io.DataInput;
-import java.util.ArrayList;
+import android.util.Pair;
 
-import kotlin.Pair;
+import java.util.ArrayList;
 
 public class DataBox {
     private ArrayList<Pair<Dish, ArrayList<Ingredient>>> box;
@@ -23,7 +22,7 @@ public class DataBox {
     public ArrayList<Dish> getDishes() {
         ArrayList<Dish> dishes = new ArrayList<>();
         for (Pair<Dish, ArrayList<Ingredient>> pair : box) {
-            dishes.add(pair.getFirst());
+            dishes.add(pair.first);
         }
         return dishes;
     }

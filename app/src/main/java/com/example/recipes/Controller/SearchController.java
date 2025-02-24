@@ -1,26 +1,23 @@
 package com.example.recipes.Controller;
 
 import android.content.Context;
-import android.content.Intent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Activity.ReadDataDishActivity;
 import com.example.recipes.Adapter.AddChooseObjectsAdapter;
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Config;
 import com.example.recipes.Interface.SelectableItem;
-import com.example.recipes.Item.Dish;
 
 import java.util.ArrayList;
-import java.util.Objects;
+
+import io.reactivex.rxjava3.annotations.NonNull;
 
 public class SearchController {
     private Context context;
@@ -29,21 +26,21 @@ public class SearchController {
     private RecyclerView.Adapter<?> adapter;
     private RecyclerView searchResultsRecyclerView;
 
-    public SearchController(Context context, ArrayList<Object> arrayData, EditText searchEditText, RecyclerView searchResultsRecyclerView, AddChooseObjectsAdapter.OnItemClickListener listener) {
+    public SearchController(Context context, EditText searchEditText, RecyclerView searchResultsRecyclerView, AddChooseObjectsAdapter.OnItemClickListener listener) {
         this.context = context;
-        this.arrayData = arrayData;
+        this.arrayData = new ArrayList<>();
         this.searchEditText = searchEditText;
         this.searchResultsRecyclerView = searchResultsRecyclerView;
         this.searchResults = new ArrayList<>();
-        adapter = new AddChooseObjectsAdapter(context, searchResults, listener);
+        adapter = new AddChooseObjectsAdapter(searchResults, listener);
 
         initializeRecyclerView();
         setListener();
     }
 
-    public SearchController(Context context, ArrayList<Object> arrayData, EditText searchEditText, RecyclerView searchResultsRecyclerView, SearchResultsAdapter.OnItemClickListener listener) {
+    public SearchController(Context context, EditText searchEditText, RecyclerView searchResultsRecyclerView, SearchResultsAdapter.OnItemClickListener listener) {
         this.context = context;
-        this.arrayData = arrayData;
+        this.arrayData = new ArrayList<>();
         this.searchEditText = searchEditText;
         this.searchResultsRecyclerView = searchResultsRecyclerView;
         this.searchResults = new ArrayList<>();
@@ -70,7 +67,7 @@ public class SearchController {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateResults(performSearch(searchEditText.getText().toString().trim()), adapter);
+                search();
             }
 
             @Override
@@ -103,10 +100,41 @@ public class SearchController {
         return result;
     }
 
-    private <T extends RecyclerView.Adapter<?>> void updateResults(ArrayList<Object> searchResult, T adapter) {
+    public void updateResults(ArrayList<Object> searchResult) {
         searchResults.clear();
         searchResults.addAll(searchResult);
         adapter.notifyDataSetChanged();
+    }
+
+    public void search() {
+        updateResults(performSearch(searchEditText.getText().toString().trim()));
+    }
+
+    public void setArrayData(ArrayList<Object> arrayData) {
+        this.arrayData.clear();
+        this.arrayData.addAll(arrayData);
+        if (adapter instanceof DataControllerForAdapter) {
+            ((DataControllerForAdapter<Object>) adapter).setItems(arrayData);
+        }
+
+        adapter.notifyDataSetChanged();
+    }
+
+    public void setArraySelectedData(ArrayList<Object> arrayData) {
+        if (adapter instanceof AddChooseObjectsAdapter) {
+            ((AddChooseObjectsAdapter) adapter).setSelectedItems(arrayData);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    public void setSearchEditText(@NonNull EditText searchEditText) {
+        this.searchEditText = searchEditText;
+        setListener();
+    }
+
+    public void setSearchResultsRecyclerView(@NonNull RecyclerView searchResultsRecyclerView) {
+        this.searchResultsRecyclerView = searchResultsRecyclerView;
+        initializeRecyclerView();
     }
 
     public ArrayList<Object> getSearchResults() {

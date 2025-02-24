@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/GPT_constraintLayout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="10dp"
-    android:focusable="true"
-    android:focusableInTouchMode="true" >
+    android:layout_height="wrap_content">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/GPT_imageView"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:paddingTop="10dp"
         android:src="@drawable/icon_gpt"
         app:tint="?attr/colorControlNormal"
         app:layout_constraintEnd_toEndOf="parent"
@@ -23,7 +19,7 @@
         android:id="@+id/GPT_main_textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="10dp"
         android:text="@string/main_text_gpt"
         android:textColor="?attr/colorText"
         android:textSize="20sp"
@@ -37,74 +33,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
+        android:paddingBottom="5dp"
         android:text="@string/main_text_gpt2"
         android:textColor="?attr/colorText"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/GPT_main_textView" />
-
-    <ScrollView
-        android:id="@+id/GPT_main_edit_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/GPT_edit_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorBackground">
-
-            <EditText
-                android:id="@+id/GPT_edit_text_my_dish"
-                android:layout_width="260dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:inputType="textCapSentences"
-                android:hint="@string/hint_text_GPT_chat"
-                android:textColor="?attr/colorText"
-                android:textColorHint="?attr/colorHintText"
-                android:visibility="gone"
-                app:backgroundTint="?attr/colorControlNormal"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/send_promt_GPT_imageView"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:src="@drawable/icon_send"
-                app:tint="?attr/colorControlNormal"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
-
-    <ScrollView
-        android:id="@+id/scrollBox_dialogContainer"
-        android:layout_width="match_parent"
-        android:layout_height="290dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/GPT_imageView">
-
-        <LinearLayout
-            android:id="@+id/dialogContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-        </LinearLayout>
-    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
