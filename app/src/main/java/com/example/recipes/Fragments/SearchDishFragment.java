@@ -38,13 +38,15 @@ import android.widget.Toast;
 
 import com.example.recipes.Activity.EditorDishActivity;
 import com.example.recipes.Activity.GPTActivity;
-import com.example.recipes.Adapter.AddChooseObjectsAdapter;
-import com.example.recipes.Config;
+import com.example.recipes.Adapter.ChooseItemAdapter;
+import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.PreferencesController;
+import com.example.recipes.Enum.IntentKeys;
+import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Utils.AnotherUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
@@ -56,10 +58,15 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Фрагмент для пошуку страв у додатку.
+ */
 public class SearchDishFragment extends Fragment implements OnBackPressedListener {
     private EditText searchEditText;
-    private PreferencesController preferencesController;
-    private ArrayList<Object> ingredients;
+    private ArrayList<String> nameIngredients;
     private RecyclerView searchResultsRecyclerView;
     private Button filtersButton, sortButton;
     private TextView head_textView;
@@ -72,19 +79,17 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private AtomicBoolean flagAccessAnimation = new AtomicBoolean(true);
     private boolean flagOpenSearch = false;
 
-    private SearchController searchControllerForDish;
-    private SearchController searchControllerForFiltersIngredient;
+    private SearchController<Dish> searchControllerForDish;
+    private SearchController<String> searchControllerForFiltersIngredient;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
         preferences.edit().remove("scroll_position").apply();
-        preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(getContext());
-        utils = new RecipeUtils(getContext());
+        utils = RecipeUtils.getInstance(getContext());
         sortStatus = new ArrayList<>();
-        ingredients = new ArrayList<>();
+        nameIngredients = new ArrayList<>();
         sortStatus.add(true);
         sortStatus.add(null);
         compositeDisposable = new CompositeDisposable();
@@ -101,6 +106,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     @Override
     public boolean onBackPressed() {
         if (flagOpenSearch && searchEditText != null) {
+            // Закриття режиму пошуку
             searchEditText.clearFocus();
             hideRecyclerView();
             hideSort();
@@ -123,6 +129,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     @Override
     public void onPause() {
         super.onPause();
+        // Збереження позиції скролу
         LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
         if (layoutManager != null) {
             int position = layoutManager.findFirstVisibleItemPosition();
@@ -136,6 +143,10 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         compositeDisposable.clear();
     }
 
+    /**
+     * Ініціалізація UI елементів
+     * @param view кореневий View фрагмента
+     */
     private void loadItemsActivity(View view){
         mainLayout = view.findViewById(R.id.mainLayout);
         ConstraintLayout linearLayout = view.findViewById(R.id.search_LinearLayout);
@@ -158,10 +169,15 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         Log.d("SearchDishFragment", "Об'єкти фрагмента успішно завантажені.");
     }
 
+    /**
+     * Налаштування обробників подій
+     */
     @SuppressLint("ClickableViewAccessibility")
-    private void loadClickListeners(){
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), searchEditText, Config.CHAR_LIMIT_NAME_DISH);
+    private void loadClickListeners() {
+        // Обмеження довжини тексту пошуку
+        CharacterLimitTextWatcher.setCharacterLimit(getContext(), searchEditText, Limits.MAX_CHAR_NAME_DISH);
 
+        // Обробник фокусу поля пошуку
         if (searchEditText != null) {
             searchEditText.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
@@ -181,6 +197,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
             });
         }
 
+        // Обробник дотиків до основного макету
         if (mainLayout != null) {
             mainLayout.setOnTouchListener((v, event) -> {
                 int[] location = new int[2];
@@ -221,18 +238,22 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
             });
         }
 
+        // Обробники кнопок
         if (sortButton != null) { sortButton.setOnClickListener(v -> onSortClick()); }
         if (filtersButton != null) { filtersButton.setOnClickListener(v -> onFiltersClick()); }
         if (add_dish_button != null) { add_dish_button.setOnClickListener(v -> {
             if (v.getId() == R.id.add_dish) {
                 Intent intent = new Intent(getContext(), EditorDishActivity.class);
-                intent.putExtra(Config.KEY_DISH, Config.ADD_MODE);
+                intent.putExtra(IntentKeys.DISH_ID.name(), -1);
                 startActivity(intent);
             }
         });}
         Log.d("SearchDishFragment", "Слухачі фрагмента успішно завантажені.");
     }
 
+    /**
+     * Відновлює фокус на полі пошуку, якщо фрагмент був у режимі пошуку
+     */
     private void restoreFocus() {
         if (flagOpenSearch) {
             flagAccessAnimation.set(false);
@@ -242,29 +263,37 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Ініціалізує контролер пошуку для страв
+     */
     private void setSearchController() {
         if (searchControllerForDish == null) {
-            searchControllerForDish = new SearchController(getContext(), searchEditText, searchResultsRecyclerView, (view, item) -> {
+            searchControllerForDish = new SearchController(getContext(), searchEditText, searchResultsRecyclerView, new SearchResultsAdapter<Dish>((view, item) -> {
                 Dish dish = (Dish) item;
                 Intent intent = new Intent(getContext(), EditorDishActivity.class);
-                intent.putExtra(Config.KEY_DISH, dish.getId());
-                startActivity(intent);
-            });
+                intent.putExtra(IntentKeys.DISH_ID.name(), dish.getId());
+                startActivity(intent); // Відкриття редактора страви
+            }));
         }
     }
 
+    /**
+     * Оновлює дані рецептів з урахуванням поточних фільтрів та сортування
+     */
     private void updateRecipesData() {
         utils.ByDish().getViewModel().getAll().observe(this, data -> {
             if (data != null && searchControllerForDish != null) {
-                Disposable disposable = utils.ByDish().getFilteredAndSorted(ingredients, sortStatus)
+                // Отримання відфільтрованих та відсортованих даних
+                Disposable disposable = utils.ByDish().getFilteredAndSorted(nameIngredients, sortStatus)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(array_dishes -> {
                             if (searchControllerForDish != null) {
                                 searchControllerForDish.setArrayData(new ArrayList<>(array_dishes));
-                                searchControllerForDish.search();
+                                searchControllerForDish.search(); // Оновлення результатів пошуку
                             }
 
+                            // Відновлення позиції скролу
                             LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
                             if (layoutManager != null) {
                                 int position = getActivity().getPreferences(Context.MODE_PRIVATE).getInt("scroll_position", 0);
@@ -277,14 +306,20 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         });
     }
 
+    /**
+     * Обробляє клік на кнопку сортування, показує діалог сортування
+     */
     private void onSortClick() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_sort_search_result, null);
+
+        // Отримання елементів сортування
         LinearLayout sort_alphabetBox = dialogView.findViewById(R.id.sort_alphabetBox);
         LinearLayout sort_TimeBox = dialogView.findViewById(R.id.sort_TimeBox);
 
         if (sort_alphabetBox != null && sort_TimeBox != null) {
+            // Налаштування радіо-кнопок сортування
             ArrayList<RadioGroup> radioGroups = new ArrayList<>();
             radioGroups.add(sort_alphabetBox.findViewById(R.id.sort_alphabet_radioButtonGroup));
             radioGroups.add(sort_TimeBox.findViewById(R.id.sort_time_radioButtonGroup));
@@ -321,12 +356,16 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Обробляє клік на кнопку фільтрів, показує діалог фільтрації
+     */
     private void onFiltersClick() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
         TextView textView = dialogView.findViewById(R.id.textView22);
         ConstraintLayout constraintLayout = dialogView.findViewById(R.id.search_filters_LinearLayout);
+        ConstraintLayout empty = dialogView.findViewById(R.id.empty);
         RecyclerView filtersRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
 
         if (textView != null) { textView.setText(R.string.your_ingredients); }
@@ -334,39 +373,35 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
             EditText editText = constraintLayout.findViewById(R.id.search_edit_text);
 
             if (editText != null) {
-                CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, 30);
+                CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Limits.MAX_CHAR_NAME_INGREDIENT);
 
+                // Отримання унікальних назв інгредієнтів
                 Disposable disposable = utils.ByIngredient().getNamesUnique()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 names -> {
-                                    if (names != null && !names.isEmpty()){
+                                    if (names != null){
+                                        if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, names.isEmpty());
+
+                                        // Ініціалізація контролера пошуку інгредієнтів
                                         if (searchControllerForFiltersIngredient == null) {
-                                            searchControllerForFiltersIngredient = new SearchController(getContext(), editText, filtersRecyclerView, (checkBox, selectedItem, item) -> {
-                                                if (!checkBox.isChecked()) {
-                                                    selectedItem.add(item);
-                                                    checkBox.setChecked(true);
-                                                } else {
-                                                    selectedItem.remove(item);
-                                                    checkBox.setChecked(false);
-                                                }
-                                            });
+                                            searchControllerForFiltersIngredient = new SearchController<>(getContext(), editText, filtersRecyclerView, new ChooseItemAdapter<String>(getContext(), (checkBox, item) -> {}));
                                         }
 
                                         searchControllerForFiltersIngredient.setArrayData(new ArrayList<>(names));
                                         searchControllerForFiltersIngredient.setSearchEditText(editText);
                                         searchControllerForFiltersIngredient.setSearchResultsRecyclerView(filtersRecyclerView);
 
-                                        AddChooseObjectsAdapter addChooseObjectsAdapter = (AddChooseObjectsAdapter) searchControllerForFiltersIngredient.getAdapter();
+                                        ChooseItemAdapter<String> chooseItemAdapter = (ChooseItemAdapter) searchControllerForFiltersIngredient.getAdapter();
 
                                         builder.setView(dialogView)
                                                 .setPositiveButton(R.string.apply, (dialog, which) -> {
-                                                    ingredients = addChooseObjectsAdapter.getSelectedItem();
-                                                    updateRecipesData();
+                                                    nameIngredients = chooseItemAdapter.getSelectedItem();
+                                                    updateRecipesData(); // Оновлення з новими фільтрами
                                                 })
                                                 .setNeutralButton(R.string.reset, (dialog, which) -> {
-                                                    resetFilters(addChooseObjectsAdapter);
+                                                    resetFilters(chooseItemAdapter);
                                                 })
                                                 .setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
 
@@ -375,20 +410,25 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                                         Toast.makeText(getContext(), getString(R.string.empty_names_ingredient), Toast.LENGTH_SHORT).show();
                                     }
                                 },
-                                throwable -> {
-                                    Log.d("SearchDishFragment", "Помилка отримання унікальних назв інгредіентів");
-                                }
+                                throwable -> Log.d("SearchDishFragment", "Помилка отримання унікальних назв інгредіентів")
                         );
                 compositeDisposable.add(disposable);
             }
         }
     }
 
+    /**
+     * Обробляє клік на GPT-контейнер
+     */
     private void onGPTClick() {
         Intent intent = new Intent(getContext(), GPTActivity.class);
-        startActivity(intent);
+        startActivity(intent); // Відкриття GPT-активності
     }
 
+    /**
+     * Встановлює стан радіо-кнопок відповідно до поточного стану сортування
+     * @param dataRadioGroup список пар (RadioGroup, RadioButton) для налаштування
+     */
     private void checkRadioButton(ArrayList<Pair<RadioGroup, ArrayList<RadioButton>>> dataRadioGroup) {
         int i = 0;
 
@@ -403,6 +443,10 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Приховує клавіатуру
+     * @param view View, яке має фокус введення
+     */
     private void hideKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
@@ -411,14 +455,19 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         Log.d("SearchDishFragment", "Клавіатура схована.");
     }
 
+    /**
+     * Показує кнопку сортування з анімацією
+     */
     private void showSort() {
         if (sortButton != null) {
             sortButton.setAlpha(0f);
             sortButton.setVisibility(View.VISIBLE);
 
+            // Анімація появи
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 0f, 1f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху зверху вниз
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", -50f, 0f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -429,14 +478,19 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Показує кнопку фільтрів з анімацією
+     */
     private void showFilters() {
         if (filtersButton != null) {
             filtersButton.setAlpha(0f);
             filtersButton.setVisibility(View.VISIBLE);
 
+            // Анімація появи
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 0f, 1f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху зверху вниз
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", -50f, 0f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -447,14 +501,19 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Показує головний текст фрагмента з анімацією
+     */
     private void showHeadText() {
         if (head_textView != null) {
             head_textView.setAlpha(0f);
             head_textView.setVisibility(View.VISIBLE);
 
+            // Анімація появи
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 0f, 1f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху зверху вниз
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", -50f, 0f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -465,6 +524,9 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Показує список результатів пошуку з анімацією
+     */
     private void showRecyclerView() {
         searchResultsRecyclerView.setAlpha(0f);
         searchResultsRecyclerView.setVisibility(View.VISIBLE);
@@ -476,11 +538,16 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         Log.d("SearchDishFragment", "Список страв/інгредієнтів з'явився.");
     }
 
+    /**
+     * Приховує заголовок з анімацією
+     */
     private void hideHeadText() {
         if (head_textView != null) {
+            // Анімація зникнення
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(head_textView, "alpha", 1f, 0f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху знизу вверх
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(head_textView, "translationY", 0f, -50f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -498,11 +565,16 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Приховує кнопку сортування з анімацією
+     */
     private void hideSort() {
         if (sortButton != null) {
+            // Анімація зникнення
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(sortButton, "alpha", 1f, 0f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху знизу вверх
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(sortButton, "translationY", 0f, -50f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -520,11 +592,16 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Приховує кнопку фільтрів з анімацією
+     */
     private void hideFilters() {
         if (filtersButton != null) {
+            // Анімація зникнення
             ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(filtersButton, "alpha", 1f, 0f);
             alphaAnimator.setDuration(durationAnimation);
 
+            // Анімація руху знизу вверх
             ObjectAnimator translationAnimator = ObjectAnimator.ofFloat(filtersButton, "translationY", 0f, -50f);
             translationAnimator.setDuration(durationAnimation);
 
@@ -542,6 +619,9 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Приховує список результатів пошуку з анімацією
+     */
     private void hideRecyclerView() {
         if (searchResultsRecyclerView != null) {
             searchResultsRecyclerView.animate()
@@ -559,19 +639,32 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         }
     }
 
+    /**
+     * Скидає налаштування сортування до значень за замовчуванням
+     */
     private void resetSorting() {
-        sortStatus.set(0, true);
-        sortStatus.set(1, null);
+        sortStatus.set(0, true); // Сортування за алфавітом (за зростанням)
+        sortStatus.set(1, null); // Без сортування за часом
         updateRecipesData();
     }
 
-    private void resetFilters(AddChooseObjectsAdapter addChooseObjectsAdapter) {
-        ingredients = new ArrayList<>();
-        if (addChooseObjectsAdapter != null) { addChooseObjectsAdapter.resetSelection(); }
+    /**
+     * Скидає вибрані фільтри інгредієнтів
+     * @param chooseItemAdapter адаптер для скидання виділених елементів
+     */
+    private void resetFilters(ChooseItemAdapter chooseItemAdapter) {
+        nameIngredients = new ArrayList<>();
+        if (chooseItemAdapter != null) { chooseItemAdapter.resetSelectionItems(); }
         updateRecipesData();
     }
 
+    /**
+     * Створює та налаштовує радіо-кнопки для діалогу сортування
+     * @param radioGroups група для додавання кнопок
+     * @return список створених радіо-кнопок
+     */
     private ArrayList<ArrayList<RadioButton>> getRadioButtons(ArrayList<RadioGroup> radioGroups) {
+        // Отримання кольору тексту з поточної теми
         TypedValue typedValue = new TypedValue();
         Resources.Theme theme = getContext().getTheme();
         theme.resolveAttribute(R.attr.colorText, typedValue, true);

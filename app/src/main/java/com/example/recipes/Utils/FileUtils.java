@@ -14,25 +14,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Утилітарний клас для роботи з файлами через Uri.
+ */
 public class FileUtils {
-
-    public static File getFileFromUri(Context context, Uri uri) throws IOException {
-        File tempFile = new File(context.getCacheDir(), "temp_recipes.json");
-        try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
-             OutputStream outputStream = new FileOutputStream(tempFile)) {
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
-        return tempFile;
-    }
-
+    /**
+     * Відправляє файл через системний інтент для відправки.
+     *
+     * @param context Контекст додатка
+     * @param uri Uri файла для відправки
+     */
     public static void sendFileByUri (Context context, Uri uri) {
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
         sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
         sendIntent.setType("application/json");
         sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -41,6 +37,13 @@ public class FileUtils {
         context.startActivity(shareIntent);
     }
 
+    /**
+     * Видаляє файл за його Uri.
+     *
+     * @param context Контекст додатка
+     * @param uri Uri файла для видалення
+     * @return true, якщо файл успішно видалено, false - якщо ні
+     */
     public static boolean deleteFileByUri(Context context, Uri uri) {
         try {
             ContentResolver contentResolver = context.getContentResolver();

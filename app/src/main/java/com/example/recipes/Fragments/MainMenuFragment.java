@@ -11,6 +11,13 @@ import android.widget.ImageView;
 
 import com.example.recipes.R;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Фрагмент, що відповідає за відображення головного меню додатка.
+ * Цей фрагмент містить основні навігаційні елементи
+ */
 public class MainMenuFragment extends Fragment {
 
     @Nullable

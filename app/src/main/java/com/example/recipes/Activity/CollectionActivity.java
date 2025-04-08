@@ -15,10 +15,8 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,22 +30,25 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Adapter.AddChooseObjectsAdapter;
+import com.example.recipes.Adapter.ChooseItemAdapter;
 import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
 import com.example.recipes.Adapter.DishGetAdapter;
-import com.example.recipes.Config;
+import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Controller.ShakeDetector;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
+import com.example.recipes.Enum.CollectionType;
+import com.example.recipes.Enum.IntentKeys;
+import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.Utils.ClassUtils;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.ViewItem.MenuItemView;
@@ -67,6 +68,14 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Активність для відображення та управління колекцією страв.
+ * Дозволяє користувачу переглядати, додавати, редагувати та видаляти страви,
+ * а також керувати самою колекцією (перейменування, очищення, видалення).
+ */
 public class CollectionActivity extends AppCompatActivity {
     private MenuItemView linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5, linearLayout6, linearLayout7;
     private AlertDialog dishCardDialog;
@@ -77,40 +86,43 @@ public class CollectionActivity extends AppCompatActivity {
     private EditText searchEditText;
     private Collection collection;
     private DrawerLayout drawerLayout;
-    private SearchController searchController;
+    private SearchController<Dish> searchController;
     private RecipeUtils utils;
     private PreferencesController preferencesController;
     private String[] themeArray;
     private DishGetAdapter adapter;
     private String nameActivity;
     private ShakeDetector shakeDetector;
+    private ImportExportController importExportController;
     private CompositeDisposable compositeDisposable;
     private AtomicBoolean flagClear = new AtomicBoolean(false);
     private AtomicBoolean flagAccessDelete = new AtomicBoolean(true);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(this);
+        preferencesController = PreferencesController.getInstance();
         themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
-        utils = new RecipeUtils(this);
-        collection = new Collection("", "");
+        utils = RecipeUtils.getInstance(this);
+        importExportController = new ImportExportController(this);
+        collection = new Collection("", CollectionType.VOID);
         compositeDisposable = new CompositeDisposable();
         nameActivity = this.getClass().getSimpleName();
 
         super.onCreate(savedInstanceState);
+        preferencesController.setPreferencesToActivity(this);
         setContentView(R.layout.collection_activity);
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        long collectionID = getIntent().getLongExtra(Config.KEY_COLLECTION, -1);
+        long collectionID = getIntent().getLongExtra(IntentKeys.COLLECTION_ID.name(), -1);
 
         loadItemsActivity(collectionID);
         loadClickListeners();
 
         if (collectionID > 0) {
+            // Слухач зміни в базі даних
             utils.ByCollection().getViewModel().getCollectionByID(collectionID).observe(this,
                     data -> {
                         if (data != null && flagAccessDelete.get() && !flagClear.get()) {
@@ -123,6 +135,7 @@ public class CollectionActivity extends AppCompatActivity {
             Toast.makeText(this, getString(R.string.error_read_get_dish), Toast.LENGTH_SHORT).show();
         }
 
+        // Детектор струшування для випадкової страви.
         shakeDetector = new ShakeDetector(this::openRandDishCard);
         shakeDetector.register(this );
     }
@@ -149,6 +162,12 @@ public class CollectionActivity extends AppCompatActivity {
         } else { super.onBackPressed(); }
     }
 
+    /**
+     * Ініціалізує та налаштовує усі UI елементи активності в залежності від типу колекції.
+     * Для системних колекцій (ID <= 4) використовується інший набір елементів меню.
+     *
+     * @param collectionID ID колекції для завантаження
+     */
     @SuppressLint("ResourceType")
     private void loadItemsActivity(long collectionID) {
         name = findViewById(R.id.nameCollection);
@@ -194,6 +213,10 @@ public class CollectionActivity extends AppCompatActivity {
 
         Log.d(nameActivity, "Елементи активності успішно завантажені");
     }
+
+    /**
+     * Встановлює обробники кліків для усіх елементів меню та інтерфейсу.
+     */
     private void loadClickListeners() {
         if (linearLayout1 != null) { linearLayout1.setOnClickListener(v -> handleAddToCollection()); }
         if (linearLayout2 != null) { linearLayout2.setOnClickListener(v -> handleCopyToCollection()); }
@@ -215,36 +238,42 @@ public class CollectionActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Заповнює UI елементи даними поточної колекції.
+     */
     private void setDataIntoItemsActivity() {
         if (name != null) { name.setText(collection.getName()); }
         if (dishRecyclerView != null) {
             setDishAdapter();
+            setSearchController();
         }
     }
 
-    private void setSearchController(List<Dish> dishes) {
+    /**
+     * Налаштовує контролер пошуку для фільтрації страв у колекції.
+     */
+    private void setSearchController() {
         if (searchEditText != null && dishRecyclerView != null) {
             if (searchController == null) {
-                searchController = new SearchController(this, searchEditText, dishRecyclerView, (view, item) -> {
-                    Dish dish = (Dish) item;
-                    Intent intent = new Intent(view.getContext(), EditorDishActivity.class);
-                    intent.putExtra(Config.KEY_DISH, dish.getId());
-                    view.getContext().startActivity(intent);
-                });
-            }
+                if (adapter == null) setDishAdapter();
 
-            searchController.setArrayData(new ArrayList<>(dishes));
-            searchController.search();
+                searchController = new SearchController<>(this, searchEditText, dishRecyclerView, adapter);
+            }
         }
     }
 
+    /**
+     * Налаштовує адаптер для відображення списку страв.
+     * Встановлює слухачів для оновлення даних при зміні страв у базі даних.
+     * Оновлює інтерфейс залежно від наявності страв у колекції.
+     */
     private void setDishAdapter() {
         if (adapter == null) {
             adapter = new DishGetAdapter(this, new DishGetAdapter.DishClickListener() {
                 @Override
                 public void onDishClick(Dish item, View v) {
                     Intent intent = new Intent(v.getContext(), EditorDishActivity.class);
-                    intent.putExtra(Config.KEY_DISH, item.getId());
+                    intent.putExtra(IntentKeys.DISH_ID.name(), item.getId());
                     v.getContext().startActivity(intent);
                 }
 
@@ -256,7 +285,7 @@ public class CollectionActivity extends AppCompatActivity {
                     for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                         MenuItem item = popupMenu.getMenu().getItem(i);
                         SpannableString spannableString = new SpannableString(item.getTitle());
-                        if (!Objects.equals(preferencesController.getTheme(), themeArray[0])) {
+                        if (!Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
                             spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(CollectionActivity.this, R.color.white)), 0, spannableString.length(), 0);
                         } else {
                             spannableString.setSpan(new ForegroundColorSpan(ContextCompat.getColor(CollectionActivity.this, R.color.black)), 0, spannableString.length(), 0);
@@ -297,6 +326,7 @@ public class CollectionActivity extends AppCompatActivity {
             dishRecyclerView.addItemDecoration(new VerticalSpaceItemDecoration(-4));
         }
 
+        // Слухач зміни страв колекції в базі даних
         utils.ByDish_Collection().getViewModel().getAllDishIDs(collection.getId()).observe(this, data -> {
             if (data != null) {
                 Disposable disposable = Observable.fromIterable(data)
@@ -307,7 +337,12 @@ public class CollectionActivity extends AppCompatActivity {
                         .subscribe(dishes -> {
                             adapter.setItems(new ArrayList<>(dishes));
                             collection.setDishes(new ArrayList<>(dishes));
-                            setSearchController(dishes);
+
+                            if (searchController != null) {
+                                searchController.setArrayData(new ArrayList<>(dishes));
+                                searchController.search();
+                            }
+
                             AnotherUtils.visibilityEmptyStatus(empty, dishes.isEmpty());
                         });
                 compositeDisposable.add(disposable);
@@ -315,8 +350,12 @@ public class CollectionActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Відкриває діалогове вікно з випадково обраною стравою з колекції.
+     * Викликається при струшуванні пристрою.
+     */
     private void openRandDishCard() {
-        if (dishCardDialog != null) { dishCardDialog.dismiss(); }
+        if (dishCardDialog != null) { dishCardDialog.dismiss(); } // Якщо карточка вже відкрита, то вона закриється
 
         if (!collection.getDishes().isEmpty()) {
             Random random = new Random();
@@ -335,7 +374,7 @@ public class CollectionActivity extends AppCompatActivity {
                 if (dishCardLayout != null) {
                     dishCardLayout.setOnClickListener(v -> {
                         Intent intent = new Intent(v.getContext(), EditorDishActivity.class);
-                        intent.putExtra(Config.KEY_DISH, randDish.getId());
+                        intent.putExtra(IntentKeys.DISH_ID.name(), randDish.getId());
                         v.getContext().startActivity(intent);
                     });
                 }
@@ -356,6 +395,11 @@ public class CollectionActivity extends AppCompatActivity {
     //
     // Handles Collection
     //
+
+    /**
+     * Відкриває діалог для додавання нових страв до поточної колекції.
+     * Показує список усіх страв, які ще не входять до цієї колекції.
+     */
     private void handleAddToCollection() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -366,25 +410,15 @@ public class CollectionActivity extends AppCompatActivity {
         Disposable disposable = utils.ByCollection().getUnusedDish(collection)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(unused_dishes -> {
-                            AddChooseObjectsAdapter adapter = new AddChooseObjectsAdapter((ArrayList) unused_dishes, (checkBox, selectedItem, item) -> {
-                                if (!checkBox.isChecked()) {
-                                    selectedItem.add(((Dish)item).getId());
-                                    checkBox.setChecked(true);
-                                } else {
-                                    selectedItem.remove(((Dish)item).getId());
-                                    checkBox.setChecked(false);
-                                }
-                            });
+                .subscribe(unused_dishes -> {   // Отримаємо страви, яких немає у вибраній коллекції
+                            ChooseItemAdapter<Dish> adapter = new ChooseItemAdapter<>(this, (checkBox, item) -> {});
+                            adapter.setItems(unused_dishes);
                             dishesRecyclerView.setAdapter(adapter);
                             dishesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
                             builder.setView(dialogView)
                                     .setPositiveButton(R.string.button_copy, (dialog, which) -> {
-                                        ArrayList<Object> selectedDishIds = adapter.getSelectedItem();
-                                        ArrayList<Long> selectedDishLongIds = new ArrayList<>();
-                                        for (Object id : selectedDishIds) {
-                                            selectedDishLongIds.add((Long) id);
-                                        }
+                                        ArrayList<?> selectedDishIds = adapter.getSelectedItem();  // Отримаємо ID став, які були вибрані в діалозі
+                                        ArrayList<Long> selectedDishLongIds = ClassUtils.getListOfType(selectedDishIds, Long.class);
 
                                         if (!selectedDishIds.isEmpty()) {
                                             Disposable disposable1 = utils.ByDish().getAll(selectedDishLongIds)
@@ -416,45 +450,53 @@ public class CollectionActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
+    /**
+     * Відкриває діалог для копіювання усіх страв з поточної колекції в інші колекції.
+     * Дозволяє обрати декілька колекцій одночасно.
+     */
     private void handleCopyToCollection() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
 
-        Disposable disposable = utils.ByCollection().getAllByType(Config.COLLECTION_TYPE)
+        Disposable disposable = utils.ByCollection().getAllByType(CollectionType.COLLECTION)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        allCollections -> {
-                            allCollections.remove(collection);
-                            AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(this, (ArrayList<Collection>) allCollections);
-                            collectionsRecyclerView.setAdapter(adapter);
-                            collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                            builder.setView(dialogView)
-                                    .setPositiveButton(R.string.button_copy, (dialog, which) -> {
-                                        ArrayList<Long> selectedCollectionIds = adapter.getSelectedCollectionIds();
-                                        if (!selectedCollectionIds.isEmpty()){
-                                            Disposable disposable1 = utils.ByDish_Collection().copyDishesToAnotherCollections(collection.getId(), selectedCollectionIds)
-                                                    .subscribeOn(Schedulers.io())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(status -> {
-                                                                if (status) {
-                                                                    Toast.makeText(this, getString(R.string.successful_copy_dishes), Toast.LENGTH_SHORT).show();
-                                                                    Log.d(nameActivity, "Страви успішно скопійовано до колекції(й)");
+                        listData -> {
+                            if (ClassUtils.isListOfType(listData, Collection.class)) {
+                                ArrayList<Collection> allCollections = ClassUtils.getListOfType(listData, Collection.class);
+                                allCollections.remove(collection);
+                                AddDishToCollectionsAdapter adapter = new AddDishToCollectionsAdapter(this, allCollections);
+                                collectionsRecyclerView.setAdapter(adapter);
+                                collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                                builder.setView(dialogView)
+                                        .setPositiveButton(R.string.button_copy, (dialog, which) -> {
+                                            // Отримаємо ID вибраних коллекцій
+                                            ArrayList<Long> selectedCollectionIds = adapter.getSelectedCollectionIds();
+                                            if (!selectedCollectionIds.isEmpty()){
+                                                Disposable disposable1 = utils.ByDish_Collection().copyDishesToAnotherCollections(collection.getId(), selectedCollectionIds)
+                                                        .subscribeOn(Schedulers.io())
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe(status -> {
+                                                                    if (status) {
+                                                                        Toast.makeText(this, getString(R.string.successful_copy_dishes), Toast.LENGTH_SHORT).show();
+                                                                        Log.d(nameActivity, "Страви успішно скопійовано до колекції(й)");
+                                                                    }
+                                                                },
+                                                                throwable -> {
+                                                                    Log.d(nameActivity, "Помилка копіювання страв до колекції(й)");
                                                                 }
-                                                            },
-                                                            throwable -> {
-                                                                Log.d(nameActivity, "Помилка копіювання страв до колекції(й)");
-                                                            }
-                                                    );
+                                                        );
 
-                                            compositeDisposable.add(disposable1);
-                                        }
-                                    })
-                                    .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+                                                compositeDisposable.add(disposable1);
+                                            }
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
-                            builder.create().show();
+                                builder.create().show();
+                            }
                         },
                         throwable -> {
                             Log.d(nameActivity, "Помилка отримання усіх колекцій");
@@ -464,13 +506,17 @@ public class CollectionActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
+    /**
+     * Відкриває діалог для редагування назви колекції.
+     * Перевіряє унікальність нової назви перед збереженням.
+     */
     private void handleEditNameCollection() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_edit_collection, null);
         EditText editText = dialogView.findViewById(R.id.edit_collection_name_editText);
         editText.setText(collection.getName());
-        CharacterLimitTextWatcher.setCharacterLimit(this, editText, Config.CHAR_LIMIT_NAME_COLLECTION);
+        CharacterLimitTextWatcher.setCharacterLimit(this, editText, Limits.MAX_CHAR_NAME_COLLECTION);
         builder.setView(dialogView)
                 .setTitle(R.string.edit_collection)
                 .setPositiveButton(R.string.edit, (dialog, which) -> {
@@ -497,9 +543,7 @@ public class CollectionActivity extends AppCompatActivity {
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
-                                    updatedCollection -> {
-                                        Toast.makeText(this, R.string.successful_edit_collection, Toast.LENGTH_SHORT).show();
-                                    },
+                                    updatedCollection -> Toast.makeText(this, R.string.successful_edit_collection, Toast.LENGTH_SHORT).show(),
                                     throwable -> {
                                         if (throwable.getMessage() != null && throwable.getMessage().equals(getString(R.string.warning_dublicate_name_collection))) {
                                             Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
@@ -516,13 +560,17 @@ public class CollectionActivity extends AppCompatActivity {
         builder.create().show();
     }
 
+    /**
+     * Експортує усі страви з колекції у файл та відкриває вікно для надсилання файлу.
+     * Спершу показує повідомлення з попередженням про експорт.
+     */
     private void handleShareCollection() {
         if (!collection.getDishes().isEmpty()) {
             new AlertDialog.Builder(this)
                     .setTitle(getString(R.string.confirm_export))
                     .setMessage(getString(R.string.warning_export))
                     .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                        ImportExportController.exportRecipeData(this, collection, new ExportCallbackUri() {
+                        importExportController.exportRecipeData(this, collection, new ExportCallbackUri() {
                             @Override
                             public void onSuccess(Uri uri) {
                                 if (uri != null) {
@@ -552,6 +600,10 @@ public class CollectionActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Видаляє усі страви з колекції, але зберігає саму колекцію.
+     * Показує діалог підтвердження перед видаленням.
+     */
     private void handleClearCollection() {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_clear_collection))
@@ -573,6 +625,10 @@ public class CollectionActivity extends AppCompatActivity {
                 .setNegativeButton(getString(R.string.no), null).show();
     }
 
+    /**
+     * Видаляє колекцію, але зберігає страви, що були в ній.
+     * Показує діалог підтвердження перед видаленням.
+     */
     private void handleDeleteCollectionOnly() {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_delete_dish))
@@ -596,6 +652,10 @@ public class CollectionActivity extends AppCompatActivity {
                 .setNegativeButton(getString(R.string.no), null).show();
     }
 
+    /**
+     * Видаляє колекцію разом з усіма стравами, що були в ній.
+     * Показує діалог підтвердження перед видаленням.
+     */
     private void handleDeleteCollectionWithDish() {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_delete_dish))
@@ -626,6 +686,13 @@ public class CollectionActivity extends AppCompatActivity {
     //
     // Handles Dish
     //
+
+    /**
+     * Відкриває діалог для додавання обраної страви до інших колекцій.
+     * Показує список колекцій, які ще не містять цю страву.
+     *
+     * @param dish Страва для додавання в інші колекції
+     */
     private void handleAddInCollectionDish(Dish dish) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -669,12 +736,23 @@ public class CollectionActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
+
+    /**
+     * Відкриває активність редактора страви та передає обрану страву туди.
+     *
+     * @param dish Страва для редагування
+     */
     private void handleEditDish(Dish dish) {
         Intent intent = new Intent(this, EditorDishActivity.class);
-        intent.putExtra(Config.KEY_DISH, dish.getId());
+        intent.putExtra(IntentKeys.DISH_ID.name(), dish.getId());
         startActivity(intent);
     }
 
+    /**
+     * Копіює інформацію про страву (назву, інгредієнти, опис) у буфер обміну.
+     *
+     * @param dish Страва для копіювання
+     */
     private void handleCopyAsTextDish(Dish dish) {
         Disposable disposable = utils.ByIngredient().getAllByIDDish(dish.getId())
                 .subscribeOn(Schedulers.io())
@@ -695,12 +773,17 @@ public class CollectionActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
+    /**
+     * Експортує окрему страву у файл та відкриває вікно для надсилання файлу.
+     *
+     * @param dish Страва для експорту
+     */
     private void handleShareDish(Dish dish) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_export))
                 .setMessage(getString(R.string.warning_export))
                 .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                    ImportExportController.exportDish(this, dish, new ExportCallbackUri() {
+                    importExportController.exportDish(this, dish, new ExportCallbackUri() {
                         @Override
                         public void onSuccess(Uri uri) {
                             if (uri != null) {
@@ -725,6 +808,11 @@ public class CollectionActivity extends AppCompatActivity {
                 .setNegativeButton(getString(R.string.no), null).show();
     }
 
+    /**
+     * Видаляє страву лише з поточної колекції, але зберігає її в базі даних.
+     *
+     * @param dish Страва для видалення з колекції
+     */
     private void handleRemoveDish(Dish dish) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_remove_dish))
@@ -755,6 +843,11 @@ public class CollectionActivity extends AppCompatActivity {
                 .setNegativeButton(getString(R.string.no), null).show();
     }
 
+    /**
+     * Повністю видаляє страву з бази даних.
+     *
+     * @param dish Страва для повного видалення
+     */
     private void handleDeleteDish(Dish dish) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_delete_dish))

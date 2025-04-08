@@ -2,27 +2,28 @@ package com.example.recipes.Item;
 
 import android.content.Context;
 
-import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-import com.bumptech.glide.load.engine.Resource;
 import com.example.recipes.Enum.DishRecipeType;
-import com.example.recipes.Interface.SelectableItem;
+import com.example.recipes.Interface.Item;
 import com.example.recipes.R;
-import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.io.Resources;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "dish",
         indices = {@Index("id")}
 )
-public class Dish implements SelectableItem {
+public class Dish implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name = "";
     @ColumnInfo(name = "portion") private int portion = 0;
@@ -30,8 +31,10 @@ public class Dish implements SelectableItem {
     @Ignore private ArrayList<Ingredient> ingredients = new ArrayList<>();
     @Ignore private ArrayList<DishRecipe> recipes = new ArrayList<>();
 
+
+    // Конструктори
     @Ignore
-    public Dish(long id, String name, String recipe, int portion, long timestamp){
+    public Dish(long id, String name, int portion, long timestamp){
         this.id = id;
         this.name = name;
         this.portion = portion;
@@ -67,6 +70,15 @@ public class Dish implements SelectableItem {
     }
 
     @Ignore
+    public Dish(String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long timestamp){
+        this.name = name;
+        this.portion = portion;
+        this.ingredients.addAll(ingredients);
+        this.recipes.addAll(recipes);
+        this.timestamp = timestamp;
+    }
+
+    @Ignore
     public Dish(String name){
         this.name = name;
         this.timestamp = System.currentTimeMillis();
@@ -78,6 +90,8 @@ public class Dish implements SelectableItem {
         this.timestamp = System.currentTimeMillis();
     }
 
+
+    // Геттери і сеттери
     @Override
     public long getId() {
         return id;
@@ -86,16 +100,6 @@ public class Dish implements SelectableItem {
     @Override
     public String getName() {
         return name;
-    }
-
-    public ArrayList<String> getRecipeText() {
-        ArrayList<String> recipeText = new ArrayList<>();
-
-        for (DishRecipe dishRecipe : recipes) {
-            if (dishRecipe.getTypeData() == DishRecipeType.TEXT) recipeText.add(dishRecipe.getTextData());
-        }
-
-        return recipeText;
     }
 
     public int getPortion() {
@@ -140,10 +144,35 @@ public class Dish implements SelectableItem {
         this.ingredients.addAll(ingredients);
     }
 
+
+    // Інші методи
     public void addRecipe(DishRecipe dishRecipe) {
         recipes.add(dishRecipe);
     }
 
+
+    /**
+     * Отримаємо один текст, який збирається із всіх DishRecipe типа Text
+     *
+     * @return весь рецепт в одним рядком
+     */
+    public ArrayList<String> getRecipeText() {
+        ArrayList<String> recipeText = new ArrayList<>();
+
+        for (DishRecipe dishRecipe : recipes) {
+            if (dishRecipe.getTypeData() == DishRecipeType.TEXT) recipeText.add(dishRecipe.getTextData());
+        }
+
+        return recipeText;
+    }
+
+
+    /**
+     * Отримаємо повний текстовий опис всієї страви.
+     *
+     * @param context контекст активності. Потрібен для отримання текстових ресурсів
+     * @return текстовий опис всієї страви
+     */
     public String getAsText(Context context) {
         StringBuilder builder = new StringBuilder();
         builder.append(name + "\n\n").append(context.getString(R.string.portionship) + ": " + portion + "\n");
@@ -160,27 +189,15 @@ public class Dish implements SelectableItem {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        Dish dish = (Dish) obj;
-
-        if (id != dish.id) return false;
-        if (!name.equals(dish.name)) return false;
-        if (portion == dish.portion) return false;
-        if (timestamp != dish.timestamp) return false;
-        return recipes == dish.recipes;
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Dish dish = (Dish) object;
+        return id == dish.id && portion == dish.portion && timestamp == dish.timestamp && Objects.equals(name, dish.name) && Objects.equals(ingredients, dish.ingredients) && Objects.equals(recipes, dish.recipes);
     }
 
     @Override
     public int hashCode() {
-        int result = Long.hashCode(id);
-        result = 31 * result + name.hashCode();
-        result = 31 * result + portion;
-        result = 31 * result + Long.hashCode(timestamp);
-        for (DishRecipe dishRecipe : recipes) result = 31 * result + dishRecipe.hashCode();
-        return result;
+        return Objects.hash(id, name, portion, timestamp, ingredients, recipes);
     }
-
 }

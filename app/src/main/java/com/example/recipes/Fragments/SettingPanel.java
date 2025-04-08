@@ -6,34 +6,22 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
-import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Adapter.AddChooseObjectsAdapter;
-import com.example.recipes.Config;
-import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PreferencesController;
-import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Interface.ExportCallbackUri;
-import com.example.recipes.Item.DataBox;
-import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
@@ -41,47 +29,59 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Клас для управління панеллю налаштувань додатка.
+ */
 public class SettingPanel {
     private DrawerLayout drawerLayout;
-    private LinearLayout importLayout, exportLayout;
-    private TextView ingredientBlackList;
+    private NavigationView navigationView;
+    private LinearLayout importLayout, exportLayout, deleteDBLayout;
     private PreferencesController preferencesController;
     private RecipeUtils utils;
     private Spinner languageSpinner, themeSpinner, paletteSpinner;
-    private Switch status_ing_hints_Switch;
     private String[] languageArray, themeArray, paletteArray;
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
     private String nameActivity;
-    private SearchController searchController;
+    private ImportExportController importExportController;
     private CompositeDisposable compositeDisposable;
 
+    /**
+     * Конструктор класу SettingPanel
+     * @param activity Поточна активність
+     * @param rootView Кореневий View, що містить DrawerLayout
+     */
     public SettingPanel(@NonNull Activity activity, View rootView) {
         try {
             this.drawerLayout = (DrawerLayout) rootView;
         } catch (Exception e) {}
-        preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(activity);
-        utils = new RecipeUtils(activity);
+        preferencesController = PreferencesController.getInstance();
+        utils = RecipeUtils.getInstance(activity);
+        importExportController = new ImportExportController(activity);
         nameActivity = activity.getClass().getSimpleName();
         compositeDisposable = new CompositeDisposable();
-        loadLayoutItems(activity, rootView);
-        loadClickListeners(activity);
+        loadLayoutItems(activity, rootView); // Завантаження UI елементів
+        loadClickListeners(activity);        // Налаштування обробників подій
     }
 
+    /**
+     * Завантажує UI елементи панелі налаштувань
+     * @param activity Поточна активність
+     * @param rootView Кореневий View
+     */
     private void loadLayoutItems(Activity activity, View rootView) {
         if (rootView != null) {
-            NavigationView navigationView = rootView.findViewById(R.id.navigationView);
+            navigationView = rootView.findViewById(R.id.navigationView);
 
             if (navigationView != null) {
                 View headerView = navigationView.getHeaderView(0);
@@ -90,11 +90,10 @@ public class SettingPanel {
                     languageSpinner = headerView.findViewById(R.id.language_spinner);
                     themeSpinner = headerView.findViewById(R.id.theme_spinner);
                     paletteSpinner = headerView.findViewById(R.id.palette_spinner);
-                    status_ing_hints_Switch = headerView.findViewById(R.id.ingredient_hints_switch);
-                    ingredientBlackList = headerView.findViewById(R.id.ingredient_black_listText);
                     confirmButton = headerView.findViewById(R.id.confirm_button);
                     importLayout = headerView.findViewById(R.id.importContainer);
                     exportLayout = headerView.findViewById(R.id.exportContainer);
+                    deleteDBLayout = headerView.findViewById(R.id.deleteAllDBContainer);
                 }
 
                 if (languageSpinner != null) {
@@ -118,14 +117,6 @@ public class SettingPanel {
                     paletteSpinner.setSelection(preferencesController.getIndexPalette());
                 }
 
-                if (status_ing_hints_Switch != null) { status_ing_hints_Switch.setChecked(preferencesController.getStatus_ing_hints()); }
-
-                if (ingredientBlackList != null) {
-                    ingredientBlackList.setOnClickListener(v -> {
-                        blackListOpen(activity);
-                    });
-                }
-
                 languageArray = preferencesController.getStringArrayForLocale(R.array.language_values, "en");
                 themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options,"en");
                 paletteArray = preferencesController.getStringArrayForLocale(R.array.palette_options, "en");
@@ -135,6 +126,10 @@ public class SettingPanel {
         }
     }
 
+    /**
+     * Налаштовує обробники подій для елементів панелі налаштувань
+     * @param activity Поточна активність
+     */
     private void loadClickListeners(Activity activity) {
         languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -177,12 +172,11 @@ public class SettingPanel {
 
         confirmButton.setOnClickListener(v -> {
             Log.d(nameActivity, "Слухач помітив підтвердження налаштувань");
-            preferencesController.setLocale(selectedLanguage);
-            preferencesController.setAppTheme(selectedTheme, selectedPalette);
+            preferencesController.setLocale(selectedLanguage, activity);
             preferencesController.savePreferences(selectedLanguage, selectedTheme, selectedPalette);
-            preferencesController.savePreferences(status_ing_hints_Switch.isChecked());
             drawerLayout.closeDrawer(GravityCompat.END);
 
+            // Перезапуск активності для застосування змін
             if (Build.VERSION.SDK_INT >= 11) {
                 Log.d(nameActivity, "Рестарт активності через recreate()");
                 activity.recreate();
@@ -198,23 +192,20 @@ public class SettingPanel {
 
         exportLayout.setOnClickListener(v -> {
             Disposable disposable = utils.ByDish().getAll()
-                    .flatMap(dishes -> utils.getListPairDishIng(dishes))
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
-                            list -> {
-                                if (!list.isEmpty()) {
+                            dishes -> {
+                                if (!dishes.isEmpty()) {
+                                    // Підтвердження експорту
                                     new AlertDialog.Builder(activity)
                                             .setTitle(activity.getString(R.string.confirm_export))
                                             .setMessage(activity.getString(R.string.warning_export))
                                             .setPositiveButton(activity.getString(R.string.yes), (dialog, whichButton) -> {
-                                                DataBox recipeData = new DataBox();
+                                                closeDrawer();
 
-                                                for (Pair<Dish, ArrayList<Ingredient>> pair : list) {
-                                                    recipeData.addRecipe(pair);
-                                                }
-
-                                                ImportExportController.exportRecipeData(activity, recipeData, new ExportCallbackUri() {
+                                                // Виконання експорту
+                                                importExportController.exportRecipeData(activity, dishes, new ExportCallbackUri() {
                                                     @Override
                                                     public void onSuccess(Uri uri) {
                                                         if (uri != null) {
@@ -248,14 +239,58 @@ public class SettingPanel {
             compositeDisposable.add(disposable);
         });
 
+        // Обробник імпорту даних
         importLayout.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("application/json");
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
             activity.startActivityForResult(intent, 1);
+            closeDrawer();
             Log.d(nameActivity, "Читання з файлу");
         });
+
+        // Обробник очищення бази даних
+        if (deleteDBLayout != null) {
+            deleteDBLayout.setOnClickListener(v -> new AlertDialog.Builder(activity)
+                    .setTitle(activity.getString(R.string.confirm_clear_db))
+                    .setMessage(activity.getString(R.string.warning_clear_db))
+                    .setPositiveButton(activity.getString(R.string.yes), (dialog, whichButton) ->
+                            new AlertDialog.Builder(activity)                       // Додаткове підтвердження
+                            .setTitle(activity.getString(R.string.confirm_clear_db))
+                            .setMessage(activity.getString(R.string.double_warning_clear_db))
+                            .setPositiveButton(activity.getString(R.string.yes), (dialog2, whichButton2) -> {
+                                // Виконання очищення БД
+                                Disposable disposable = Single.zip(
+                                            utils.ByDish().deleteAll(),
+                                            utils.ByCollection().deleteAllWithoutSystem(),
+                                            utils.ByIngredientShopList().deleteAll(),
+                                            (result1, result2, result3) -> new ArrayList<Boolean>()
+                                        )
+                                        .subscribeOn(Schedulers.io())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe(result -> {
+                                            if (!result.contains(false)) {
+                                                Toast.makeText(activity, activity.getString(R.string.successful_clear_db), Toast.LENGTH_SHORT).show();
+                                                Log.d("SettingPanel", "База даних успішно очищена");
+                                            } else {
+                                                Toast.makeText(activity, activity.getString(R.string.error_clear_db), Toast.LENGTH_SHORT).show();
+                                                Log.e("SettingPanel", "Помилка очищення бази даних");
+                                            }
+                                        }, throwable -> {
+                                            Toast.makeText(activity, activity.getString(R.string.error_clear_db), Toast.LENGTH_SHORT).show();
+                                            Log.e("SettingPanel", "Помилка очищення бази даних", throwable);
+                                        });
+
+                                compositeDisposable.add(disposable);
+                            })
+                            .setNegativeButton(activity.getString(R.string.no), null).show())
+                    .setNegativeButton(activity.getString(R.string.no), null).show());
+        }
     }
 
+    /**
+     * Обробник кліку на кнопку налаштувань
+     */
     public void onClickSetting() {
         if (isDrawerOpen()) {
             closeDrawer();
@@ -264,10 +299,13 @@ public class SettingPanel {
             languageSpinner.setSelection(preferencesController.getIndexLanguage());
             themeSpinner.setSelection(preferencesController.getIndexTheme());
             paletteSpinner.setSelection(preferencesController.getIndexPalette());
-            status_ing_hints_Switch.setChecked(preferencesController.getStatus_ing_hints());
         }
     }
 
+    /**
+     * Перевіряє, чи відкрита панель налаштувань
+     * @return true, якщо панель відкрита
+     */
     public boolean isDrawerOpen() {
         if (drawerLayout != null) {
             return drawerLayout.isDrawerOpen(GravityCompat.END);
@@ -275,6 +313,9 @@ public class SettingPanel {
         return false;
     }
 
+    /**
+     * Відкриває панель налаштувань
+     */
     public void openDrawer() {
         if (drawerLayout != null) {
             drawerLayout.openDrawer(GravityCompat.END);
@@ -282,6 +323,9 @@ public class SettingPanel {
         }
     }
 
+    /**
+     * Закриває панель налаштувань
+     */
     public void closeDrawer() {
         if (drawerLayout != null) {
             drawerLayout.closeDrawer(GravityCompat.END);
@@ -289,142 +333,27 @@ public class SettingPanel {
         }
     }
 
+    /**
+     * Очищає Rx disposables
+     */
     public void clearDisposables() { compositeDisposable.clear(); }
 
-    private void blackListOpen(Activity activity) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        LayoutInflater inflater = activity.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
-
-        if (dialogView != null) {
-            TextView textView = dialogView.findViewById(R.id.textView22);
-            if (textView != null) { textView.setText(R.string.your_dish); }
-            RecyclerView ingredientsRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
-            EditText editText = dialogView.findViewById(R.id.search_edit_text);
-            if (editText != null) { CharacterLimitTextWatcher.setCharacterLimit(activity, editText, 30); }
-
-            if (ingredientsRecyclerView != null) {
-                Disposable disposable = Single.zip(
-                                utils.ByIngredient().getNamesUnique(),
-                                utils.ByIngredientShopList().getAllNamesByBlackList(),
-                                Pair::new
-                        )
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(data -> {
-                            if (data.first != null && data.second != null) {
-                                searchController = new SearchController(activity, editText, ingredientsRecyclerView, (checkBox, selectedItem, item) -> {
-                                    if (!checkBox.isChecked()) {
-                                        selectedItem.add(item);
-                                        checkBox.setChecked(true);
-                                    } else {
-                                        selectedItem.remove(item);
-                                        checkBox.setChecked(false);
-                                    }
-                                });
-
-                                searchController.setArrayData(new ArrayList<>(data.first));
-                                searchController.setArraySelectedData(new ArrayList<>(data.second));
-                                searchController.setSearchEditText(editText);
-                                searchController.setSearchResultsRecyclerView(ingredientsRecyclerView);
-
-
-                                AddChooseObjectsAdapter adapterChooseObjects = (AddChooseObjectsAdapter) searchController.getAdapter();
-
-                                builder.setView(dialogView)
-                                        .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                                            ArrayList<Object> selectedIngredientIds = adapterChooseObjects.getSelectedItem();
-                                            ArrayList<String> selectedIngredients = new ArrayList<>();
-                                            for (Object ingredient : selectedIngredientIds) {
-                                                selectedIngredients.add((String)ingredient);
-                                            }
-
-                                            Disposable disposable1 = updateBlackList(data.first, selectedIngredients)
-                                                    .subscribeOn(Schedulers.newThread())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(
-                                                            status -> {
-                                                                if (status) {
-                                                                    Toast.makeText(activity, activity.getString(R.string.successfully_made_changes), Toast.LENGTH_SHORT).show();
-                                                                    Log.d(nameActivity, "Інгедієнти успішно додано до чорного списку");
-                                                                } else {
-                                                                    Toast.makeText(activity, activity.getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
-                                                                    Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
-                                                                }
-                                                            },
-                                                            throwable -> {
-                                                                Toast.makeText(activity, activity.getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
-                                                                Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
-                                                            }
-                                                    );
-
-
-                                            compositeDisposable.add(disposable1);
-                                        })
-                                        .setNeutralButton(R.string.reset, (dialog, which) -> {
-                                            Disposable disposable1 = utils.ByIngredientShopList().getAllByBlackList()
-                                                    .flatMap(ingredientShopLists -> utils.ByIngredientShopList().deleteAll(new ArrayList<>(ingredientShopLists)))
-                                                    .subscribeOn(Schedulers.newThread())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(status -> {
-                                                        if (status) {
-                                                            Toast.makeText(activity, activity.getString(R.string.successful_reset), Toast.LENGTH_SHORT).show();
-                                                            Log.d(nameActivity, "Успішно скинуто інгредієнти blacklist");
-                                                        } else {
-                                                            Toast.makeText(activity, activity.getString(R.string.error_reset), Toast.LENGTH_SHORT).show();
-                                                            Log.d(nameActivity, "Помилка скидання інгредієнтів blacklist");
-                                                        }
-                                                    });
-
-                                            compositeDisposable.add(disposable1);
-                                        })
-                                        .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-                                builder.create().show();
-                            }
-                        });
-
-                compositeDisposable.add(disposable);
-            }
+    /**
+     * Блокує панель налаштувань
+     */
+    public void lockSettingPanel() {
+        if (drawerLayout != null) {
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         }
     }
 
-    private Single<Boolean> updateBlackList(List<String> oldList, List<String> newList) {
-        ArrayList<String> addedItems = new ArrayList<>(newList);
-        addedItems.removeAll(oldList);
-
-        ArrayList<String> removedItems = new ArrayList<>(oldList);
-        removedItems.removeAll(newList);
-
-        return Single.zip(
-                        utils.ByIngredientShopList().addAll(Config.ID_BLACK_LIST, addedItems),
-                        removedIngredients(removedItems),
-                        Pair::new
-                )
-                .flatMap(status -> {
-                    if (status.first && status.second) {
-                        return Single.just(true);
-                    } else {
-                        return Single.just(false);
-                    }
-                });
-    }
-
-    private Single<Boolean> removedIngredients(ArrayList<String> removedItems) {
-        return Observable.fromIterable(removedItems)
-                .flatMapSingle(item -> utils.ByIngredientShopList().getByNameAndIDCollection(item, Config.ID_BLACK_LIST)
-                        .flatMap(ingredientShopList -> {
-                            if (ingredientShopList != null) {
-                                return utils.ByIngredientShopList().delete(ingredientShopList).toSingleDefault(true).onErrorReturnItem(false);
-                            } else { return Single.just(false); }
-                        })
-                )
-                .toList()
-                .map(results -> {
-                    for (Boolean result : results) {
-                        if (!result) { return false; }
-                    }
-                    return true;
-                });
+    /**
+     * Розблоковує панель налаштувань
+     */
+    public void unlockSettingPanel() {
+        if (drawerLayout != null && navigationView != null) {
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            navigationView.bringToFront();
+        }
     }
 }

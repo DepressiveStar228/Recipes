@@ -18,6 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Утилітний клас для анімації View в Android додатках.
+ * Надає плавні анімації для обертання, з'явлення/зникнення, ковзання та зміни фону.
+ */
 public class AnimationUtils {
     public static final int TOP = 1;
     public static final int BOTTOM = 2;
@@ -27,8 +34,17 @@ public class AnimationUtils {
     public static final boolean SHOW = true;
     public static final boolean HIDE = false;
 
+    // Відстежує стан анімацій для запобігання накладання
     private static final SparseBooleanArray animationFlags = new SparseBooleanArray();
 
+    /**
+     * Виконує плавне обертання View.
+     *
+     * @param view View для анімації
+     * @param way Напрямок обертання
+     * @param durationAnimation Тривалість анімації в мілісекундах
+     * @param onAnimationEnd Колбек після завершення анімації
+     */
     public static void smoothRotation(@NonNull View view, @NonNull @Nonnegative int way, @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
@@ -53,6 +69,16 @@ public class AnimationUtils {
         }
     }
 
+    /**
+     * Анімація ковзання View з ефектом зникнення.
+     *
+     * @param view View для анімації
+     * @param way Напрямок руху
+     * @param mode SHOW або HIDE
+     * @param translationValue Відстань ковзання
+     * @param durationAnimation Тривалість в мілісекундах
+     * @param onAnimationEnd Колбек після завершення
+     */
     public static void smoothSlipVisibility(@NonNull View view, @NonNull @Nonnegative int way, @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative float translationValue, @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
@@ -112,6 +138,13 @@ public class AnimationUtils {
         }
     }
 
+    /**
+     * Плавне зникнення/поява View.
+     *
+     * @param view View для анімації
+     * @param mode SHOW або HIDE
+     * @param durationAnimation Тривалість в мілісекундах
+     */
     public static void smoothVisibility(@NonNull View view, @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative int durationAnimation) {
         int viewKey  = view.hashCode();
 
@@ -147,6 +180,13 @@ public class AnimationUtils {
         }
     }
 
+    /**
+     * Анімація зникнення/показу фону View.
+     *
+     * @param view View з фоном для анімації
+     * @param mode SHOW або HIDE
+     * @return Аніматор або null, якщо анімація не може стартувати
+     */
     public static ValueAnimator backgroundVisibility(@NonNull View view, @NonNull @Nonnegative boolean mode) {
         int viewKey = view.hashCode();
 

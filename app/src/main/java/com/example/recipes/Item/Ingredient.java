@@ -1,5 +1,7 @@
 package com.example.recipes.Item;
 
+import android.content.Context;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
@@ -7,8 +9,17 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-import com.example.recipes.Interface.SelectableItem;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
+import com.example.recipes.Enum.IngredientType;
+import com.example.recipes.Interface.Item;
+import com.example.recipes.Utils.RecipeUtils;
 
+import java.util.Objects;
+
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "ingredient",
         indices = @Index(value = "id_dish"),
@@ -20,15 +31,17 @@ import com.example.recipes.Interface.SelectableItem;
                 onDelete = ForeignKey.CASCADE
         )}
 )
-public class Ingredient implements SelectableItem {
+public class Ingredient implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
     @ColumnInfo(name = "amount") private String amount;
-    @ColumnInfo(name = "type") private String type;
+    @ColumnInfo(name = "type") private IngredientType type;
     @ColumnInfo(name = "id_dish") private long id_dish;
 
+
+    // Конструктори
     @Ignore
-    public Ingredient(long id, String name, String amount, String type, long id_dish){
+    public Ingredient(long id, String name, String amount, IngredientType type, long id_dish) {
         this.id = id;
         this.name = name;
         this.amount = amount;
@@ -37,19 +50,24 @@ public class Ingredient implements SelectableItem {
     }
 
     @Ignore
-    public Ingredient(String name, String amount, String type, long id_dish){
+    public Ingredient(String name, String amount, IngredientType type, long id_dish) {
         this.name = name;
         this.amount = amount;
         this.type = type;
         this.id_dish = id_dish;
     }
 
-    public Ingredient(String name, String amount, String type){
+    @Ignore
+    public Ingredient() {}
+
+    public Ingredient(String name, String amount, IngredientType type) {
         this.name = name;
         this.amount = amount;
         this.type = type;
     }
 
+
+    // Геттери і сеттери
     @Override
     public long getId() {
         return id;
@@ -64,7 +82,7 @@ public class Ingredient implements SelectableItem {
         return amount;
     }
 
-    public String getType() {
+    public IngredientType getType() {
         return type;
     }
 
@@ -85,11 +103,36 @@ public class Ingredient implements SelectableItem {
         this.amount = amount;
     }
 
-    public void setType(String type) {
+    public void setType(IngredientType type) {
         this.type = type;
     }
 
     public void setId_dish(long id_dish) {
         this.id_dish = id_dish;
+    }
+
+
+    // Інші методи
+
+    /**
+     * Отримаємо текстовий формат IngredientType згідно локалізації
+     *
+     * @return текст відповідно до IngredientType
+     */
+    public String getTypeString() {
+        return IngredientTypeConverter.fromIngredientTypeBySettingLocale(type);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Ingredient that = (Ingredient) object;
+        return id == that.id && id_dish == that.id_dish && Objects.equals(name, that.name) && Objects.equals(amount, that.amount) && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, amount, type, id_dish);
     }
 }

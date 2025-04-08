@@ -16,6 +16,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Інтерфейс DAO для роботи з таблицею "dish_collection" у базі даних.
+ */
 @Dao
 public interface DishCollectionDAO {
     String TABLE_NAME = "dish_collection";
@@ -49,4 +55,7 @@ public interface DishCollectionDAO {
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();
+
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
+    LiveData<Integer> getCountLive();
 }

@@ -8,6 +8,13 @@ import com.example.recipes.Item.IngredientShopList_AmountType;
 
 import java.util.List;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Клас, який представляє ViewModel для роботи з кількістю та типом інгредієнтів у списку покупок.
+ * Використовує DAO для отримання даних про кількість та тип інгредієнтів.
+ */
 public class IngredientShopList_AmountTypeViewModel extends ViewModel {
     public final IngredientShopList_AmountTypeDAO dao;
 
@@ -15,18 +22,38 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
         this.dao = dao;
     }
 
+    /**
+     * Отримує список усіх записів про кількість та тип інгредієнтів у вигляді LiveData.
+     *
+     * @return LiveData, яка містить список усіх записів.
+     */
     public LiveData<List<IngredientShopList_AmountType>> getAll() {
         return dao.getAllLive();
     }
 
+    /**
+     * Отримує список усіх записів про кількість та тип інгредієнтів у вигляді LiveData.
+     *
+     * @return LiveData, яка містить список усіх записів.
+     */
     public LiveData<List<IngredientShopList_AmountType>> getByIDIngredient(long id_ingredient) {
         return dao.getByIDIngredientLive(id_ingredient);
     }
 
+    /**
+     * Отримує список усіх записів про кількість та тип інгредієнтів у вигляді LiveData.
+     *
+     * @return LiveData, яка містить список усіх записів.
+     */
     public LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long id_dish) {
         return dao.getByIDDishLive(id_dish);
     }
 
+    /**
+     * Отримує список усіх записів про кількість та тип інгредієнтів у вигляді LiveData.
+     *
+     * @return LiveData, яка містить список усіх записів.
+     */
     public LiveData<Integer> getCountByID(long id_ingredient) {
         return dao.getCountByID(id_ingredient);
     }

@@ -1,6 +1,7 @@
 package com.example.recipes.Item;
 
-import androidx.annotation.Nullable;
+import android.content.Context;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
@@ -8,7 +9,10 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-import com.example.recipes.Interface.SelectableItem;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
+import com.example.recipes.Enum.IngredientType;
+import com.example.recipes.Interface.Item;
+import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +24,10 @@ import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "ingredient_shop_list",
         indices = {@Index("id")},
@@ -32,15 +40,17 @@ import io.reactivex.rxjava3.annotations.NonNull;
             )
         }
 )
-public class IngredientShopList implements SelectableItem {
+public class IngredientShopList implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
-    @Ignore private Map<String, ArrayList<String>> groupedAmountType = new HashMap<>();
+    @Ignore private Map<IngredientType, ArrayList<String>> groupedAmountType = new HashMap<>();
     @ColumnInfo(name = "id_collection") private long id_collection;
     @ColumnInfo(name = "is_buy") private boolean isBuy = false;
 
+
+    // Конструктори
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull Map<String, ArrayList<String>> groupedAmountType, @NonNull long id_collection){
+    public IngredientShopList(@NonNull String name, @NonNull Map<IngredientType, ArrayList<String>> groupedAmountType, @NonNull long id_collection){
         this.name = name;
         this.groupedAmountType = groupedAmountType;
         this.id_collection = id_collection;
@@ -56,14 +66,14 @@ public class IngredientShopList implements SelectableItem {
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull String type, @NonNull long id_collection){
+    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long id_collection){
         this.name = name;
         addAmountType(amount, type);
         this.id_collection = id_collection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull String type, @NonNull boolean isBuy){
+    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull boolean isBuy){
         this.name = name;
         addAmountType(amount, type);
         this.isBuy = isBuy;
@@ -93,6 +103,8 @@ public class IngredientShopList implements SelectableItem {
     public IngredientShopList(){}
 
 
+
+    // Геттери і сеттери
     @Override
     public long getId() {
         return id;
@@ -103,24 +115,71 @@ public class IngredientShopList implements SelectableItem {
         return name;
     }
 
-    public Map<String, ArrayList<String>> getGroupedAmountType() { return groupedAmountType; }
+    public Map<IngredientType, ArrayList<String>> getGroupedAmountType() { return groupedAmountType; }
 
-    public String getGroupedAmountTypeToString() {
+    public long getId_collection() {
+        return id_collection;
+    }
+
+    public boolean getIsBuy() {
+        return isBuy;
+    }
+
+    public void setId(@NonNull long id) {
+        this.id = id;
+    }
+
+    @Override
+    public void setName(@NonNull String name) {
+        this.name = name;
+    }
+
+    public void setGroupedAmountType(@NonNull Map<IngredientType, ArrayList<String>> groupedAmountType) { this.groupedAmountType = groupedAmountType; }
+
+    public void setId_collection(@NonNull long id_collection) {
+        this.id_collection = id_collection;
+    }
+
+    public void setIsBuy(@NonNull boolean isBuy) {
+        this.isBuy = isBuy;
+    }
+
+
+
+    // Інші методи
+    public void addAmountType(@NonNull String amount, @NonNull IngredientType type) {
+        groupedAmountType.putIfAbsent(type, new ArrayList<>());
+        groupedAmountType.get(type).add(amount);
+    }
+
+    public void addAmountType(@NonNull IngredientShopList_AmountType amountType) {
+        groupedAmountType.putIfAbsent(amountType.getType(), new ArrayList<>());
+        groupedAmountType.get(amountType.getType()).add(amountType.getAmount());
+    }
+
+
+    /**
+     * Отримаємо текст суми кількості інгредієнтів за їх типом
+     *
+     * @param context контекст активності. Потрібен для отримання текстових ресурсів
+     * @return текст суми кількості інгредієнтів за їх типом
+     */
+    public String getGroupedAmountTypeToString(Context context) {
         List<String> amountType = groupedAmountType.entrySet().stream()
                 .map(type -> {
                     StringBuilder amount = new StringBuilder();
                     float sumFloat = 0;
                     ArrayList<String> unParse = new ArrayList<>();
 
-                    for (String amountString : type.getValue()){
+                    for (String amountString : type.getValue()) { // Отримуємо всі кількості інгредієнтів та перебираємо їх
                         try {
                             if (amountString.contains("/")) {
-                                sumFloat += parseFraction(amountString);
+                                sumFloat += parseFraction(amountString); // Парсимо як дріб
                             } else {
-                                sumFloat += Float.parseFloat(amountString);
+                                sumFloat += Float.parseFloat(amountString); // Парсимо як число
                             }
                         }
-                        catch (Exception e) { unParse.add(amountString); }
+                        catch (Exception e) { unParse.add(amountString); } // Якщо невдалося отримати число, додаємо у массив непарсованих
                     }
 
                     if (sumFloat > 0) {
@@ -131,18 +190,20 @@ public class IngredientShopList implements SelectableItem {
                         }
                     }
 
+                    String stringType = IngredientTypeConverter.fromIngredientTypeBySettingLocale(type.getKey());
+
                     if (!unParse.isEmpty()) {
-                        if (sumFloat > 0) { amount.append(" " + type.getKey() + ", "); }
+                        if (sumFloat > 0) { amount.append(" " + stringType + ", "); }
 
                         for (int i = 0; i < unParse.size(); i++) {
-                            amount.append(unParse.get(i) + " " + type.getKey());
+                            amount.append(unParse.get(i) + " " + stringType);
 
-                            if (i < unParse.size() - 1) {
+                            if (i < unParse.size() - 1) { // Відслідковує передостанній елемент, щоб уникнути коми в кінці
                                 amount.append(", ");
                             }
                         }
                     } else {
-                        amount.append(" " + type.getKey());
+                        amount.append(" " + stringType);
                     }
 
                     return amount.toString();
@@ -150,7 +211,7 @@ public class IngredientShopList implements SelectableItem {
                 .collect(Collectors.toList());
 
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < amountType.size(); i++) {
+        for (int i = 0; i < amountType.size(); i++) {  // Збираємо фінальний текст кількості інгредієнта.
             result.append(amountType.get(i));
 
             if (i < amountType.size() - 1) {
@@ -161,6 +222,13 @@ public class IngredientShopList implements SelectableItem {
         return result.toString();
     }
 
+
+    /**
+     * Парсер текстових дробів (1/2), повертає число (0.5)
+     *
+     * @param fraction текстовий дріб
+     * @return число з плаваючою точкою
+     */
     private static float parseFraction(String fraction) {
         try {
             String[] parts = fraction.split("/");
@@ -173,52 +241,16 @@ public class IngredientShopList implements SelectableItem {
         return 0;
     }
 
-    public long getId_collection() {
-        return id_collection;
-    }
-
-    public boolean getIsBuy() {
-        return isBuy;
-    }
-
-
-
-
-    public void setId(@NonNull long id) {
-        this.id = id;
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        IngredientShopList that = (IngredientShopList) object;
+        return id == that.id && id_collection == that.id_collection && isBuy == that.isBuy && Objects.equals(name, that.name) && Objects.equals(groupedAmountType, that.groupedAmountType);
     }
 
     @Override
-    public void setName(@NonNull String name) {
-        this.name = name;
-    }
-
-    public void setGroupedAmountType(@NonNull Map<String, ArrayList<String>> groupedAmountType) { this.groupedAmountType = groupedAmountType; }
-
-    public void setId_collection(@NonNull long id_collection) {
-        this.id_collection = id_collection;
-    }
-
-    public void setIsBuy(@NonNull boolean isBuy) {
-        this.isBuy = isBuy;
-    }
-
-    public void addAmountType(@NonNull String amount, @NonNull String type) {
-        groupedAmountType.putIfAbsent(type, new ArrayList<>());
-        groupedAmountType.get(type).add(amount);
-    }
-
-    public void addAmountType(@NonNull IngredientShopList_AmountType amountType) {
-        groupedAmountType.putIfAbsent(amountType.getType(), new ArrayList<>());
-        groupedAmountType.get(amountType.getType()).add(amountType.getAmount());
-    }
-
-    public boolean equals(@Nullable IngredientShopList item) {
-        if (this.id != item.getId()) { return false; }
-        if (!this.name.equals(item.getName())) { return false; }
-        if (this.id_collection != item.getId_collection()) { return false; }
-        if (this.isBuy != item.getIsBuy()) { return false; }
-        if (!Objects.equals(this.groupedAmountType, item.getGroupedAmountType())) { return false; }
-        return true;
+    public int hashCode() {
+        return Objects.hash(id, name, groupedAmountType, id_collection, isBuy);
     }
 }

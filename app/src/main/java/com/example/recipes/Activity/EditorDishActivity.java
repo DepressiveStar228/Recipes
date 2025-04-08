@@ -1,5 +1,6 @@
 package com.example.recipes.Activity;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -8,10 +9,12 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.SharedElementCallback;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -27,6 +30,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -35,34 +39,39 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.AI.ChatGPT;
-import com.example.recipes.AI.ChatGPTClient;
+import com.example.recipes.AI.Translator;
 import com.example.recipes.Adapter.AddDishToCollectionsAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
 import com.example.recipes.Adapter.IngredientSetAdapter;
 import com.example.recipes.Adapter.RecipeAdapter;
-import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.ImageController;
-import com.example.recipes.Controller.TranslateController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Decoration.AnimationUtils;
 import com.example.recipes.Decoration.TextLoadAnimation;
+import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Enum.DishRecipeType;
+import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IngredientType;
+import com.example.recipes.Enum.IntentKeys;
+import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.ExportCallbackUri;
-import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
@@ -85,43 +94,65 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 public class EditorDishActivity extends AppCompatActivity {
-    private Dish originalDish, translateDish;
-    private RecyclerView ingredientRecyclerView, recipeRecycler;
-    private TextView loadText;
-    private TextView nameTextViewContainer, translate;
-    private EditText nameEditText, portionEditText;
-    private ConstraintLayout ingredientEmpty, recipeEmpty, portionEmpty, editDishActivityContainer, loadScreen, buttonsRecipeContainer, nameDishContainerWithBorder, nameDishContainer;
-    private DrawerLayout drawerLayout;
-    private LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4, linearLayout5;
-    private IngredientSetAdapter ingredientSetAdapter;
-    private IngredientGetAdapter ingredientGetAdapter;
-    private RecipeAdapter recipeAdapter;
-    private ImageView back, setting, addIngredient, addToRecipe, addTextToRecipe, addImageToRecipe;
-    private Button setDataButton;
-    private Long dishID;
-    private RecipeUtils utils;
-    private TextLoadAnimation textLoadAnimation;
-    private ImageController imageController;
-    private TranslateController translateController;
-    private String nameActivity;
+    // Режими роботи активності
+    private final int ADD_MODE = -1;
+    private final int EDIT_MODE = -2;
+    private final int READ_MODE = -3;
+
+    private int mode;                         // Поточний режим роботи активності
+    private Dish originalDish, translateDish; // Об'єкти для роботи з оригінальною та перекладеною стравою
+    private Long dishID = -3L;
+
+    // Флаги для управління анімацією та перекладом
     private final AtomicBoolean flagAccessAnimation = new AtomicBoolean(true);
     private final AtomicBoolean flagAccessButtonAnimation = new AtomicBoolean(true);
     private final AtomicBoolean flagInitTranslationController = new AtomicBoolean(false);
     private final AtomicBoolean flagIsTranslated = new AtomicBoolean(false);
-    private CompositeDisposable compositeDisposable;
-    private Runnable startLoading, finishLoading;
-    private int mode;
+
+    // Налаштування анімації
     private final int durationAnimation = 200;
-    private final int translationView = 100;
+
+    // Об'єкти інтерфейсу
+    private RecyclerView ingredientRecyclerView, recipeRecycler;
+    private ItemTouchHelper itemTouchHelper;
+    private TextView loadText;
+    private TextView nameTextViewContainer, translate;
+    private EditText nameEditText, portionEditText;
+    private ConstraintLayout ingredientEmpty, recipeEmpty, portionEmpty, loadScreen, buttonsRecipeContainer, nameDishContainerWithBorder, nameDishContainer;
+    private DrawerLayout drawerLayout;
+    private ConstraintLayout editDishMenuItem, deleteDishMenuItem, shareDishMenuItem, addDishToCollectionMenuItem, copyAsTextMenuItem;
+    private IngredientSetAdapter ingredientSetAdapter;
+    private IngredientGetAdapter ingredientGetAdapter;
+    private RecipeAdapter recipeAdapter;
+    private ImageView back, setting, addIngredient, addTextToRecipe, addImageToRecipe;
+    private Button setDataButton;
+
+    private RecipeUtils utils; // Класс утиліт для роботи з рецептами через БД
+
+    // Контролери
+    private TextLoadAnimation screenLoad, imageLoad;
+    private ImportExportController importExportController;
+    private ImageController imageController;
+    private Translator translator;
+    private CompositeDisposable compositeDisposable;
+
+    private String nameActivity; // Назва активності
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        PreferencesController preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(this);
+        PreferencesController preferencesController = PreferencesController.getInstance();
 
         super.onCreate(savedInstanceState);
+        preferencesController.setPreferencesToActivity(this);
         setContentView(R.layout.editor_dish_activity);
+
+        loadItemsActivity();
 
         compositeDisposable = new CompositeDisposable();
         Log.d(nameActivity, "Активність успішно створена");
@@ -131,38 +162,50 @@ public class EditorDishActivity extends AppCompatActivity {
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         loadScreen = findViewById(R.id.loadScreen);
-        startLoadingScreenAnimation();
+        startLoadingScreenAnimation(); // Початок анімації завантаження активності
 
-        compositeDisposable.add(Single.create(emitter -> {
-                    loadItemsActivity();
+        // Асинхронне завантаження елементів активності
+        compositeDisposable.add(Completable.create(emitter -> {
                     loadClickListeners();
 
                     translateDish = new Dish("");
-                    dishID = getIntent().getLongExtra(Config.KEY_DISH, -1);
-                    utils = new RecipeUtils(this);
+                    dishID = getIntent().getLongExtra(IntentKeys.DISH_ID.name(), -1L);
+                    utils = RecipeUtils.getInstance(this);
+
                     imageController = new ImageController(this);
+                    imageController.clearCache();
+
+                    importExportController = new ImportExportController(this);
                     nameActivity = this.getClass().getSimpleName();
                     originalDish = new Dish("");
+                    imageLoad = new TextLoadAnimation(getString(R.string.loading));
 
-                    emitter.onSuccess(true);
+                    emitter.onComplete();
                 })
-                .flatMapCompletable(status -> setDishRecipesInDish())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
+                    // Визначення режиму роботи активності
                     if (dishID > -1) {
-                        mode = Config.READ_MODE;
-                        setObserveDish(dishID);
-                    } else if (dishID == Config.ADD_MODE) {
-                        mode = Config.ADD_MODE;
+                        mode = READ_MODE;
+                        setObserveDish();
+                        setIngredientAdapter();
+                        setRecipeAdapter();
+                    } else if (dishID == ADD_MODE) {
+                        mode = ADD_MODE;
                         setDataButton.setText(R.string.button_add);
                         setIngredientAdapter();
                         setRecipeAdapter();
-                    } else if (dishID == Config.EDIT_MODE){
-                        mode = Config.EDIT_MODE;
+                    } else if (dishID == EDIT_MODE){
+                        mode = EDIT_MODE;
                         setDataButton.setText(R.string.edit);
+                        setObserveDish();
+                        setIngredientAdapter();
+                        setRecipeAdapter();
                     } else {
-                        mode = Config.READ_MODE;
+                        mode = READ_MODE;
+                        setIngredientAdapter();
+                        setRecipeAdapter();
                         Toast.makeText(this,  getString(R.string.error_edit_get_dish), Toast.LENGTH_SHORT).show();
                         Log.e(nameActivity, "Помилка. Не вдалося отримати блюдо на редагування");
                     }
@@ -171,9 +214,9 @@ public class EditorDishActivity extends AppCompatActivity {
                     startAnimationChangeStylePage(0);
                 }, Throwable::printStackTrace));
 
-
-        translateController = new TranslateController(this);
-        compositeDisposable.add(translateController.initialization()
+        // Ініціалізація перекладача
+        translator = new Translator(this);
+        compositeDisposable.add(translator.initialization()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(status -> {
@@ -191,6 +234,7 @@ public class EditorDishActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         compositeDisposable.clear();
+        if (imageController != null) imageController.dispose();
         Log.d(nameActivity, "Активність успішно закрита");
     }
 
@@ -199,33 +243,12 @@ public class EditorDishActivity extends AppCompatActivity {
         if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawer(GravityCompat.END);
         }
-        else if (dishID >= 0 && mode != Config.READ_MODE) {
+        else if (dishID >= 0 && mode != READ_MODE) {  // Якщо сторінка перебуває в режимі редагування, вона перейде в режим читання
             if (flagAccessAnimation.get()) {
-                mode = Config.READ_MODE;
+                mode = READ_MODE;
                 startAnimationChangeStylePage(durationAnimation);
             }
         } else super.onBackPressed();
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            View v = getCurrentFocus();
-            if (v instanceof ImageView && flagAccessButtonAnimation.get()) {
-                boolean isClickInsideButtons = isClickInsideView(event, addToRecipe) ||
-                        isClickInsideView(event, addTextToRecipe) ||
-                        isClickInsideView(event, addImageToRecipe);
-
-                if (!isClickInsideButtons) {
-                    v.clearFocus();
-
-                    if (addTextToRecipe != null && addToRecipe != null) {
-                        if (addTextToRecipe.getVisibility() == View.VISIBLE) hideButtonsRecipe(getRunnableAnimation(addToRecipe));
-                    }
-                }
-            }
-        }
-        return super.dispatchTouchEvent(event);
     }
 
     @Override
@@ -233,40 +256,68 @@ public class EditorDishActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == 1 && data != null) {
+                // Обробка вибраного зображення з галереї
                 Uri selectedImageUri = data.getData();
                 if (selectedImageUri != null) {
-                    if (startLoading != null) startLoading.run();
-                    imageController.setImageToImageView(selectedImageUri, recipeAdapter, finishLoading);
+                    if (recipeRecycler != null && recipeAdapter != null) {
+                        TextView textView = recipeAdapter.getTextViewForCurrentItem(recipeRecycler);
 
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        if (imageController.isLoading()) finishLoading.run();
+                        if (textView != null) {
+                            imageLoad.setTextView(textView);
+                            imageLoad.startAnimation();
+                        }
+
+                        recipeAdapter.setImageToCurrentItem(selectedImageUri, imageLoad);
+                    }
+
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {  // Якщо з якихось причин завантаження відбувається довше 10 секунд, анімація зупиниться
+                        if (imageController.isLoading()) imageLoad.stopAnimation();
                     }, 10000);
                 }
             } else if (requestCode == 2) {
+                // Обробка зробленого фото з камери
                 Uri currentPhotoUri = imageController.getCurrentPhotoUri();
                 if (currentPhotoUri != null) {
-                    if (startLoading != null) startLoading.run();
-                    imageController.setImageToImageView(currentPhotoUri, recipeAdapter, finishLoading);
+                    if (recipeRecycler != null && recipeAdapter != null) {
+                        TextView textView = recipeAdapter.getTextViewForCurrentItem(recipeRecycler);
 
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        if (imageController.isLoading()) finishLoading.run();
+                        if (textView != null) {
+                            imageLoad.setTextView(textView);
+                            imageLoad.startAnimation();
+                        }
+
+                        recipeAdapter.setImageToCurrentItem(currentPhotoUri, imageLoad);
+                    }
+
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> { // Якщо з якихось причин завантаження відбувається довше 10 секунд, анімація зупиниться
+                        if (imageController.isLoading()) imageLoad.stopAnimation();
                     }, 10000);
                 }
             }
         }
     }
 
-    private boolean isClickInsideView(MotionEvent event, View view) {
-        if (view == null) return false;
-        Rect outRect = new Rect();
-        view.getGlobalVisibleRect(outRect);
-        return outRect.contains((int) event.getRawX(), (int) event.getRawY());
+    /**
+     * Видача прав
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                imageController.openCamera(this);
+            } else {
+                Toast.makeText(this, "Доступ до камери заблоковано", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
+    /**
+     * Ініціалізація елементів інтерфейсу
+     */
     @SuppressLint("ResourceType")
     private void loadItemsActivity(){
         nameTextViewContainer = findViewById(R.id.nameTextViewContainer);
-        editDishActivityContainer = findViewById(R.id.editDishActivityContainer);
         nameDishContainerWithBorder = findViewById(R.id.nameDishContainerWithBorder);
         nameDishContainer = findViewById(R.id.nameDishContainer);
         buttonsRecipeContainer = findViewById(R.id.buttonsRecipeContainer);
@@ -285,10 +336,10 @@ public class EditorDishActivity extends AppCompatActivity {
 
         setting = findViewById(R.id.imageSettingImageView);
         back = findViewById(R.id.backImageView);
-        addToRecipe = findViewById(R.id.add_container_to_recipe);
         addTextToRecipe = findViewById(R.id.add_textContainer_to_recipe);
         addImageToRecipe = findViewById(R.id.add_imageContainer_to_recipe);
 
+        // Бокове меню опцій
         drawerLayout = findViewById(R.id.readDrawerLayout);
         NavigationView navigationView = findViewById(R.id.navigationView);
 
@@ -296,45 +347,45 @@ public class EditorDishActivity extends AppCompatActivity {
             View headerView = navigationView.getHeaderView(0);
 
             if (headerView != null) {
-                linearLayout1 = headerView.findViewById(R.id.setting_dish_edit);
-                linearLayout2 = headerView.findViewById(R.id.setting_dish_delete);
-                linearLayout3 = headerView.findViewById(R.id.setting_dish_share);
-                linearLayout4 = headerView.findViewById(R.id.setting_dish_add_to_collection);
-                linearLayout5 = headerView.findViewById(R.id.setting_dish_copy_as_text);
+                editDishMenuItem = headerView.findViewById(R.id.setting_dish_edit);
+                deleteDishMenuItem = headerView.findViewById(R.id.setting_dish_delete);
+                shareDishMenuItem = headerView.findViewById(R.id.setting_dish_share);
+                addDishToCollectionMenuItem = headerView.findViewById(R.id.setting_dish_add_to_collection);
+                copyAsTextMenuItem = headerView.findViewById(R.id.setting_dish_copy_as_text);
             }
         }
 
         Log.d(nameActivity, "Елементи активності успішно завантажені");
     }
 
+    /**
+     * Встановлення слухачів подій для елементів інтерфейсу
+     */
     @SuppressLint("ClickableViewAccessibility")
     private void loadClickListeners() {
-        if (editDishActivityContainer != null) {
-            editDishActivityContainer.setOnTouchListener((view, motionEvent) -> {
-                if (addToRecipe != null && flagAccessAnimation.get()) {
-                    addToRecipe.clearFocus();
-                    return true;
-                }
-                return false;
-            });
-        }
-
+        // Кнопки верхнього меню
         if (back != null) back.setOnClickListener(v -> finish());
-        if (setting != null) { setting.setOnClickListener(this::onClickSettingDish); }
+        if (setting != null) setting.setOnClickListener(v -> onClickSettingDish());
 
-        if (linearLayout1 != null) { linearLayout1.setOnClickListener(v -> editDish()); }
-        if (linearLayout2 != null) { linearLayout2.setOnClickListener(v -> deleteDish()); }
-        if (linearLayout3 != null) { linearLayout3.setOnClickListener(v -> shareDish()); }
-        if (linearLayout4 != null) { linearLayout4.setOnClickListener(v -> showAddDishInCollectionDialog()); }
-        if (linearLayout5 != null) { linearLayout5.setOnClickListener(v -> copy_as_text()); }
+        // Кнопки бокового меню
+        if (editDishMenuItem != null) { editDishMenuItem.setOnClickListener(v -> editDish()); }
+        if (deleteDishMenuItem != null) { deleteDishMenuItem.setOnClickListener(v -> deleteDish()); }
+        if (shareDishMenuItem != null) { shareDishMenuItem.setOnClickListener(v -> shareDish()); }
+        if (addDishToCollectionMenuItem != null) { addDishToCollectionMenuItem.setOnClickListener(v -> showAddDishInCollectionDialog()); }
+        if (copyAsTextMenuItem != null) { copyAsTextMenuItem.setOnClickListener(v -> copy_as_text()); }
 
+        // Кнопка перекладу
         if (translate != null) {
             translate.setOnClickListener(v -> {
-                if (flagInitTranslationController.get()) {
+                if (!flagInitTranslationController.get()) {
+                    Toast.makeText(this, getString(R.string.error_access_translation), Toast.LENGTH_SHORT).show();
+                    Log.d(nameActivity, getString(R.string.error_access_translation));
+                }
+                else if (translator.getClient().checkLimit()) {
                     if (!flagIsTranslated.get()) {
-                        if (translateDish.getName().isEmpty()) {
+                        if (translateDish.getName().isEmpty()) {  // Якщо страву ще не було переведено, то почнеться переклад
                             onTranslationDishClick();
-                        } else {
+                        } else {                                  // Інакше буде показано вже перекладену раніше страву
                             flagIsTranslated.set(true);
                             setDataIntoItemsActivity(translateDish);
                             translate.setText(getString(R.string.translate_button_text_true));
@@ -345,77 +396,76 @@ public class EditorDishActivity extends AppCompatActivity {
                         translate.setText(getString(R.string.translate_button_text_false));
                         Log.d(nameActivity, "Показ оригіналу страви");
                     }
-                } else {
-                    Toast.makeText(this, getString(R.string.error_access_translation), Toast.LENGTH_SHORT).show();
-                    Log.d(nameActivity, getString(R.string.error_access_translation));
                 }
             });
         }
 
+        // Кнопка збереження даних
         if (setDataButton != null) setDataButton.setOnClickListener(view -> {
             if (flagAccessAnimation.get()) onAddOrEditButtonClick();
         });
 
-
+        // Кнопка додавання інгредієнта
         if (addIngredient != null) addIngredient.setOnClickListener(v -> {
             if (ingredientRecyclerView != null) {
-                Ingredient newIngredient = new Ingredient("", "", "");
+                Ingredient newIngredient = new Ingredient("", "", IngredientType.VOID);
                 if (ingredientSetAdapter != null) {
                     ingredientSetAdapter.addIngredient(newIngredient);
-                    ingredientRecyclerView.smoothScrollToPosition(ingredientSetAdapter.getPositionItem(newIngredient));
+
+                    // Автоматичний прокрут до нового елемента
+                    ingredientRecyclerView.post(() -> {
+                        if (ingredientSetAdapter.getItemCount() > 0) {
+                            ingredientRecyclerView.scrollToPosition(ingredientSetAdapter.getItemCount() - 1);
+                        }
+                    });
                 }
             }
         });
 
-        if (addToRecipe != null && addTextToRecipe != null && addImageToRecipe != null && mode != Config.READ_MODE) {
-            addToRecipe.setOnClickListener(v -> {
-                if (flagAccessButtonAnimation.get()) {
-                    v.setClickable(false);
-
-                    if (!v.isFocusable()) addToRecipe.requestFocus();
-                    else addToRecipe.clearFocus();
-                }
-            });
-
-            addToRecipe.setOnFocusChangeListener((v, hasFocus) -> {
-                Runnable onAnimationEnd = getRunnableAnimation(v);
-
-                if (!flagAccessButtonAnimation.get()) return;
-
-                flagAccessButtonAnimation.set(false);
-
-                if (hasFocus) showButtonsRecipe(onAnimationEnd);
-                else hideButtonsRecipe(onAnimationEnd);
-            });
-        }
-
-        if (addToRecipe != null && addTextToRecipe != null) {
+        // Кнопка додавання тексту до рецепту
+        if (addTextToRecipe != null) {
             addTextToRecipe.setOnClickListener(v -> {
                 if (recipeRecycler != null) recipeRecycler.setVisibility(View.VISIBLE);
 
                 recipeAdapter.addItem(new DishRecipe(dishID, DishRecipeType.TEXT));
-                addToRecipe.clearFocus();
+
+                // Автоматичний прокрут до нового елемента
+                recipeRecycler.post(() -> {
+                    if (recipeAdapter.getItemCount() > 0) {
+                        recipeRecycler.scrollToPosition(recipeAdapter.getItemCount() - 1);
+                    }
+                });
             });
         }
 
-        if (addToRecipe != null && addImageToRecipe != null) {
+        // Кнопка додавання зображення до рецепту
+        if (addImageToRecipe != null) {
             addImageToRecipe.setOnClickListener(v -> {
                 if (recipeRecycler != null) recipeRecycler.setVisibility(View.VISIBLE);
 
                 recipeAdapter.addItem(new DishRecipe(dishID, DishRecipeType.IMAGE));
-                addToRecipe.clearFocus();
+
+                // Автоматичний прокрут до нового елемента
+                recipeRecycler.post(() -> {
+                    if (recipeAdapter.getItemCount() > 0) {
+                        recipeRecycler.scrollToPosition(recipeAdapter.getItemCount() - 1);
+                    }
+                });
             });
         }
 
-        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, Config.CHAR_LIMIT_NAME_DISH);
-        CharacterLimitTextWatcher.setCharacterLimit(this, portionEditText, Config.CHAR_LIMIT_PORTION_DISH);
+        // Встановлення обмежень на кількість символів для полів вводу
+        CharacterLimitTextWatcher.setCharacterLimit(this, nameEditText, Limits.MAX_CHAR_NAME_DISH);
+        CharacterLimitTextWatcher.setCharacterLimit(this, portionEditText, Limits.MAX_CHAR_PORTION_DISH);
 
         Log.d(nameActivity, "Слухачі активності успішно завантажені");
     }
 
-
+    /**
+     * Заповнення полів інтерфейсу даними з об'єкта страви
+     */
     private void setDataIntoItemsActivity(Dish dish) {
-        nameEditText.setText(dish.getName());
+        if (nameEditText != null) nameEditText.setText(dish.getName());
         if (ingredientRecyclerView != null) setIngredientsToIngredientAdapter(dish);
         if (portionEmpty != null && portionEditText != null) {
             if (dish.getPortion() > 0) portionEditText.setText(String.valueOf(dish.getPortion()));
@@ -425,6 +475,9 @@ public class EditorDishActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Ініціалізація адаптера для списку інгредієнтів
+     */
     private void setIngredientAdapter() {
         if (ingredientRecyclerView != null) {
             if (ingredientSetAdapter == null) {
@@ -437,11 +490,14 @@ public class EditorDishActivity extends AppCompatActivity {
             LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
             linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
 
-            if (mode == Config.READ_MODE) ingredientRecyclerView.setAdapter(ingredientGetAdapter);
+            // Вибір адаптера залежно від режиму активності
+            if (mode == READ_MODE) ingredientRecyclerView.setAdapter(ingredientGetAdapter);
             else ingredientRecyclerView.setAdapter(ingredientSetAdapter);
 
             ingredientRecyclerView.setLayoutManager(linearLayoutManager);
+            ingredientRecyclerView.setHasFixedSize(true);
 
+            // Слухач зміни унікальних назв інгредієнтів
             utils.ByIngredient().getViewModel().getNamesUnique().observe(this, data -> {
                 if (data != null) {
                     ingredientSetAdapter.setNamesIngredient(new ArrayList<>(data));
@@ -452,27 +508,27 @@ public class EditorDishActivity extends AppCompatActivity {
         setObserveIngredients();
     }
 
-    private void changeIngredientAdapter() {
-        if (mode == Config.READ_MODE) ingredientRecyclerView.setAdapter(ingredientGetAdapter);
-        else ingredientRecyclerView.setAdapter(ingredientSetAdapter);
-    }
-
+    /**
+     * Передача списку інгредієнтів до адаптерів
+     */
     private void setIngredientsToIngredientAdapter(Dish dish) {
         if (ingredientSetAdapter != null) ingredientSetAdapter.setIngredients(dish.getIngredients());
         if (ingredientGetAdapter != null) ingredientGetAdapter.setIngredients(dish.getIngredients());
     }
 
+    /**
+     * Ініціалізація адаптера для рецептів
+     */
     private void setRecipeAdapter() {
         if (recipeRecycler != null) {
             if (recipeAdapter == null) {
-                recipeAdapter = new RecipeAdapter(this, recipeEmpty, mode == Config.READ_MODE, new RecipeAdapter.ImageClickListener() {
+                recipeAdapter = new RecipeAdapter(this, recipeEmpty, mode == READ_MODE, new RecipeAdapter.ImageClickListener() {
                     @Override
-                    public void onImageClick(AppCompatImageView imageView, TextView textView) {
+                    public void onImageClick(AppCompatImageView imageView) {
                         if (imageController != null) {
-                            TextLoadAnimation textLoadImageAnimation = new TextLoadAnimation(textView, getString(R.string.loading));
+                            imageLoad.clearAllRunnable(); // Очищуємо всі події
 
-                            imageController.setImageView(imageView);
-
+                            // Створення діалогу для вибору способу додавання зображення
                             AlertDialog.Builder builder = new AlertDialog.Builder(EditorDishActivity.this);
                             LayoutInflater inflater = getLayoutInflater();
                             View dialogView = inflater.inflate(R.layout.dialog_choose_way_add_image, null);
@@ -484,7 +540,12 @@ public class EditorDishActivity extends AppCompatActivity {
                                 gallery = dialogView.findViewById(R.id.gallery);
 
                                 if (photo != null && gallery != null) {
-                                    photo.setOnClickListener(view -> imageController.openCamera(EditorDishActivity.this));
+                                    photo.setOnClickListener(view -> {
+                                        // Видача прав для камери
+                                        if (ContextCompat.checkSelfPermission(EditorDishActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                            ActivityCompat.requestPermissions(EditorDishActivity.this, new String[]{Manifest.permission.CAMERA}, 100);
+                                        } else imageController.openCamera(EditorDishActivity.this);
+                                    });
                                     gallery.setOnClickListener(view -> imageController.openGallery(EditorDishActivity.this));
                                 }
                             }
@@ -492,29 +553,26 @@ public class EditorDishActivity extends AppCompatActivity {
                             Dialog dialog =  builder.create();
                             dialog.show();
 
-                            startLoading = () -> {
+                            // Налаштування анімації завантаження зображення
+                            imageLoad.addStartRunnable(() -> { // Додаємо дії до події початку анімації
                                 if (dialogView != null) dialog.dismiss();
                                 imageView.setVisibility(View.INVISIBLE);
-                                textLoadImageAnimation.startAnimation();
-                            };
+                            });
 
-                            finishLoading = () -> {
-                                textLoadImageAnimation.stopAnimation();
+                            imageLoad.addStopRunnable(() -> { // Додаємо дії до події закінчення анімації
                                 imageView.setVisibility(View.VISIBLE);
-                            };
+                            });
                         }
                     }
 
                     @Override
                     public void onDeleteClick(DishRecipe dishRecipe) {
+                        // Видалення елемента рецепту з бази даних
                         Disposable disposable = utils.ByDishRecipe().delete(dishRecipe)
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(
-                                        () -> {
-                                            imageController.setImageView(null);
-                                            Log.d("RecipeUtils", "Елемент рецепту успішно видалено");
-                                        },
+                                        () -> Log.d("RecipeUtils", "Елемент рецепту успішно видалено"),
                                         throwable -> Log.e("RecipeUtils", "Помилка: " + throwable.getMessage())
                                 );
                         compositeDisposable.add(disposable);
@@ -526,31 +584,39 @@ public class EditorDishActivity extends AppCompatActivity {
                 recipeRecycler.setAdapter(recipeAdapter);
                 recipeRecycler.addItemDecoration(new VerticalSpaceItemDecoration(-4));
                 recipeRecycler.setLayoutManager(linearLayoutManager);
-
-                ItemTouchHelper itemTouchHelper = recipeAdapter.getItemTouchHelper();
-                itemTouchHelper.attachToRecyclerView(recipeRecycler);
-
                 recipeRecycler.getRecycledViewPool().clear();
-                recipeAdapter.setItems(originalDish.getRecipes());
+                recipeRecycler.setItemViewCacheSize(20);
+                recipeRecycler.setDrawingCacheEnabled(true);
+                recipeRecycler.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+                recipeRecycler.setHasFixedSize(true);
+
+                setObserveRecipes();
             }
         }
     }
 
-    public void setObserveDish(long newID) {
-        dishID = newID;
-
-        utils.ByDish().getViewModel().getByID(dishID).observe(this, data -> {
-            if (data != null) {
-                data.setRecipes(originalDish.getRecipes());
-                originalDish = data;
-                setDataIntoItemsActivity(originalDish);
-                setIngredientAdapter();
-                setRecipeAdapter();
-            }
-        });
+    /**
+     * Налаштування спостереження за змінами страви в базі даних
+     */
+    public void setObserveDish() {
+        // Слухач зміни страви в базі даних
+        if (dishID > -1) {
+            utils.ByDish().getViewModel().getByID(dishID).observe(this, data -> {
+                if (data != null) {
+                    originalDish.setId(data.getId());
+                    originalDish.setName(data.getName());
+                    originalDish.setPortion(data.getPortion());
+                    setDataIntoItemsActivity(originalDish);
+                }
+            });
+        }
     }
 
+    /**
+     * Налаштування спостереження за змінами інгредієнтів страви
+     */
     private void setObserveIngredients() {
+        // Слухач зміни інгредієнтів страви в базі даних
         utils.ByIngredient().getViewModel().getAllByIDDish(dishID).observe(this, data -> {
             if (data != null) {
                 originalDish.setIngredients(new ArrayList<>(data));
@@ -559,44 +625,23 @@ public class EditorDishActivity extends AppCompatActivity {
         });
     }
 
-    private Completable setDishRecipesInDish() {
-        return utils.ByDishRecipe().getByDishID(dishID)
-                .flatMapObservable(dishRecipes -> Observable.fromIterable(dishRecipes)
-                        .flatMapSingle(dishRecipe -> {
-                            if (dishRecipe.getTypeData() == DishRecipeType.IMAGE) {
-                                if (!dishRecipe.getTextData().isEmpty()) {
-                                    return imageController.loadImageFromPath(dishRecipe.getTextData())
-                                            .flatMap(bytes -> imageController.decodeByteArrayToBitmap(bytes))
-                                            .flatMap(bitmap -> {
-                                                if (bitmap != null && bitmap.getByteCount() != 0) {
-                                                    dishRecipe.setBitmap(bitmap);
-                                                    originalDish.addRecipe(dishRecipe);
-                                                    return Single.just(true);
-                                                } else return Single.just(false);
-                                            });
-                                } else {
-                                    return Single.just(false);
-                                }
-                            } else {
-                                if (!dishRecipe.getTextData().isEmpty()) {
-                                    originalDish.addRecipe(dishRecipe);
-                                    return Single.just(true);
-                                } else return Single.just(false);
-                            }
-                        }))
-                .toList()
-                .flatMapCompletable(results -> {
-                    for (Boolean result : results) {
-                        if (!result) {
-                            Log.d("RecipeUtils", "Помилка. Щось не завантажено");
-                            return Completable.error(new Throwable());
-                        }
-                    }
-                    Log.d("RecipeUtils", "Успішно завантажено всі рецепти");
-                    return Completable.complete();
-                });
+    /**
+     * Налаштування спостереження за змінами рецептів страви
+     */
+    private void setObserveRecipes() {
+        // Слухач зміни рецептів страви в базі даних
+        utils.ByDishRecipe().getViewModel().getByDishID(dishID).observe(this, data -> {
+            if (data != null) {
+                originalDish.setRecipes(new ArrayList<>(data));
+
+                if (recipeAdapter != null) recipeAdapter.setItems(new ArrayList<>(data));
+            }
+        });
     }
 
+    /**
+     * Обробка натискання кнопки додавання або редагування страви
+     */
     private void onAddOrEditButtonClick() {
         AtomicBoolean sameName = new AtomicBoolean(false);
         String name = nameEditText.getText().toString().trim();
@@ -634,10 +679,6 @@ public class EditorDishActivity extends AppCompatActivity {
                                     boolean flagFullIngredient = true, flagFullRecipeItem = true;
 
                                     for (Ingredient in : ingredients) {
-                                        if (in.getType().isEmpty()) {
-                                            in.setType(utils.getNameIngredientType(Config.VOID));
-                                        }
-
                                         if (in.getName().isEmpty()) {
                                             flagFullIngredient = false;
                                             break;
@@ -645,27 +686,22 @@ public class EditorDishActivity extends AppCompatActivity {
                                     }
 
                                     for (DishRecipe dishRecipe : dishRecipes) {
-                                        if (dishRecipe.getTypeData() == DishRecipeType.IMAGE) {
-                                            if (dishRecipe.getBitmap() == null || dishRecipe.getBitmap().getByteCount() <= 0) {
-                                                flagFullRecipeItem = false;
-                                                break;
-                                            }
-                                        } else if (dishRecipe.getTypeData() == DishRecipeType.TEXT) {
-                                            if (dishRecipe.getTextData().isEmpty()) {
-                                                flagFullRecipeItem = false;
-                                                break;
-                                            }
+                                        if (dishRecipe.getTextData().isEmpty()) {
+                                            flagFullRecipeItem = false;
+                                            break;
                                         }
                                     }
 
                                     Dish newDish = new Dish(dishID, name, portion.get(), ingredients, dishRecipes);
 
+                                    // Перевірка повноти даних інгредієнтів та рецептів
                                     if (!flagFullIngredient || !flagFullRecipeItem) {
                                         stopLoadingScreenAnimation();
                                         Toast.makeText(this, getString(R.string.warning_set_all_data), Toast.LENGTH_SHORT).show();
                                     } else {
-                                        if (mode == Config.ADD_MODE) { addDish(newDish); }
-                                        else if (mode == Config.EDIT_MODE) { editDish(newDish); }
+                                        // Виклик відповідної операції в залежності від режиму
+                                        if (mode == ADD_MODE) { addDish(newDish); }
+                                        else if (mode == EDIT_MODE) { editDish(newDish); }
                                     }
                                 }
                             },
@@ -680,14 +716,20 @@ public class EditorDishActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Додавання нової страви до бази даних
+     */
     private void addDish(Dish dish) {
-        Disposable addDishDisposable = utils.ByDish().add(dish, Integer.toUnsignedLong(Config.ID_MY_RECIPE_COLLECTION))
+        Disposable addDishDisposable = utils.ByDish().add(dish, ID_System_Collection.ID_MY_RECIPE.getId())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         id -> {
                             if (id > 0) {
-                                if (dishID == null) setObserveDish(id);
+                                if (dishID == null) {
+                                    dishID = id;
+                                    setObserveDish();
+                                }
                                 stopLoadingScreenAnimation();
                                 Toast.makeText(this, getString(R.string.successful_add_dish), Toast.LENGTH_SHORT).show();
                                 finish();
@@ -706,6 +748,9 @@ public class EditorDishActivity extends AppCompatActivity {
         compositeDisposable.add(addDishDisposable);
     }
 
+    /**
+     * Редагування існуючої страви в базі даних
+     */
     private void editDish(Dish newDish) {
         Disposable disposable = utils.ByDish().update(newDish)
                 .andThen(updateIngredient(newDish)
@@ -719,7 +764,7 @@ public class EditorDishActivity extends AppCompatActivity {
                         result -> {
                             if (result) {
                                 stopLoadingScreenAnimation();
-                                mode = Config.READ_MODE;
+                                mode = READ_MODE;
                                 startAnimationChangeStylePage(durationAnimation);
                                 Toast.makeText(this, getString(R.string.successful_edit_dish), Toast.LENGTH_SHORT).show();
                                 Log.d(nameActivity, "Страва успішно відредагована");
@@ -738,6 +783,9 @@ public class EditorDishActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
+    /**
+     * Запускає анімацію екрану завантаження
+     */
     private void startLoadingScreenAnimation() {
         if (loadScreen != null) {
             loadScreen.setVisibility(View.VISIBLE);
@@ -757,21 +805,31 @@ public class EditorDishActivity extends AppCompatActivity {
             params.gravity = Gravity.CENTER;
 
             rootView.addView(loadText, params);
-            textLoadAnimation = new TextLoadAnimation(loadText, getString(R.string.loading));
-            textLoadAnimation.startAnimation();
+            screenLoad = new TextLoadAnimation(loadText, getString(R.string.loading));
+            screenLoad.startAnimation();
         }
     }
 
+    /**
+     * Зупиняє анімацію екрану завантаження
+     */
     private void stopLoadingScreenAnimation() {
         if (loadScreen != null && loadText != null) {
             ViewGroup rootView = (ViewGroup) getWindow().getDecorView().getRootView();
             rootView.removeView(loadText);
-            textLoadAnimation.stopAnimation();
+            screenLoad.stopAnimation();
             loadText = null;
             loadScreen.setVisibility(View.GONE);
         }
     }
 
+    /**
+     * Оновлює інгредієнти страви в базі даних
+     * Спочатку видаляє всі поточні інгредієнти, а потім додає нові
+     *
+     * @param newDish Страва з оновленими інгредієнтами
+     * @return Single<Boolean> Результат операції (успішно/неуспішно)
+     */
     private Single<Boolean> updateIngredient(Dish newDish) {
         return utils.ByIngredient().getAllByIDDish(dishID)
                 .flatMap(
@@ -824,32 +882,52 @@ public class EditorDishActivity extends AppCompatActivity {
                 );
     }
 
+    /**
+     * Оновлює рецепт страви в базі даних
+     * Спочатку видаляє всі поточні елементи рецепту, а потім додає нові
+     *
+     * @param newDish Страва з оновленим рецептом
+     * @return Single<Boolean> Результат операції (успішно/неуспішно)
+     */
     private Single<Boolean> updateRecipe(Dish newDish) {
         return utils.ByDishRecipe().getByDishID(dishID)
                 .flatMap(dishRecipes -> {
                     ArrayList<DishRecipe> newDishRecipes = newDish.getRecipes();
 
-                    if (dishRecipes != null && !dishRecipes.isEmpty()) {
-                        return utils.ByDishRecipe().deleteAll(new ArrayList<>(dishRecipes))
-                                .flatMap(status -> {
-                                    if (!status) {
-                                        Log.e(nameActivity, "Помилка видалення елементів рецепту страви з БД.");
-                                    }
+                    return Observable.fromIterable(newDishRecipes)
+                            .flatMapSingle(newDishRecipe -> {
+                                if (newDishRecipe.getTypeData() == DishRecipeType.IMAGE && !newDishRecipe.getTextData().contains("cache")) {
+                                    return imageController.addImageToCache(newDishRecipe.getTextData())
+                                            .flatMap(path -> {
+                                                newDishRecipe.setTextData(path);
+                                                return Single.just(newDishRecipe);
+                                            });
+                                } else return Single.just(newDishRecipe);
+                            })
+                            .toList()
+                            .flatMap(newDishRecipes_ -> {
+                                if (dishRecipes != null && !dishRecipes.isEmpty()) {
+                                    return utils.ByDishRecipe().deleteAll(new ArrayList<>(dishRecipes))
+                                            .flatMap(status -> {
+                                                if (!status) {
+                                                    Log.e(nameActivity, "Помилка видалення елементів рецепту страви з БД.");
+                                                }
 
-                                    if (newDishRecipes == null) {
+                                                if (newDishRecipes_ == null) {
+                                                    return Single.just(new ArrayList<DishRecipe>());
+                                                } else {
+                                                    return Single.just(newDishRecipes_);
+                                                }
+                                            });
+                                } else {
+                                    Log.d(nameActivity, "Список елементів рецепту страви пустий.");
+                                    if (newDishRecipes_ == null || newDishRecipes_.isEmpty()) {
                                         return Single.just(new ArrayList<DishRecipe>());
                                     } else {
-                                        return Single.just(newDishRecipes);
+                                        return Single.just(newDishRecipes_);
                                     }
-                                });
-                    } else {
-                        Log.d(nameActivity, "Список елементів рецепту страви пустий.");
-                        if (newDishRecipes == null || newDishRecipes.isEmpty()) {
-                            return Single.just(new ArrayList<DishRecipe>());
-                        } else {
-                            return Single.just(newDishRecipes);
-                        }
-                    }
+                                }
+                            });
                 })
                 .flatMap(
                         dishRecipes -> {
@@ -869,50 +947,75 @@ public class EditorDishActivity extends AppCompatActivity {
                 );
     }
 
+    /**
+     * Обробляє натискання кнопки перекладу страви
+     * Перекладає назву страви, інгредієнти та текстові частини рецепту
+     * Зберігає оригінальні позиції та нетекстові елементи рецепту
+     */
     private void onTranslationDishClick() {
-        if (translateController != null) {
-            TextLoadAnimation textLoadAnimation = new TextLoadAnimation(translate, getString(R.string.loading));
-            textLoadAnimation.startAnimation();
+        if (translator != null) {
+            if (AnotherUtils.checkInternet(this)) {
+                TextLoadAnimation textLoadAnimation = new TextLoadAnimation(translate, getString(R.string.loading));
+                textLoadAnimation.startAnimation();
 
-            ArrayList<Integer> positionTextRecipe = new ArrayList<>();
-            for (DishRecipe dishRecipe : originalDish.getRecipes()) {
-                if (dishRecipe.getTypeData() == DishRecipeType.TEXT) positionTextRecipe.add(dishRecipe.getPosition());
-            }
+                ArrayList<Integer> positionTextRecipe = new ArrayList<>();
+                for (DishRecipe dishRecipe : originalDish.getRecipes()) {  // Запам'ятовуємо позиції текстових частин рецепту
+                    if (dishRecipe.getTypeData() == DishRecipeType.TEXT) positionTextRecipe.add(dishRecipe.getPosition());
+                }
 
-            Disposable disposable = translateController.translateRecipe(originalDish)
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(dish -> {
-                        if (dish != null) {
-                            translateDish = new Dish(dish);
-                            translateDish.setId(originalDish.getId());
-                            setDataIntoItemsActivity(translateDish);
-                            translateDish.setRecipes(new ArrayList<>());
-                            if (positionTextRecipe.size() == dish.getRecipes().size()) {
-                                for (int i = 0, j = 0; i < originalDish.getRecipes().size(); i++) {
-                                    if (positionTextRecipe.contains(i)) {
-                                        translateDish.addRecipe(dish.getRecipes().get(j));
-                                        j++;
-                                    } else translateDish.addRecipe(originalDish.getRecipes().get(i));
+                Disposable disposable = translator.translateRecipe(originalDish)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(dish -> {
+                            if (dish != null) {
+                                translateDish = new Dish(dish);
+                                translateDish.setId(originalDish.getId());
+
+                                ArrayList<Ingredient> translateIngredient = new ArrayList<>();
+                                for (int i = 0; i < originalDish.getIngredients().size(); i++) {  // На переклад подаються лише назви інгредієнтів, тому тут відновлюється інші дані
+                                    Ingredient ingredient = originalDish.getIngredients().get(i);
+                                    translateIngredient.add(new Ingredient(dish.getIngredients().get(i).getName(), ingredient.getAmount(), ingredient.getType()));
                                 }
+                                translateDish.setIngredients(translateIngredient);
+
+                                setDataIntoItemsActivity(translateDish);
+
+                                translateDish.setRecipes(new ArrayList<>());
+                                if (positionTextRecipe.size() == dish.getRecipes().size()) {
+                                    for (int i = 0, j = 0; i < originalDish.getRecipes().size(); i++) {  // Вставляємо переклад у позиції, які запам'ятали
+                                        if (positionTextRecipe.contains(i)) {
+                                            translateDish.addRecipe(dish.getRecipes().get(j));
+                                            j++;
+                                        } else translateDish.addRecipe(originalDish.getRecipes().get(i));
+                                    }
+                                }
+
+                                if (recipeRecycler != null && recipeAdapter != null) recipeAdapter.setItems(translateDish.getRecipes());
+
+                                flagIsTranslated.set(true);
+                                textLoadAnimation.setBaseText(getString(R.string.translate_button_text_true));
+                                textLoadAnimation.stopAnimation();
+                                translate.setVisibility(View.VISIBLE);
                             }
-
-                            if (recipeRecycler != null && recipeAdapter != null) recipeAdapter.setItems(translateDish.getRecipes());
-
-                            flagIsTranslated.set(true);
-                            textLoadAnimation.setBaseText(getString(R.string.translate_button_text_true));
-                            textLoadAnimation.stopAnimation();
-                        }
-                        else {
-                            flagIsTranslated.set(false);
-                            textLoadAnimation.setBaseText(getString(R.string.translate_button_text_false));
-                            textLoadAnimation.stopAnimation();
-                        }
-                    });
-            compositeDisposable.add(disposable);
+                            else {
+                                flagIsTranslated.set(false);
+                                textLoadAnimation.setBaseText(getString(R.string.translate_button_text_false));
+                                textLoadAnimation.stopAnimation();
+                                translate.setVisibility(View.VISIBLE);
+                            }
+                        });
+                compositeDisposable.add(disposable);
+            } else Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
         }
     }
 
+    /**
+     * Повертає Runnable, який після виконання анімації
+     * робить об'єкт знову активним для натискання
+     *
+     * @param v Об'єкт, який стане активним
+     * @return Runnable для виконання після анімації
+     */
     private Runnable getRunnableAnimation(View v) {
         return () -> {
             flagAccessButtonAnimation.set(true);
@@ -920,22 +1023,12 @@ public class EditorDishActivity extends AppCompatActivity {
         };
     }
 
-    private void showButtonsRecipe(Runnable onAnimationEnd) {
-        addTextToRecipe.setClickable(true);
-        addImageToRecipe.setClickable(true);
-        AnimationUtils.smoothRotation(addToRecipe, AnimationUtils.RIGHT, durationAnimation, onAnimationEnd);
-        AnimationUtils.smoothSlipVisibility(addTextToRecipe, AnimationUtils.RIGHT, AnimationUtils.SHOW, translationView, durationAnimation, onAnimationEnd);
-        AnimationUtils.smoothSlipVisibility(addImageToRecipe, AnimationUtils.LEFT, AnimationUtils.SHOW, translationView, durationAnimation, onAnimationEnd);
-    }
-
-    private void hideButtonsRecipe(Runnable onAnimationEnd) {
-        addTextToRecipe.setClickable(false);
-        addImageToRecipe.setClickable(false);
-        AnimationUtils.smoothRotation(addToRecipe, AnimationUtils.LEFT, durationAnimation, onAnimationEnd);
-        AnimationUtils.smoothSlipVisibility(addTextToRecipe, AnimationUtils.RIGHT, AnimationUtils.HIDE, translationView, durationAnimation, onAnimationEnd);
-        AnimationUtils.smoothSlipVisibility(addImageToRecipe, AnimationUtils.LEFT, AnimationUtils.HIDE, translationView, durationAnimation, onAnimationEnd);
-    }
-
+    /**
+     * Встановлює ширину поля для введення назви страви
+     * Визначає оптимальну ширину поля в залежності від напрямку анімації
+     *
+     * @param isAnimatingForward Напрямок анімації (true - вперед, false - назад)
+     */
     private void setWightNameEditText(boolean isAnimatingForward) {
         int match_parentWidth = nameDishContainerWithBorder.getWidth();
 
@@ -953,6 +1046,11 @@ public class EditorDishActivity extends AppCompatActivity {
         nameEditText.setLayoutParams(params);
     }
 
+    /**
+     * Встановлює горизонтальне зміщення поля для введення назви страви
+     *
+     * @param bias Значення зміщення (від 0 до 1)
+     */
     private void setBiasNameEditText(float bias) {
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) nameEditText.getLayoutParams();
         params.horizontalBias = bias;
@@ -960,6 +1058,11 @@ public class EditorDishActivity extends AppCompatActivity {
         nameEditText.requestLayout();
     }
 
+    /**
+     * Встановлює ширину поля для введення назви страви в залежності від режиму
+     *
+     * @param isRead Режим читання (true) або редагування/додавання (false)
+     */
     private void setWidthNameEditText(boolean isRead) {
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) nameEditText.getLayoutParams();
         params.width = isRead ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -967,13 +1070,19 @@ public class EditorDishActivity extends AppCompatActivity {
         nameEditText.requestLayout();
     }
 
+    /**
+     * Запускає анімацію зміни стилю сторінки при переключенні між режимами
+     * Виконує комплексну анімацію всіх елементів інтерфейсу
+     *
+     * @param duration Тривалість анімації в мілісекундах
+     */
     private void startAnimationChangeStylePage(int duration) {
-        boolean isRead = mode == Config.READ_MODE;
+        boolean isRead = mode == READ_MODE;
 
         if (flagAccessAnimation.get()) {
             flagAccessAnimation.set(false);
 
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {  // Блокуємо можливість клікати на період анімації
                 flagAccessAnimation.set(true);
                 if (loadScreen != null) loadScreen.setVisibility(View.GONE);
             }, duration*5L);
@@ -991,7 +1100,7 @@ public class EditorDishActivity extends AppCompatActivity {
                     setWightNameEditText(isRead);
                 });
 
-                if (mode == Config.READ_MODE) {
+                if (mode == READ_MODE) {
                     ValueAnimator biasAnimator = ValueAnimator.ofFloat(0f, 0.5f);
                     biasAnimator.setDuration(duration);
                     biasAnimator.addUpdateListener(animation -> {
@@ -1005,7 +1114,7 @@ public class EditorDishActivity extends AppCompatActivity {
 
                     ConstraintSet endSet = new ConstraintSet();
                     endSet.clone(nameDishContainer);
-                    endSet.setHorizontalBias(nameEditText.getId(), (mode == Config.READ_MODE) ? 0.5f : 0f);
+                    endSet.setHorizontalBias(nameEditText.getId(), (mode == READ_MODE) ? 0.5f : 0f);
 
                     TransitionManager.beginDelayedTransition(nameDishContainer);
                     endSet.applyTo(nameDishContainer);
@@ -1031,7 +1140,7 @@ public class EditorDishActivity extends AppCompatActivity {
                             }
                         }
                     });
-                    if (mode != Config.READ_MODE) {
+                    if (mode != READ_MODE) {
                         alphaBackgroundAnimator.setStartDelay(duration);
                         alphaBackgroundAnimator.setDuration(duration*3L);
                     }
@@ -1043,7 +1152,7 @@ public class EditorDishActivity extends AppCompatActivity {
                 moveUpAnimator.setDuration(duration);
 
                 ObjectAnimator alphaNameContainerAnimator = ObjectAnimator.ofFloat(nameTextViewContainer, "alpha", isRead ? 1f : 0f, isRead ? 0f : 1f);
-                if (mode != Config.READ_MODE) {
+                if (mode != READ_MODE) {
                     alphaNameContainerAnimator.setStartDelay(duration);
                     alphaNameContainerAnimator.setDuration(duration*3L);
                 } else alphaNameContainerAnimator.setDuration(duration/2L);
@@ -1079,8 +1188,8 @@ public class EditorDishActivity extends AppCompatActivity {
             if (setDataButton != null) {
                 if (isRead) AnimationUtils.smoothVisibility(setDataButton, AnimationUtils.HIDE, duration);
                 else {
-                    if (mode == Config.ADD_MODE) setDataButton.setText(R.string.button_add);
-                    else if (mode == Config.EDIT_MODE) setDataButton.setText(R.string.edit);
+                    if (mode == ADD_MODE) setDataButton.setText(R.string.button_add);
+                    else if (mode == EDIT_MODE) setDataButton.setText(R.string.edit);
 
                     AnimationUtils.smoothVisibility(setDataButton, AnimationUtils.SHOW, duration);
                 }
@@ -1092,20 +1201,50 @@ public class EditorDishActivity extends AppCompatActivity {
             if (buttonsRecipeContainer != null && recipeRecycler != null) {
                 if (isRead) AnimationUtils.smoothVisibility(buttonsRecipeContainer, AnimationUtils.HIDE, duration);
                 else AnimationUtils.smoothVisibility(buttonsRecipeContainer, AnimationUtils.SHOW, duration);
-
-                if (!addToRecipe.isFocused()) hideButtonsRecipe(getRunnableAnimation(addToRecipe));
             }
             if (addIngredient != null) {
                 if (isRead) AnimationUtils.smoothVisibility(addIngredient, AnimationUtils.HIDE, duration);
                 else AnimationUtils.smoothVisibility(addIngredient, AnimationUtils.SHOW, duration);
             }
-            if (ingredientSetAdapter != null && ingredientGetAdapter != null) changeIngredientAdapter();
-            if (recipeAdapter != null) {
+            if (ingredientSetAdapter != null && ingredientGetAdapter != null && ingredientRecyclerView != null) {
+                ViewGroup.LayoutParams layoutParams = ingredientRecyclerView.getLayoutParams();
+
+                if (isRead) {
+                    ingredientRecyclerView.setAdapter(ingredientGetAdapter);
+                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
+                else {
+                    ingredientRecyclerView.setAdapter(ingredientSetAdapter);
+                    layoutParams.height = AnotherUtils.dpToPx(400, this);
+                }
+
+                ingredientRecyclerView.setLayoutParams(layoutParams);
+            }
+            if (recipeRecycler != null && recipeAdapter != null) {
+                ViewGroup.LayoutParams layoutParams = recipeRecycler.getLayoutParams();
+
+                // Можливість перетягування елементів
+                if (itemTouchHelper == null) itemTouchHelper = recipeAdapter.getItemTouchHelper();
+
                 recipeAdapter.setReadMode(isRead);
+
+                if (isRead) {
+                    itemTouchHelper.attachToRecyclerView(null);
+                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
+                else {
+                    itemTouchHelper.attachToRecyclerView(recipeRecycler);
+                    layoutParams.height = AnotherUtils.dpToPx(400, this);
+                }
+
+                recipeRecycler.setLayoutParams(layoutParams);
             }
         }
     }
 
+    /**
+     * Видаляє страву з бази даних після підтвердження користувачем
+     */
     private void deleteDish() {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_delete_dish))
@@ -1130,13 +1269,19 @@ public class EditorDishActivity extends AppCompatActivity {
                 .setNegativeButton(getString(R.string.no), null).show();
     }
 
+    /**
+     * Переводить інтерфейс у режим редагування страви
+     */
     private void editDish() {
         if (flagAccessAnimation.get()) {
-            mode = Config.EDIT_MODE;
+            mode = EDIT_MODE;
             startAnimationChangeStylePage(durationAnimation);
         }
     }
 
+    /**
+     * Копіює інформацію про страву у вигляді тексту в буфер обміну
+     */
     private void copy_as_text() {
         ClipboardManager clipboard = (ClipboardManager) this.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("label", originalDish.getAsText(this));
@@ -1145,26 +1290,35 @@ public class EditorDishActivity extends AppCompatActivity {
         Toast.makeText(this, getString(R.string.copy_clipboard_text), Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Виконує експорт та пересилання файлу через intent
+     */
     private void shareDish() {
         if (originalDish != null) {
             new AlertDialog.Builder(this)
                     .setTitle(getString(R.string.confirm_export))
                     .setMessage(getString(R.string.warning_export))
                     .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                        ImportExportController.exportDish(this, originalDish, new ExportCallbackUri() {
+                        startLoadingScreenAnimation();
+                        Dish dishExport = new Dish(originalDish);
+
+                        importExportController.exportDish(this, dishExport, new ExportCallbackUri() {
                             @Override
                             public void onSuccess(Uri uri) {
                                 if (uri != null) {
                                     FileUtils.sendFileByUri(EditorDishActivity.this, uri);
                                     FileUtils.deleteFileByUri(EditorDishActivity.this, uri);
                                     Log.d(nameActivity, "Рецепт успішно експортовано");
-                                }
+                                } else Log.d(nameActivity, "Посилання на файл експорту є null");
+
+                                stopLoadingScreenAnimation();
                             }
 
                             @Override
                             public void onError(Throwable throwable) {
+                                stopLoadingScreenAnimation();
                                 Toast.makeText(EditorDishActivity.this, EditorDishActivity.this.getString(R.string.error_export), Toast.LENGTH_SHORT).show();
-                                Log.e("ImportExportController", "Помилка при експорті рецептів", throwable);
+                                Log.e(nameActivity, "Помилка при експорті рецептів", throwable);
                             }
 
                             @Override
@@ -1180,13 +1334,17 @@ public class EditorDishActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Відкриває діалог для додавання страви до колекцій.
+     * Показує список колекцій, які ще не містять цю страву.
+     */
     private void showAddDishInCollectionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_dish_in_collection, null);
         RecyclerView collectionsRecyclerView = dialogView.findViewById(R.id.collection_RecyclerView);
 
-        Disposable disposable = utils.ByCollection().getUnusedInDish(originalDish)
+        Disposable disposable = utils.ByCollection().getUnusedByTypeInDish(originalDish, CollectionType.COLLECTION)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -1236,7 +1394,10 @@ public class EditorDishActivity extends AppCompatActivity {
         compositeDisposable.add(disposable);
     }
 
-    private void onClickSettingDish(View view) {
+    /**
+     * Відкриває та закриває бокову панель опцій
+     */
+    private void onClickSettingDish() {
         if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawer(GravityCompat.END);
         } else {

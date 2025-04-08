@@ -15,23 +15,27 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.SearchController;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
+import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
+import com.example.recipes.Utils.ClassUtils;
+import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import android.os.Handler;
@@ -39,28 +43,37 @@ import android.os.Looper;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Адаптер для відображення списку інгредієнтів з можливістю редагування назви, кількості та типу.
+ * Підтримує підказки назв інгредієнтів.
+ */
 public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdapter.IngredientViewHolder> {
     private Context context;
     private ConstraintLayout empty;
     private ArrayList<Ingredient> ingredients;
-    private ArrayList<String> allNameIngredients;
+    private ArrayList<String> allNameIngredients; // Список усіх можливих назв інгредієнтів
     private RecyclerView recyclerView;
-    private Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable searchRunnable;
-    private PreferencesController preferencesController;
-    private int currentFocusedPosition = RecyclerView.NO_POSITION;
 
+    /**
+     * Конструктор адаптера.
+     *
+     * @param context Контекст додатку.
+     * @param empty Виджет для відображення порожнього стану.
+     * @param recyclerView RecyclerView для відображення списку.
+     */
     public IngredientSetAdapter(Context context, ConstraintLayout empty, RecyclerView recyclerView) {
         this.context = context;
         this.recyclerView = recyclerView;
         this.empty = empty;
         this.ingredients = new ArrayList<>();
         this.allNameIngredients = new ArrayList<>();
-        this.preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(context);
     }
 
     @NonNull
@@ -84,54 +97,75 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
     @Override
     public void onViewRecycled(@NonNull IngredientViewHolder holder) {
         super.onViewRecycled(holder);
-        if (holder.disposable != null) {
-            holder.disposable.dispose();
-        }
     }
 
+    /**
+     * Встановлює список усіх можливих назв інгредієнтів.
+     *
+     * @param names Список назв інгредієнтів.
+     */
     public void setNamesIngredient(ArrayList<String> names) {
         allNameIngredients.clear();
         allNameIngredients.addAll(names);
         notifyDataSetChanged();
     }
 
+    /**
+     * Встановлює новий список інгредієнтів, перевіряючи обмеження на максимальну кількість.
+     *
+     * @param ingredients Новий список інгредієнтів.
+     */
     public void setIngredients(ArrayList<Ingredient> ingredients) {
-        if ((ingredients.size() + this.ingredients.size()) < Config.COUNT_LIMIT_INGREDIENT) {
+        if ((ingredients.size() + this.ingredients.size()) < Limits.MAX_COUNT_INGREDIENT.getLimit()) {
             this.ingredients.clear();
             this.ingredients.addAll(ingredients);
             notifyDataSetChanged();
             checkEmpty();
         } else {
-            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Limits.MAX_COUNT_INGREDIENT.getLimit() + ")", Toast.LENGTH_SHORT).show();
             Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
         }
     }
 
+    /**
+     * Додає новий інгредієнт до списку.
+     *
+     * @param ingredient Інгредієнт для додавання.
+     */
     public void addIngredient(Ingredient ingredient) {
-        if (ingredients.size() < Config.COUNT_LIMIT_INGREDIENT) {
+        if (ingredients.size() < Limits.MAX_COUNT_INGREDIENT.getLimit()) {
             ingredients.add(ingredient);
             notifyItemInserted(ingredients.size() - 1);
             checkEmpty();
         } else {
-            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Config.COUNT_LIMIT_INGREDIENT + ")", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.warning_max_count_ingredients) + "(" + Limits.MAX_COUNT_INGREDIENT.getLimit() + ")", Toast.LENGTH_SHORT).show();
             Log.d("MainActivity", "Рецепти успішно імпортовані із файлу.");
         }
     }
 
+    /**
+     * Видаляє інгредієнт зі списку за позицією.
+     *
+     * @param position Позиція інгредієнта для видалення.
+     */
     public void delIngredient(int position) {
         ingredients.remove(position);
         notifyItemRemoved(position);
         checkEmpty();
     }
 
+    /**
+     * Повертає список інгредієнтів.
+     *
+     * @return Список інгредієнтів.
+     */
     public ArrayList<Ingredient> getIngredients() {
         return ingredients;
     }
 
-    public int getPositionItem(Ingredient ingredient) {
-        return ingredients.indexOf(ingredient);
-    }
-
+    /**
+     * Оновлює дані інгредієнтів у списку на основі введених значень у ViewHolder.
+     */
     public void updateIngredients() {
         for (int i = 0; i < getItemCount(); i++) {
             IngredientViewHolder holder = (IngredientViewHolder) recyclerView.findViewHolderForAdapterPosition(i);
@@ -139,12 +173,15 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 Ingredient ingredient = ingredients.get(i);
                 ingredient.setName(holder.nameIngredientEditText.getText().toString());
                 ingredient.setAmount(holder.countIngredientEditText.getText().toString());
-                ingredient.setType(holder.spinnerTypeIngredient.getSelectedItem().toString());
+                ingredient.setType(IngredientTypeConverter.toIngredientType(holder.spinnerTypeIngredient.getSelectedItem().toString()));
             }
         }
         checkEmpty();
     }
 
+    /**
+     * Перевіряє, чи список інгредієнтів порожній, і оновлює відображення порожнього стану.
+     */
     private void checkEmpty() {
         if (empty != null) {
             if (ingredients.isEmpty()) empty.setVisibility(View.VISIBLE);
@@ -152,17 +189,14 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         }
     }
 
+    /**
+     * Внутрішній клас, який представляє ViewHolder для елементів списку інгредієнтів.
+     */
     class IngredientViewHolder extends RecyclerView.ViewHolder {
         EditText nameIngredientEditText;
         EditText countIngredientEditText;
         Spinner spinnerTypeIngredient;
         ImageView deleteButton;
-        PopupWindow popupWindow;
-        RecyclerView popupRecyclerView;
-        SearchController searchController;
-        Disposable disposable;
-        PreferencesController controller;
-        boolean accessShowPopup = false, isTouch = false;
 
         IngredientViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -171,33 +205,16 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             spinnerTypeIngredient = itemView.findViewById(R.id.spinnerTypeIngredient);
             deleteButton = itemView.findViewById(R.id.imageButton);
 
-            CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Config.CHAR_LIMIT_NAME_INGREDIENT);
-            CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, Config.CHAR_LIMIT_AMOUNT_INGREDIENT);
+            // Встановлюємо обмеження на кількість символів у полях вводу
+            CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Limits.MAX_CHAR_NAME_INGREDIENT);
+            CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, Limits.MAX_CHAR_AMOUNT_INGREDIENT);
 
-            controller = new PreferencesController();
-            controller.loadPreferences(context);
-
-            ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(context, android.R.layout.simple_spinner_item, Arrays.asList(context.getResources().getStringArray(R.array.options_array)));
+            // Налаштовуємо спінер для вибору типу інгредієнта
+            ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(context, android.R.layout.simple_spinner_item, Arrays.asList(context.getResources().getStringArray(R.array.ingredient_types)));
             languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerTypeIngredient.setAdapter(languageAdapter);
 
-            popupRecyclerView = new RecyclerView(context);
-            searchController = new SearchController(context, nameIngredientEditText, popupRecyclerView, (view, item) -> {
-                accessShowPopup = false;
-                nameIngredientEditText.setText(item.toString());
-                hidePopup();
-            });
-            searchController.setArrayData(new ArrayList<>(allNameIngredients));
-            popupWindow = new PopupWindow(searchController.getRecyclerView(), ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-            if (Objects.equals(preferencesController.getThemeNameBySpinner(preferencesController.getIndexTheme()), "Dark")) {
-                popupWindow.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            } else {
-                popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
-            }
-            popupWindow.setHeight(300);
-            popupWindow.setOutsideTouchable(true);
-            popupWindow.setFocusable(false);
-
+            // Обробка кліку на кнопку видалення
             deleteButton.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
@@ -205,43 +222,13 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             });
 
-            nameIngredientEditText.setOnFocusChangeListener((v, hasFocus) -> {
-                int position = getAdapterPosition();
-
-                if (hasFocus && position != RecyclerView.NO_POSITION) {
-                    currentFocusedPosition = position;
-                    isTouch = true;
-                } else if (!hasFocus) {
-                    hidePopup();
-                    if (currentFocusedPosition == position) {
-                        currentFocusedPosition = RecyclerView.NO_POSITION;
-                    }
-                    isTouch = false;
-                }
-            });
-
+            // Обробка зміни тексту у полі для вводу назви
             nameIngredientEditText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (controller.getStatus_ing_hints() && isTouch && accessShowPopup) {
-                        int position = getAdapterPosition();
-
-                        if (searchRunnable != null) {
-                            handler.removeCallbacks(searchRunnable);
-                        }
-
-                        searchRunnable = () -> {
-                            if (getAdapterPosition() == position) {
-                                filterIngredients(s.toString().trim());
-                            }
-                        };
-
-                        handler.postDelayed(searchRunnable, 100);
-                    }
-                }
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
                 @Override
                 public void afterTextChanged(Editable s) {
@@ -249,11 +236,11 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
 
                     if (position != RecyclerView.NO_POSITION) {
                         ingredients.get(position).setName(s.toString());
-                        accessShowPopup = true;
                     }
                 }
             });
 
+            // Обробка зміни тексту у полі для вводу кількості
             countIngredientEditText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -270,12 +257,13 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             });
 
+            // Обробка вибору типу інгредієнта
             spinnerTypeIngredient.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     int adapterPosition = getAdapterPosition();
                     if (adapterPosition != RecyclerView.NO_POSITION) {
-                        ingredients.get(adapterPosition).setType(parent.getItemAtPosition(position).toString());
+                        ingredients.get(adapterPosition).setType(IngredientTypeConverter.toIngredientType(parent.getItemAtPosition(position).toString()));
                     }
                 }
 
@@ -284,13 +272,25 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             });
         }
 
+        /**
+         * Прив'язує дані до ViewHolder.
+         *
+         * @param ingredient Інгредієнт для відображення.
+         */
         void bind(Ingredient ingredient) {
             nameIngredientEditText.setText(ingredient.getName());
             countIngredientEditText.setText(ingredient.getAmount());
-            int index = getIndex(spinnerTypeIngredient, ingredient.getType());
+            int index = getIndex(spinnerTypeIngredient, ingredient.getTypeString());
             spinnerTypeIngredient.setSelection(index);
         }
 
+        /**
+         * Повертає індекс елемента у спінері за його значенням.
+         *
+         * @param spinner Спинер.
+         * @param myString Значення для пошуку.
+         * @return Індекс елемента.
+         */
         private int getIndex(Spinner spinner, String myString) {
             for (int i = 0; i < spinner.getCount(); i++) {
                 if (spinner.getItemAtPosition(i).toString().equalsIgnoreCase(myString)) {
@@ -298,57 +298,6 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             }
             return 0;
-        }
-
-        private void showPopup(View anchorView) {
-            if (popupWindow != null && popupWindow.isShowing()) {
-                popupWindow.dismiss();
-            }
-
-            if (!popupWindow.isShowing()) {
-                popupWindow.showAsDropDown(anchorView);
-            }
-        }
-
-
-        private void hidePopup() {
-            if (popupWindow != null && popupWindow.isShowing()) {
-                popupWindow.dismiss();
-            }
-        }
-
-        private void filterIngredients(String query) {
-            if (!query.isEmpty()) {
-                disposable = Observable.create(emitter -> {
-                            ArrayList<String> filteredItems = new ArrayList<>();
-                            for (String item : allNameIngredients) {
-                                if (item.toLowerCase().contains(query.toLowerCase())) {
-                                    filteredItems.add(item);
-                                }
-                            }
-                            emitter.onNext(filteredItems);
-                            emitter.onComplete();
-                        })
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(filteredItems -> {
-                            if (filteredItems instanceof ArrayList<?>) {
-                                ArrayList<String> list = (ArrayList<String>) filteredItems;
-
-                                searchController.getSearchResults().clear();
-                                searchController.getSearchResults().addAll(list);
-                                searchController.getAdapter().notifyDataSetChanged();
-
-                                if (!list.isEmpty()) {
-                                    nameIngredientEditText.post(() -> showPopup(nameIngredientEditText));
-                                } else {
-                                    hidePopup();
-                                }
-                            }
-                        });
-            } else {
-                hidePopup();
-            }
         }
     }
 }

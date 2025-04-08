@@ -1,4 +1,133 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
+**/logs
+.log
 app/src/main/java/com/example/recipes/API_Keys.java
+app/src/main/java/com/example/recipes/BuildConfig.java
+.idea/workspace.xml
+.idea/libraries
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/dictionaries
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/modules/
+.idea/assetWizardSettings.xml
+
+# Gradle files
+.gradle/
+gradle/
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Build output directory
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio captures folder
+captures/
+*.hprof
+
+# Miscellaneous files
+.DS_Store
+Thumbs.db
+
+# Android Studio specific files
+*.iml
+*.ipr
+*.iws
+
+# External build system files
+out/
+*.class
+
+# Java class files and logs
+*.class
+*.log
+
+# Android Studio settings
+.idea/
+*.iml
+
+# IntelliJ IDEA project files and directories
+.idea/workspace.xml
+.idea/modules.xml
+
+# Gradle files and directories
+.gradle/
+build/
+
+# Android Studio specific cache and output folders
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Miscellaneous files and directories that should be ignored by version control systems like Git or SVN.
+.DS_Store
+Thumbs.db
+
+# Android Studio specific files and directories to ignore.
+.idea/workspace.xml
+.idea/libraries/
+.idea/modules.xml
+
+# Gradle specific files and directories to ignore.
+.gradle/
+/gradle/
+/gradle-wrapper.jar
+/gradle-wrapper.properties
+
+# Build output directory to ignore.
+build/
+/captures/
+/.externalNativeBuild/
+/.cxx/
+
+# Local configuration file (sdk path, etc) to ignore.
+local.properties
+
+# Miscellaneous files to ignore.
+.DS_Store
+Thumbs.db
+
+# Android Studio captures folder to ignore.
+captures/
+
+# External build system files to ignore.
+out/
+/*.class/
+
+# Java class files and logs to ignore.
+*.class/
+/*.log/
+
+# Android Studio settings to ignore.
+.idea/
+/*.iml/
+
+# IntelliJ IDEA project files and directories to ignore.
+.idea/workspace.xml/
+/idea/modules.xml/
+
+# Gradle files and directories to ignore.
+.gradle/
+/gradle/
+/gradle-wrapper.jar/
+/gradle-wrapper.properties/
+
+# Build output directory to ignore.
+build/
+/captures/
+/.externalNativeBuild/
+/.cxx/

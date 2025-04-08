@@ -6,23 +6,33 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import com.example.recipes.Enum.CollectionType;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
+
+
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "collection",
         indices = {@Index("id")}
 )
 public class Collection {
+    public static final String SYSTEM_COLLECTION_TAG = "#%$*@";
+
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
-    @ColumnInfo(name = "type") private String type;
+    @ColumnInfo(name = "type") private CollectionType type;
     @Ignore private ArrayList<Dish> dishes = new ArrayList<>();
-    @Ignore private ArrayList<IngredientShopList> ingredients = new ArrayList<>();
-    @Ignore private ArrayList<Long> ids_dish_collection = new ArrayList<>();
 
+
+    // Конструктори
     @Ignore
-    public Collection(long id, String name, String type, ArrayList<Dish> dishes) {
+    public Collection(long id, String name, CollectionType type, ArrayList<Dish> dishes) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -30,18 +40,10 @@ public class Collection {
     }
 
     @Ignore
-    public Collection(String name, String type, ArrayList<Dish> dishes) {
+    public Collection(String name, CollectionType type, ArrayList<Dish> dishes) {
         this.name = name;
         this.type = type;
         if (dishes != null) { this.dishes.addAll(dishes); }
-    }
-
-    @Ignore
-    public Collection(String name, String type, ArrayList<Dish> dishes, ArrayList<IngredientShopList> ingredients) {
-        this.name = name;
-        this.type = type;
-        if (dishes != null) { this.dishes.addAll(dishes); }
-        if (ingredients != null) { this.ingredients.addAll(ingredients); }
     }
 
     @Ignore
@@ -50,17 +52,15 @@ public class Collection {
         this.name = collection.getName();
         this.type = collection.getType();
         this.dishes.addAll(collection.getDishes());
-        this.ingredients.addAll(collection.getIngredients());
-        this.ids_dish_collection.addAll(collection.getIds_dish_collection());
     }
 
-    public Collection(String name, String type) {
+    public Collection(String name, CollectionType type) {
         this.name = name;
         this.type = type;
     }
 
 
-
+    // Геттери і сеттери
     public long getId() {
         return id;
     }
@@ -69,26 +69,10 @@ public class Collection {
         return name;
     }
 
-    public String getType() { return type; }
+    public CollectionType getType() { return type; }
 
     public ArrayList<Dish> getDishes() {
         return dishes;
-    }
-
-    public ArrayList<IngredientShopList> getIngredients() {
-        return ingredients;
-    }
-
-    public ArrayList<String> getNameIngredients() {
-        ArrayList<String> names = new ArrayList<>();
-        for (IngredientShopList ing : ingredients) {
-            names.add(ing.getName());
-        }
-        return names;
-    }
-
-    public ArrayList<Long> getIds_dish_collection() {
-        return ids_dish_collection;
     }
 
     public void setId(long id) {
@@ -99,38 +83,18 @@ public class Collection {
         this.name = name;
     }
 
-    public void setType(String type) { this.type = type; }
+    public void setType(CollectionType type) { this.type = type; }
 
     public void setDishes(ArrayList<Dish> dishes) {
         this.dishes.addAll(dishes);
     }
 
-    public void setIngredients(ArrayList<IngredientShopList> ingredients) {
-        this.ingredients.clear();
-        this.ingredients.addAll(ingredients);
-    }
 
-    public void setIds_dish_collection(ArrayList<Long> ids_dish_collection) {
-        this.ingredients.clear();
-        this.ids_dish_collection.addAll(ids_dish_collection);
-    }
-
-    public void addIngredient(IngredientShopList ing) {
-        this.ingredients.add(ing);
-    }
-
-    public void addIngredients(ArrayList<IngredientShopList> ingredients) {
-        this.ingredients.addAll(ingredients);
-    }
-
+    // Інші методи
     public void addDish(Dish dish) { dishes.add(dish); }
 
     public void deleteDish(Dish dish) {
         dishes.remove(dish);
-    }
-
-    public void addIDDish_Collection(long id) {
-        ids_dish_collection.add(id);
     }
 
     @Override
@@ -140,11 +104,14 @@ public class Collection {
 
         Collection collection = (Collection) obj;
 
-        return id == collection.id;
+        if (id != collection.id) return false;
+        if (!name.equals(collection.name)) return false;
+        if (!type.equals(collection.type)) return false;
+        return dishes.equals(collection.dishes);
     }
 
     @Override
     public int hashCode() {
-        return (int)id;
+        return Objects.hash(id, name, type, dishes);
     }
 }

@@ -8,6 +8,7 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Update;
 
+import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Item.Collection;
 
 import java.util.ArrayList;
@@ -17,6 +18,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Інтерфейс DAO для роботи з таблицею "collection" у базі даних.
+ */
 @Dao
 public interface CollectionDAO {
     String TABLE_NAME = "collection";
@@ -52,20 +59,23 @@ public interface CollectionDAO {
     Single<List<String>> getAllName();
 
     @Query("SELECT " + NAME + " FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
-    Single<List<String>> getAllNameByType(String type);
+    Single<List<String>> getAllNameByType(CollectionType type);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
-    Single<List<Collection>> getAllByType(String type);
+    Single<List<Collection>> getAllByType(CollectionType type);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + TYPE + " = :type")
-    LiveData<List<Collection>> getAllByTypeLive(String type);
+    LiveData<List<Collection>> getAllByTypeLive(CollectionType type);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + TYPE + " = :type")
-    Maybe<Long> getIdByNameAndType(String name, String type);
+    Maybe<Long> getIdByNameAndType(String name, CollectionType type);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + TYPE + " =:type")
-    Single<Integer> getCountByType(String type);
+    Single<Integer> getCountByType(CollectionType type);
+
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + TYPE + " =:type")
+    LiveData<Integer> getCountByTypeLive(CollectionType type);
 }

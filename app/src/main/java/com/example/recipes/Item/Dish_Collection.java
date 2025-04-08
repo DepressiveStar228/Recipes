@@ -7,6 +7,10 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "dish_collection",
         foreignKeys = {
@@ -33,6 +37,8 @@ public class Dish_Collection {
     @ColumnInfo(name = "id_dish") private long id_dish;
     @ColumnInfo(name = "id_collection") private long id_collection;
 
+
+    // Конструктори
     @Ignore
     public Dish_Collection(long id, long id_dish, long id_collection) {
         this.id = id;
@@ -45,6 +51,8 @@ public class Dish_Collection {
         this.id_collection = id_collection;
     }
 
+
+    // Геттери і сеттери
     public long getId() {
         return id;
     }

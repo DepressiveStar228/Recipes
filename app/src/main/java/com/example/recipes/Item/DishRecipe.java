@@ -11,6 +11,12 @@ import androidx.room.PrimaryKey;
 
 import com.example.recipes.Enum.DishRecipeType;
 
+import java.util.Objects;
+
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 @Entity(
         tableName = "dish_recipe",
         foreignKeys = {
@@ -22,25 +28,26 @@ import com.example.recipes.Enum.DishRecipeType;
                 )
         },
         indices = {
-                @Index(value = "id_dish")
+                @Index(value = "id_dish"),
+                @Index(value = "type_data")
         }
 )
 public class DishRecipe {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "id_dish") private long id_dish;
-    @Ignore private Bitmap bitmap;
     @ColumnInfo(name = "textData") private String textData = "";
     @ColumnInfo(name = "position") private int position = -1;
     @ColumnInfo(name = "type_data") private DishRecipeType typeData;
 
+
+    // Конструктори
     @Ignore
     public DishRecipe() {}
 
     @Ignore
-    public DishRecipe(long id, long id_dish, Bitmap bitmap, String textData, int position, DishRecipeType typeData) {
+    public DishRecipe(long id, long id_dish, String textData, int position, DishRecipeType typeData) {
         this.id = id;
         this.id_dish = id_dish;
-        this.bitmap = bitmap;
         this.textData = textData;
         this.position = position;
         this.typeData = typeData;
@@ -49,7 +56,6 @@ public class DishRecipe {
     @Ignore
     public DishRecipe(long id_dish, DishRecipe dishRecipe) {
         this.id_dish = id_dish;
-        this.bitmap = dishRecipe.getBitmap();
         this.textData = dishRecipe.getTextData();
         this.position = dishRecipe.getPosition();
         this.typeData = dishRecipe.getTypeData();
@@ -58,16 +64,14 @@ public class DishRecipe {
     @Ignore
     public DishRecipe(String textData, DishRecipe dishRecipe) {
         this.id_dish = dishRecipe.getId_dish();
-        this.bitmap = dishRecipe.getBitmap();
         this.textData = textData;
         this.position = dishRecipe.getPosition();
         this.typeData = dishRecipe.getTypeData();
     }
 
     @Ignore
-    public DishRecipe(long id_dish, Bitmap bitmap, int position, DishRecipeType typeData) {
+    public DishRecipe(long id_dish, int position, DishRecipeType typeData) {
         this.id_dish = id_dish;
-        this.bitmap = bitmap;
         this.position = position;
         this.typeData = typeData;
     }
@@ -93,7 +97,7 @@ public class DishRecipe {
     }
 
 
-
+    // Геттери і сеттери
     public long getId() {
         return id;
     }
@@ -134,11 +138,18 @@ public class DishRecipe {
         this.position = position;
     }
 
-    public Bitmap getBitmap() {
-        return bitmap;
+
+    // Інші методи
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        DishRecipe that = (DishRecipe) object;
+        return id == that.id && id_dish == that.id_dish && position == that.position && Objects.equals(textData, that.textData) && typeData == that.typeData;
     }
 
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, id_dish, textData, position, typeData);
     }
 }

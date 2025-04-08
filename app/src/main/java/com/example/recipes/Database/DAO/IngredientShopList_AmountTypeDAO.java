@@ -16,6 +16,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Інтерфейс DAO для роботи з таблицею "ingredient_shop_list_amount_type" у базі даних.
+ */
 @Dao
 public interface IngredientShopList_AmountTypeDAO {
     String TABLE_NAME = "ingredient_shop_list_amount_type";

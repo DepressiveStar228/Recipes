@@ -1,7 +1,5 @@
 package com.example.recipes.Adapter;
 
-import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,33 +7,32 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.Config;
-import com.example.recipes.Controller.DataControllerForAdapter;
-import com.example.recipes.Item.Collection;
-import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.IngredientShopList;
+import com.example.recipes.Item.ShopList;
 import com.example.recipes.R;
-import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 
-public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.ViewHolder> implements DataControllerForAdapter<Collection> {
-    private final LifecycleOwner lifecycleOwner;
-    private final TextView empty;
-    private ArrayList<Collection> collections;
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Адаптер для відображення списку покупок.
+ */
+public class ShopListGetAdapter extends ListAdapter<ShopList, ShopListGetAdapter.ViewHolder> {
     private CollectionClickListener collectionClickListener;
-    private RecipeUtils utils;
 
-    public ShopListGetAdapter(Context context, LifecycleOwner lifecycleOwner, TextView empty, ArrayList<Collection> collections, CollectionClickListener clickListener) {
-        this.lifecycleOwner = lifecycleOwner;
-        this.empty = empty;
-        this.collections = collections;
+    /**
+     * Конструктор адаптера.
+     *
+     * @param clickListener Лістенер для обробки кліків на елементи списку
+     */
+    public ShopListGetAdapter(CollectionClickListener clickListener) {
+        super(DIFF_CALLBACK);
         this.collectionClickListener = clickListener;
-        this.utils = new RecipeUtils(context);
     }
 
     @NonNull
@@ -47,135 +44,42 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Collection collection = collections.get(position);
-        holder.shop_list_name.setText(collection.getName());
+        int currentPosition = holder.getBindingAdapterPosition();
+        if (currentPosition == RecyclerView.NO_POSITION) return;
 
-        utils.ByIngredientShopList()
-                .getViewModel()
-                .getBoughtCountByIdCollection(collection.getId())
-                .observe(lifecycleOwner, data -> {
-                    if (data != null) {
-                        holder.boughtItem.setText(data.toString());
-                    }
-                }
-        );
+        // Встановлюємо дані у відповідні View
+        ShopList shopList = getItem(currentPosition);
+        holder.shop_list_name.setText(shopList.getName());
+        holder.boughtItem.setText(String.valueOf(shopList.getAllBoughtItems()));
+        holder.allItem.setText(String.valueOf(shopList.getAllItems()));
 
-        utils.ByIngredientShopList()
-                .getViewModel()
-                .getCountByIdCollection(collection.getId())
-                .observe(lifecycleOwner, data -> {
-                            if (data != null) {
-                                holder.allItem.setText(data.toString());
-                            }
-                        }
-                );
-
+        // Обробка кліку на кнопку меню
         holder.menu_img.setOnClickListener(v -> {
             if (collectionClickListener != null) {
-                collectionClickListener.onMenuIconClick(collection, holder.menu_img);
+                collectionClickListener.onMenuIconClick(shopList, holder.menu_img);
             }
         });
 
+        // Обробка кліку на весь елемент списку
         holder.itemView.setOnClickListener(v -> {
             if (collectionClickListener != null) {
-                collectionClickListener.onCollectionClick(collection);
+                collectionClickListener.onCollectionClick(shopList);
             }
         });
     }
 
-    @Override
-    public int getItemCount() {
-        return collections.size();
+    /**
+     * Оновлює список елементів у адаптері.
+     *
+     * @param items Новий список списків покупок
+     */
+    public void setItems(ArrayList<ShopList> items) {
+        submitList(items);
     }
 
-    @Override
-    public void addItem(RecyclerView recyclerView, Collection item) {
-        collections.add(0, item);
-        int position = 0;
-        notifyItemInserted(position);
-
-        recyclerView.postDelayed(() -> {
-            RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
-            if (holder != null) {
-                holder.itemView.setAlpha(0f);
-                holder.itemView.animate()
-                        .alpha(1f)
-                        .setDuration(250)
-                        .start();
-            }
-            checkEmptyList();
-        }, 50);
-
-        Log.d("ShopListGetAdapter", "Адаптер додав колекцію");
-    }
-
-    @Override
-    public void addItems(RecyclerView recyclerView, ArrayList<Collection> items) {
-        if (items.size() + collections.size() > Config.COUNT_LIMIT_SHOP_LIST) {
-            for (Collection collection : items) {
-                addItem(recyclerView, collection);
-            }
-
-            Log.d("ShopListGetAdapter", "Адаптер додав колекцію");
-        }
-    }
-
-    @Override
-    public void delItem(RecyclerView recyclerView, Collection item) {
-        int position = getPosition(item);
-        if (position != -1) {
-            RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
-
-            if (holder != null) {
-                holder.itemView.animate()
-                        .alpha(0f)
-                        .setDuration(250)
-                        .withEndAction(() -> {
-                            collections.remove(position);
-                            notifyItemRemoved(position);
-                            checkEmptyList();
-                            Log.d("ShopListGetAdapter", "Адаптер видалив колекцію");
-                        })
-                        .start();
-            }
-        }
-    }
-
-    @Override
-    public void upItem(RecyclerView recyclerView, Collection item) {
-        int position = getPosition(item);
-        if (position != -1) {
-            RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
-            if (holder != null) {
-                collections.set(position, item);
-                notifyItemChanged(position);
-                checkEmptyList();
-            }
-        }
-    }
-
-    @Override
-    public void setItems(ArrayList<Collection> items) {
-        this.collections = items;
-        notifyDataSetChanged();
-        checkEmptyList();
-    }
-
-    @Override
-    public int getPosition(Collection item) {
-        return collections.indexOf(item);
-    }
-
-    public void checkEmptyList() {
-        if (empty != null) {
-            if (!collections.isEmpty()) {
-                empty.setVisibility(View.GONE);
-            } else {
-                empty.setVisibility(View.VISIBLE);
-            }
-        }
-    }
-
+    /**
+     * Внутрішній клас, що представляє ViewHolder для елементів списку.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView shop_list_name, boughtItem, allItem;
         ImageView menu_img;
@@ -189,8 +93,27 @@ public class ShopListGetAdapter extends RecyclerView.Adapter<ShopListGetAdapter.
         }
     }
 
+    /**
+     * Інтерфейс для обробки кліків на елементи списку.
+     */
     public interface CollectionClickListener {
-        void onCollectionClick(Collection collection);
-        void onMenuIconClick(Collection collection, View v);
+        void onCollectionClick(ShopList collection);        // Викликається при кліку на елемент списку.
+        void onMenuIconClick(ShopList collection, View v);  // Викликається при кліку на кнопку меню елемента.
     }
+
+    /**
+     * Callback для DiffUtil для порівняння елементів списку.
+     */
+    public static final DiffUtil.ItemCallback<ShopList> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull ShopList oldItem, @NonNull ShopList newItem) {
+                    return oldItem.getId() == newItem.getId();
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull ShopList oldItem, @NonNull ShopList newItem) {
+                    return oldItem.equals(newItem);
+                }
+            };
 }

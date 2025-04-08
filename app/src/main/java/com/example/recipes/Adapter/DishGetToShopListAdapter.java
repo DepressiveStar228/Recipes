@@ -18,9 +18,22 @@ import com.example.recipes.R;
 
 import java.util.ArrayList;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Адаптер для відображення списку страв, які використовуються у списку покупок.
+ * Кожен елемент списку містить назву страви та кнопку для її видалення.
+ * Використовує DiffUtil для ефективного оновлення списку.
+ */
 public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopListAdapter.ViewHolder> {
     private DishClickListener clickListener;
 
+    /**
+     * Конструктор адаптера.
+     *
+     * @param clickListener Лістенер для обробки кліків на кнопку видалення.
+     */
     public DishGetToShopListAdapter(DishClickListener clickListener) {
         super(DIFF_CALLBACK);
         this.clickListener = clickListener;
@@ -41,6 +54,8 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
 
         Dish dish = getItem(currentPosition);
         holder.dishName.setText(dish.getName());
+
+        // Обробка кліку на кнопку видалення
         holder.delete.setOnClickListener(v -> {
             if (clickListener != null) {
                 clickListener.onDeleteClick(dish);
@@ -48,6 +63,11 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
         });
     }
 
+    /**
+     * Оновлює список елементів у адаптері.
+     *
+     * @param newItems Новий список страв.
+     */
     public void setItems(ArrayList<Dish> newItems) {
         ArrayList<Dish> newList = new ArrayList<>(newItems.size());
         for (Dish item : newItems) {
@@ -58,8 +78,11 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
         notifyDataSetChanged();
     }
 
+    /**
+     * Callback для порівняння елементів списку за допомогою DiffUtil.
+     */
     public static final DiffUtil.ItemCallback<Dish> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<Dish>() {
+            new DiffUtil.ItemCallback<>() {
                 @Override
                 public boolean areItemsTheSame(@NonNull Dish oldItem, @NonNull Dish newItem) {
                     boolean box = oldItem.getId() == newItem.getId();
@@ -73,6 +96,9 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
                 }
             };
 
+    /**
+     * Внутрішній клас, який представляє ViewHolder для елементів списку страв.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView dishName;
         ImageView delete;
@@ -84,6 +110,9 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
         }
     }
 
+    /**
+     * Інтерфейс для обробки кліків на кнопку видалення.
+     */
     public interface DishClickListener {
         void onDeleteClick(Dish dish);
     }

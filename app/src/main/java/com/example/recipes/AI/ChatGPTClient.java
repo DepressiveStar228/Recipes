@@ -24,12 +24,14 @@ import com.azure.ai.openai.assistants.models.ThreadRun;
 import com.azure.core.credential.KeyCredential;
 import com.azure.core.exception.ResourceNotFoundException;
 import com.example.recipes.API_Keys;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
+import com.example.recipes.Enum.ChatGPTRole;
 import com.example.recipes.Enum.DishRecipeType;
-import com.example.recipes.Item.DataBox;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
+import com.example.recipes.Utils.RecipeUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,6 +49,15 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 
+
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Клас для взаємодії з API ChatGPT.
+ * Відповідає за створення, збереження та управління асистентами та діалогами (threads) у ChatGPT.
+ * Підтримує два типи асистентів: "Chef" (кухар) та "Translator" (перекладач).
+ */
 public class ChatGPTClient {
     private static final String PREF_CHEF_NAME = "assistant_chef_prefs";
     private static final String KEY_CHEF_ID = "chef_id";
@@ -56,26 +67,38 @@ public class ChatGPTClient {
     private static final String KEY_TRANSLATOR_ID = "translator_id";
     private static final String KEY_TRANSLATOR_THREAD_ID = "translator_thread_id";
 
+    private static final String PREFS_DAILY_LIMIT_NAME = "dailyLimitPrefs";
+    private static final String KEY_DAILY_LIMIT = "dailyRequestCount";
+    private static final String KEY_LAST_RESET_TIME = "lastResetTime";
+
     private static final long MIN_REQUEST_INTERVAL_MS = 5000;
-    private static final int MAX_REQUESTS_PER_DAY = 100;
-    private static final int MAX_MESSAGE_LENGTH = 250;
+    private static final int MAX_REQUESTS_PER_DAY = 15;
     private int dailyRequestCount = 0;
     private long lastRequestTime = 0;
 
     private final Context context;
-    private final String roleAssistant;
+    private final ChatGPTRole roleAssistant;
     private AssistantsClient client;
     private Assistant assistant;
     private AssistantThread thread;
 
 
-    public ChatGPTClient (Context context, String roleAssistant) {
+    /**
+     * Конструктор класу ChatGPTClient.
+     *
+     * @param context       Контекст додатку.
+     * @param roleAssistant Роль асистента (Chef або Translator).
+     */
+    public ChatGPTClient (Context context, ChatGPTRole roleAssistant) {
         this.context = context;
         this.roleAssistant = roleAssistant;
 
+        // Налаштування обробника помилок RxJava
         RxJavaPlugins.setErrorHandler(throwable -> {
             if (throwable instanceof UndeliverableException) {
                 Throwable cause = throwable.getCause();
+
+                // Відловлючання випадків, коли запит надходить у вже знищену активність
                 if (cause instanceof RuntimeException && cause.getCause() instanceof InterruptedException) {
                     Log.e("RxJavaError", "Thread interrupted: " + cause.getMessage());
                     Thread.currentThread().interrupt();
@@ -88,20 +111,36 @@ public class ChatGPTClient {
         });
     }
 
+    /**
+     * Ініціалізація асистента.
+     * Перевіряє ліміт запитів та ініціалізує асистента відповідно до його ролі.
+     *
+     * @return Single<Boolean>, який повертає true, якщо ініціалізація успішна, або false, якщо ні.
+     */
     public Single<Boolean> initialization() {
-        if (Objects.equals(roleAssistant, ChatGPT.CHEF)) return initializationChef();
-        else if (Objects.equals(roleAssistant, ChatGPT.TRANSLATOR)) return initializationTranslator();
+        checkResetDailyLimit();
+
+        if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) return initializationChef();
+        else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) return initializationTranslator();
         else return Single.just(false);
     }
 
+    /**
+     * Ініціалізація асистента-кухаря.
+     * Отримує або створює асистента та діалог, зберігає їх стан у SharedPreferences.
+     *
+     * @return Single<Boolean>, який повертає true, якщо ініціалізація успішна, або false, якщо ні.
+     */
     private Single<Boolean> initializationChef() {
         return Single.create(emitter -> {
+            // Отримання збережених ID асистента та діалогу
             SharedPreferences prefs = context.getSharedPreferences(PREF_CHEF_NAME, Context.MODE_PRIVATE);
             String assistantId = prefs.getString(KEY_CHEF_ID, null);
             String threadId = prefs.getString(KEY_CHEF_THREAD_ID, null);
 
             client = createClient();
 
+            // Отримання або створення асистента
             if (assistantId != null) {
                 try {
                     assistant = client.getAssistant(assistantId);
@@ -115,6 +154,7 @@ public class ChatGPTClient {
                 saveAssistantState();
             }
 
+            // Отримання або створення діалогу
             if (threadId != null) {
                 thread = client.getThread(threadId);
 
@@ -130,6 +170,7 @@ public class ChatGPTClient {
                 saveAssistantState();
             }
 
+            // Перевірка наявності клієнта, асистента та діалогу
             if (client == null) { emitter.onError(new Throwable("Client is null")); }
             if (assistant == null) { emitter.onError(new Throwable("Assistant is null")); }
             if (thread == null) { emitter.onError(new Throwable("Thread is null")); }
@@ -138,14 +179,22 @@ public class ChatGPTClient {
         });
     }
 
+    /**
+     * Ініціалізація асистента-перекладача.
+     * Отримує або створює асистента та діалог, зберігає їх стан у SharedPreferences.
+     *
+     * @return Single<Boolean>, який повертає true, якщо ініціалізація успішна, або false, якщо ні.
+     */
     private Single<Boolean> initializationTranslator() {
         return Single.create(emitter -> {
+            // Отримуємо з налаштувань ID асистента та його діалога для подальшого використання, щоб не створювати нових на сервері OpenAI
             SharedPreferences prefs = context.getSharedPreferences(PREF_TRANSLATOR_NAME, Context.MODE_PRIVATE);
             String assistantId = prefs.getString(KEY_TRANSLATOR_ID, null);
             String threadId = prefs.getString(KEY_TRANSLATOR_THREAD_ID, null);
 
             client = createClient();
 
+            // Отримання збережених ID асистента та діалогу
             if (assistantId != null) {
                 try {
                     assistant = client.getAssistant(assistantId);
@@ -159,6 +208,7 @@ public class ChatGPTClient {
                 saveAssistantState();
             }
 
+            // Отримання або створення діалогу
             if (threadId != null) {
                 thread = client.getThread(threadId);
 
@@ -174,6 +224,7 @@ public class ChatGPTClient {
                 saveAssistantState();
             }
 
+            // Перевірка наявності клієнта, асистента та діалогу
             if (client == null) { emitter.onError(new Throwable("Client is null")); }
             if (assistant == null) { emitter.onError(new Throwable("Assistant is null")); }
             if (thread == null) { emitter.onError(new Throwable("Thread is null")); }
@@ -182,26 +233,46 @@ public class ChatGPTClient {
         });
     }
 
+    /**
+     * Створення клієнта для взаємодії з API ChatGPT.
+     *
+     * @return Створений клієнт AssistantsClient.
+     */
     private AssistantsClient createClient() {
         return new AssistantsClientBuilder()
                 .credential(new KeyCredential(API_Keys.GPT_KEY))
                 .buildClient();
     }
 
+    /**
+     * Створення асистента відповідно до його ролі.
+     *
+     * @return Створений асистент.
+     */
     private Assistant createAssistant() {
         AssistantCreationOptions assistantCreationOptions = new AssistantCreationOptions("gpt-3.5-turbo");
 
-        if (Objects.equals(roleAssistant, ChatGPT.CHEF)) assistantCreationOptions.setName("Chef").setInstructions(readTextFileFromAssets(context, "asset_chef"));
-        else if (Objects.equals(roleAssistant, ChatGPT.TRANSLATOR)) assistantCreationOptions.setName("Translator").setInstructions(readTextFileFromAssets(context, "asset_translator"));
+        if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) assistantCreationOptions.setName("Chef").setInstructions(readTextFileFromAssets("asset_chef"));
+        else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) assistantCreationOptions.setName("Translator").setInstructions(readTextFileFromAssets("asset_translator"));
         else assistantCreationOptions = null;
 
         return client.createAssistant(assistantCreationOptions);
     }
 
+    /**
+     * Створення нового діалогу (thread).
+     *
+     * @return Створений діалог.
+     */
     private AssistantThread createThread() {
         return client.createThread(new AssistantThreadCreationOptions());
     }
 
+    /**
+     * Отримання всіх повідомлень з поточного діалогу.
+     *
+     * @return Single<List<Pair<String, String>>>, який містить список пар (роль, текст повідомлення).
+     */
     public Single<List<Pair<String, String>>> getAllDialogTread() {
         return Single.create(emitter -> {
             if (thread != null) {
@@ -233,31 +304,47 @@ public class ChatGPTClient {
         });
     }
 
+    /**
+     * Надсилає повідомлення до ChatGPT та отримує відповідь.
+     *
+     * @param message Повідомлення, яке потрібно надіслати.
+     * @return Single<String>, який містить відповідь від ChatGPT або помилку.
+     */
     public Single<String> sendMessage(String message) {
-        //return Single.just(message);
+        dailyRequestCount++; // Збільшуємо лічильник запитів за день
+        saveDailyLimit(); // Зберігаємо поточний ліміт запитів
+
         return Single.create(emitter -> {
             if (client != null && assistant != null && thread != null) {
                 try {
+                    // Надсилання повідомлення до діалогу
                     client.createMessage(thread.getId(), new ThreadMessageOptions(MessageRole.USER, message));
+
+                    // Запуск обробки повідомлення асистентом
                     ThreadRun run = client.createRun(thread.getId(), new CreateRunOptions(assistant.getId()));
 
+                    // Очікування завершення обробки повідомлення
                     do {
                         Thread.sleep(500);
                         run = client.getRun(run.getThreadId(), run.getId());
                     } while (run.getStatus() == RunStatus.QUEUED || run.getStatus() == RunStatus.IN_PROGRESS);
 
+                    // Отримання відповіді від асистента
                     PageableList<ThreadMessage> messages = client.listMessages(run.getThreadId());
                     List<ThreadMessage> data = messages.getData();
 
                     if (!data.isEmpty()) {
                         ThreadMessage lastMessage = data.get(0);
 
+                        // Обробка відповіді
                         for (MessageContent messageContent : lastMessage.getContent()) {
                             if (messageContent instanceof MessageTextContent) {
                                 MessageTextContent messageTextContent = (MessageTextContent) messageContent;
                                 String box = messageTextContent.getText().getValue();
                                 if (!box.isEmpty()) {
-                                    emitter.onSuccess(box);
+                                    dailyRequestCount++;
+                                    saveDailyLimit();
+                                    emitter.onSuccess(box); // Повертаємо відповідь
                                 } else { emitter.onError(new Throwable("Answer is empty")); }
                             } else { emitter.onError(new Throwable("MessageContent is not MessageTextContent")); }
                         }
@@ -269,6 +356,12 @@ public class ChatGPTClient {
         });
     }
 
+    /**
+     * Форматує об'єкт Dish у рядок для надсилання до ChatGPT.
+     *
+     * @param dish Об'єкт Dish, який потрібно форматувати.
+     * @return Рядок у форматі, зрозумілому для ChatGPT.
+     */
     public String getFormatStringForGPT(Dish dish) {
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -283,10 +376,7 @@ public class ChatGPTClient {
         stringBuilder.append("{portion=[").append(dish.getPortion()).append("]},");
         stringBuilder.append("{ingredients=<");
         for (Ingredient ing : dish.getIngredients()) {
-            stringBuilder.append("[").append(ing.getName()).append("|");
-            stringBuilder.append(ing.getAmount()).append("|");
-            stringBuilder.append(ing.getType()).append("]");
-
+            stringBuilder.append("[").append(ing.getName()).append("]");
             if (dish.getIngredients().size()-1 != dish.getIngredients().indexOf(ing)) stringBuilder.append(",");
         }
         stringBuilder.append(">}");
@@ -294,6 +384,12 @@ public class ChatGPTClient {
         return stringBuilder.toString();
     }
 
+    /**
+     * Форматує об'єкт Dish у зрозумілий для користувача текст.
+     *
+     * @param dish Об'єкт Dish, який потрібно форматувати.
+     * @return Рядок у зрозумілому для користувача форматі.
+     */
     public String getTextFromParsedAnswer(Dish dish) {
         if (dish != null) {
             StringBuilder builder = new StringBuilder();
@@ -319,11 +415,18 @@ public class ChatGPTClient {
         } else return "";
     }
 
+    /**
+     * Парсить відповідь від ChatGPT у об'єкт Dish.
+     *
+     * @param answer Відповідь від ChatGPT.
+     * @return Об'єкт Dish, створений на основі відповіді.
+     */
     public Dish parsedAnswerGPT(String answer) {
         Map<String, String> recipeMap = new HashMap<>();
         List<Map<String, String>> ingredientsList = new ArrayList<>();
         ArrayList<DishRecipe> recipes = new ArrayList<>();
 
+        // Регулярний вираз для парсингу відповіді
         Pattern pattern = Pattern.compile("\\{(\\w+)=\\[(.*?)\\]\\}|\\{(\\w+)=<(.*?)>\\}");
         Matcher matcher = pattern.matcher(answer.contains("Data:") ? answer.substring(16) : answer);
 
@@ -332,20 +435,24 @@ public class ChatGPTClient {
             String value = matcher.group(2) != null ? matcher.group(2) : matcher.group(4);
 
             if ("ingredients".equals(key)) {
-                Pattern ingredientPattern = Pattern.compile("\\[(.*?)\\|(.*?)(?:\\|(.*?))?\\]");
+                Pattern ingredientPattern = Pattern.compile("\\[(.*?)(?:\\|(.*?))?(?:\\|(.*?))?\\]");
                 Matcher ingredientMatcher = ingredientPattern.matcher(value);
 
                 while (ingredientMatcher.find()) {
                     Map<String, String> ingredient = new HashMap<>();
                     ingredient.put("name", ingredientMatcher.group(1));
 
+                    // Перевіряємо кількість елементів у інгредієнта
                     if (ingredientMatcher.group(3) != null) {
                         ingredient.put("quantity", ingredientMatcher.group(2));
                         ingredient.put("unit", ingredientMatcher.group(3));
                     }
-                    else {
+                    else if (ingredientMatcher.group(2) != null) {
                         ingredient.put("quantity", "");
                         ingredient.put("unit", ingredientMatcher.group(2));
+                    } else {
+                        ingredient.put("quantity", "");
+                        ingredient.put("unit", "");
                     }
 
                     ingredientsList.add(ingredient);
@@ -367,15 +474,17 @@ public class ChatGPTClient {
         int portion = 0;
 
         try {
-            portion = Integer.parseInt(recipeMap.get("portion"));
+            String portionText = recipeMap.get("portion");
+            if (portionText != null) portion = Integer.parseInt(portionText);
         } catch (Exception e) {}
 
+        // Створення об'єкта Dish на основі розпарсених даних
         Dish dish = new Dish(recipeMap.get("name"), portion);
         dish.setRecipes(recipes);
         ArrayList<Ingredient> ingredients = new ArrayList<>();
 
         for (Map<String, String> ingredient : ingredientsList) {
-            Ingredient ingredient_ = new Ingredient(ingredient.get("name"), ingredient.get("quantity"), ingredient.get("unit"));
+            Ingredient ingredient_ = new Ingredient(ingredient.get("name"), ingredient.get("quantity"), IngredientTypeConverter.toIngredientType(ingredient.get("unit")));
             ingredients.add(ingredient_);
         }
 
@@ -384,14 +493,17 @@ public class ChatGPTClient {
         return dish;
     }
 
+    /**
+     * Зберігає стан асистента (ID асистента та діалогу) у SharedPreferences.
+     */
     private void saveAssistantState() {
-        if (Objects.equals(roleAssistant, ChatGPT.CHEF)) {
+        if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) {
             SharedPreferences prefs = context.getSharedPreferences(PREF_CHEF_NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             if (assistant != null) { editor.putString(KEY_CHEF_ID, assistant.getId()); }
             if (thread != null) { editor.putString(KEY_CHEF_THREAD_ID, thread.getId()); }
             editor.apply();
-        } else if (Objects.equals(roleAssistant, ChatGPT.TRANSLATOR)) {
+        } else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) {
             SharedPreferences prefs = context.getSharedPreferences(PREF_TRANSLATOR_NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             if (assistant != null) { editor.putString(KEY_TRANSLATOR_ID, assistant.getId()); }
@@ -400,7 +512,37 @@ public class ChatGPTClient {
         }
     }
 
-    private boolean checkLimit(String prompt){
+    /**
+     * Зберігає поточний ліміт запитів за день у SharedPreferences.
+     */
+    private void saveDailyLimit() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_DAILY_LIMIT_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putInt(KEY_DAILY_LIMIT, dailyRequestCount).apply();
+    }
+
+    /**
+     * Перевіряє та скидає ліміт запитів за день, якщо минула доба.
+     */
+    private void checkResetDailyLimit() {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_DAILY_LIMIT_NAME, Context.MODE_PRIVATE);
+        long currentTime = System.currentTimeMillis();
+        dailyRequestCount = prefs.getInt(KEY_DAILY_LIMIT, 0);
+        long lastResetTime = prefs.getLong(KEY_LAST_RESET_TIME, 0);
+
+        if (currentTime - lastResetTime >= 86400000) {
+            prefs.edit()
+                    .putInt(KEY_DAILY_LIMIT, 0)
+                    .putLong(KEY_LAST_RESET_TIME, currentTime)
+                    .apply();
+        }
+    }
+
+    /**
+     * Перевіряє, чи не перевищено ліміт запитів за день або інтервал між запитами.
+     *
+     * @return true, якщо ліміт не перевищено, інакше false.
+     */
+    public boolean checkLimit() {
         long currentTime = System.currentTimeMillis();
 
         if (currentTime - lastRequestTime < MIN_REQUEST_INTERVAL_MS) {
@@ -410,27 +552,21 @@ public class ChatGPTClient {
 
         lastRequestTime = currentTime;
 
-        if (prompt.isEmpty()) {
-            Toast.makeText(context, context.getString(R.string.warning_empty_message), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        if (prompt.length() > MAX_MESSAGE_LENGTH) {
-            Toast.makeText(context, context.getString(R.string.warning_max_length_message), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
         if (dailyRequestCount >= MAX_REQUESTS_PER_DAY) {
             Toast.makeText(context, context.getString(R.string.warning_daily_request_limit), Toast.LENGTH_SHORT).show();
             return false;
         }
 
-        dailyRequestCount++;
-
         return true;
     }
 
-    private String readTextFileFromAssets(Context context, String fileName) {
+    /**
+     * Зчитує текстовий файл з папки assets.
+     *
+     * @param fileName Назва файлу.
+     * @return Зчитаний текст або порожній рядок у разі помилки.
+     */
+    private String readTextFileFromAssets(String fileName) {
         try (InputStream is = context.getAssets().open(fileName);
              BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             StringBuilder sb = new StringBuilder();

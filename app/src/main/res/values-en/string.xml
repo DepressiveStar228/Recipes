@@ -57,10 +57,11 @@
     <string name="hint_short_text_name_ingredient">Name ing.</string>
     <string name="hint_short_text_numbs">Count</string>
     <string name="theme">Theme</string>
-    <string-array name="options_array">
+    <string-array name="ingredient_types">
         <item>g.</item>
         <item>kg.</item>
         <item>ml.</item>
+        <item>l.</item>
         <item>pcs.</item>
         <item>tsp</item>
         <item>tbsp</item>
@@ -86,7 +87,7 @@
     <string name="copy_clipboard_text">Copied to clipboard</string>
     <string name="import_recipe">Import recipe</string>
     <string name="export_recipe">Export recipe</string>
-    <string name="successful_import">Recipes successfully imported from file:</string>
+    <string name="successful_import">Recipes successfully imported</string>
     <string name="successful_export">Recipes successfully exported</string>
     <string name="error_import">"Error importing recipes "</string>
     <string name="error_export">Error when exporting recipes</string>
@@ -219,4 +220,11 @@
     <string name="photo">Photo</string>
     <string name="gallery">Gallery</string>
     <string name="error_access_translation">Error: Translator not loaded yet</string>
+    <string name="clear_db">Database cleaning</string>
+    <string name="confirm_clear_db">Confirm database cleanup</string>
+    <string name="warning_clear_db">Do you really want to clear the entire database?</string>
+    <string name="successful_clear_db">Database successfully cleared</string>
+    <string name="double_warning_clear_db">Absolutely all of your information will be deleted. Are you sure you agree?</string>
+    <string name="error_clear_db">Database cleanup error</string>
+    <string name="daily_request_limit_exceeded">Daily request limit exceeded</string>
 </resources>

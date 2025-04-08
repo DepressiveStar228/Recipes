@@ -5,8 +5,7 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import androidx.room.migration.Migration;
-import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.room.TypeConverters;
 
 import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.DAO.DishCollectionDAO;
@@ -15,19 +14,25 @@ import com.example.recipes.Database.DAO.DishRecipeDAO;
 import com.example.recipes.Database.DAO.IngredientDAO;
 import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
+import com.example.recipes.Database.TypeConverter.CollectionTypeConverter;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.DishAmountType;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Dish_Collection;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.Item.IngredientShopList_AmountType;
 
-import io.reactivex.rxjava3.annotations.NonNull;
-
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Головний клас бази даних, який використовує Room для зберігання даних про страви, рецепти, інгредієнти, колекції тощо.
+ * Визначає всі сутності (таблиці) та DAO для роботи з ними.
+ */
 @Database(
-        version = 19,
+        version = 2,
         entities = {
                 Dish.class,
                 DishRecipe.class,
@@ -39,6 +44,10 @@ import io.reactivex.rxjava3.annotations.NonNull;
         },
         exportSchema = false
 )
+@TypeConverters({
+        CollectionTypeConverter.class,
+        IngredientTypeConverter.class
+})
 public abstract class RecipeDatabase extends RoomDatabase {
     public abstract DishDAO dishDao();
     public abstract DishRecipeDAO dishRecipeDao();

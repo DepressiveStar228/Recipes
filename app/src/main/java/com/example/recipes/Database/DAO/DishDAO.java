@@ -18,6 +18,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Інтерфейс DAO для роботи з таблицею "dish" у базі даних.
+ */
 @Dao
 public interface DishDAO {
     String TABLE_NAME = "dish";
@@ -37,6 +43,9 @@ public interface DishDAO {
 
     @Query("SELECT * FROM " + TABLE_NAME)
     Single<List<Dish>> getAll();
+
+    @Query("SELECT " + ID + " FROM " + TABLE_NAME)
+    Single<List<Long>> getAllIDs();
 
     @Query("SELECT * FROM " + TABLE_NAME)
     LiveData<List<Dish>> getAll_Live();

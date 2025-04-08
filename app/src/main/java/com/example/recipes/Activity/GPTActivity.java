@@ -6,8 +6,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
@@ -18,33 +16,29 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.recipes.AI.ChatGPT;
 import com.example.recipes.AI.ChatGPTClient;
 import com.example.recipes.Adapter.DialogGPTAdapter;
-import com.example.recipes.Config;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.TrackingTask;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Decoration.AnimationUtils;
 import com.example.recipes.Decoration.TextLoadAnimation;
-import com.example.recipes.Item.DataBox;
+import com.example.recipes.Enum.ChatGPTRole;
+import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
+import com.example.recipes.Utils.AnotherUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.ViewItem.DialogItemContainer;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,13 +48,17 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ */
 public class GPTActivity extends AppCompatActivity implements LifecycleObserver {
     private RecipeUtils utils;
     private String nameActivity;
     private PreferencesController preferencesController;
     private TextView GPTStatusLoadTextView;
     private EditText GPTEditText;
-    private ImageView GPTSendButton;
+    private ImageView GPTSendButton, GPTBack;
     private RecyclerView GPTDialogRecyclerView;
     private CompositeDisposable compositeDisposable;
     private ChatGPTClient client;
@@ -77,16 +75,16 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        preferencesController = new PreferencesController();
-        preferencesController.loadPreferences(this);
-        themeArray = getStringArrayForLocale(R.array.theme_options, new Locale("en"));
+        preferencesController = PreferencesController.getInstance();
+        themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options,"en");
 
         super.onCreate(savedInstanceState);
+        preferencesController.setPreferencesToActivity(this);
         setContentView(R.layout.gpt_activity);
         getLifecycle().addObserver(this);
 
         nameActivity = this.getClass().getSimpleName();
-        utils = new RecipeUtils(this);
+        utils = RecipeUtils.getInstance(this);
         trackingTasks = new ArrayList<>();
         messagesTread = new ArrayList<>();
         compositeDisposable = new CompositeDisposable();
@@ -100,7 +98,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         setTrackingTasks();
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    @Override
     public void onDestroy() {
         try {
             super.onDestroy();
@@ -108,7 +106,8 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
             for (TrackingTask task : trackingTasks) {
                 task.stopTracking();
             }
-            textLoadAnimation.stopAnimation();
+
+            if (textLoadAnimation != null) textLoadAnimation.stopAnimation();
 
             Log.d(nameActivity, "Активність успішно закрита");
         } catch (IllegalStateException e) {
@@ -125,32 +124,38 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         GPTStatusLoadTextView = findViewById(R.id.statusLoadTextView);
         GPTEditText = findViewById(R.id.GPT_edit_text_my_dish);
         GPTSendButton = findViewById(R.id.send_promt_GPT_imageView);
+        GPTBack= findViewById(R.id.back);
         GPTDialogRecyclerView = findViewById(R.id.dialogRecyclerView);
     }
 
     private void loadClickListeners() {
         if (GPTSendButton != null && GPTDialogRecyclerView != null) { GPTSendButton.setOnClickListener(v -> {
-            if (flagAccessInternet.get() && flagInitializationGPTClient.get()) {
-                addMessageToDialog(getString(R.string.you), GPTEditText.getText().toString());
+            String message = GPTEditText.getText().toString();
+
+            if (!flagAccessInternet.get()) Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
+            else if (!flagInitializationGPTClient.get()) Toast.makeText(this, getString(R.string.wait_load_assistant), Toast.LENGTH_SHORT).show();
+            else if (message.isEmpty()) Toast.makeText(this, getString(R.string.warning_empty_message), Toast.LENGTH_SHORT).show();
+            else if (client.checkLimit()) {
+                addMessageToDialog(getString(R.string.you), message);
                 sendPromptToGPT(GPTEditText.getText().toString());
                 GPTEditText.setText("");
             }
-            else if (!flagAccessInternet.get()) Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
-            else if (!flagInitializationGPTClient.get()) Toast.makeText(this, getString(R.string.wait_load_assistant), Toast.LENGTH_SHORT).show();
         }); }
 
-        if (GPTEditText != null) CharacterLimitTextWatcher.setCharacterLimit(this, GPTEditText, Config.CHAR_LIMIT_GPT_PROMPT);
-
+        if (GPTEditText != null) CharacterLimitTextWatcher.setCharacterLimit(this, GPTEditText, Limits.MAX_CHAR_GPT_PROMPT);
         if (GPTStatusLoadTextView != null) textLoadAnimation = new TextLoadAnimation(GPTStatusLoadTextView, getString(R.string.loading));
+        if (GPTBack != null) GPTBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Встановлює трекери
+     */
     private void setTrackingTasks() {
-        if (isDestroyed() || isFinishing()) return;
-
+        // Перевіряємо підключення до інтернету кожну секунду
         TrackingTask trackingAccessInternet = new TrackingTask(1000);
         trackingAccessInternet.startTracking(() -> {
-            if (flagAccessInternet.get() != checkInternet()) {
-                flagAccessInternet.set(checkInternet());
+            if (flagAccessInternet.get() != AnotherUtils.checkInternet(this)) {
+                flagAccessInternet.set(AnotherUtils.checkInternet(this));
                 checkChanged.set(true);
 
                 if (flagAccessInternet.get()) {
@@ -161,19 +166,20 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                         setDialogGPTAdapter();
                     } else changeVisibilityItems(true);
                 } else Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
-            } else if (!flagInitializationGPTClient.get() && !checkInternet()) {
+            } else if (!flagInitializationGPTClient.get() && !AnotherUtils.checkInternet(this)) {
                 textLoadAnimation.setBaseTextIntoTextView(getString(R.string.error_network));
             }
         });
         trackingTasks.add(trackingAccessInternet);
 
+        // Оновлюємо колір кнопки "Відправити" згідно доступу до інтернету та ініціалізації GPT клієнта
         TrackingTask trackingCorrectColorSendButton = new TrackingTask(1000);
         trackingCorrectColorSendButton.startTracking(() -> {
             if (GPTSendButton != null && checkChanged.get()) {
                 checkChanged.set(false);
 
                 if (flagAccessInternet.get() && flagInitializationGPTClient.get()) {
-                    if (Objects.equals(preferencesController.getTheme(), themeArray[1])) {
+                    if (Objects.equals(preferencesController.getThemeString(), themeArray[1])) {
                         GPTSendButton.setColorFilter(Color.WHITE);
                     } else {
                         GPTSendButton.setColorFilter(Color.BLACK);
@@ -184,19 +190,18 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         trackingTasks.add(trackingCorrectColorSendButton);
     }
 
+    /**
+     * Ініціалізує клієнт GPT.
+     */
     private void setChatGPTClient() {
-        if (isDestroyed() || isFinishing()) return;
-
         if (client == null) {
-            client = new ChatGPTClient(this, ChatGPT.CHEF);
+            client = new ChatGPTClient(this, ChatGPTRole.CHEF);
             textLoadAnimation.startAnimation();
 
-            Disposable disposable = client.initialization()
+            Disposable disposable = client.initialization() // Ініціалізуємо клієнт
                     .flatMap(status -> {
-                        if (isDestroyed() || isFinishing()) return null;
-
                         textLoadAnimation.setBaseText(getString(R.string.get_history_messages));
-                        if (status) return client.getAllDialogTread();
+                        if (status) return client.getAllDialogTread(); // Отримуємо весь діалог
                         else return null;
                     })
                     .flatMap(messages -> {
@@ -209,8 +214,6 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                             status -> {
-                                if (isDestroyed() || isFinishing()) return;
-
                                 flagInitializationGPTClient.set(true);
                                 checkChanged.set(true);
                                 changeVisibilityItems(true);
@@ -226,15 +229,16 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         }
     }
 
+    /**
+     * Налаштовує адаптер для діалога з GPT.
+     */
     private void setDialogGPTAdapter() {
-        if (isDestroyed() || isFinishing()) return;
-
         if (dialogGPTAdapter == null && client != null) {
-            dialogGPTAdapter = new DialogGPTAdapter((text, position) -> {
+            dialogGPTAdapter = new DialogGPTAdapter((text, position) -> {  // Слухач адаптера на клік кнопки "Додати страву"
                 Dish dish = client.parsedAnswerGPT(text);
 
                 if (dish != null) {
-                    Disposable disposable = utils.ByDish().add(dish, Config.ID_GPT_RECIPE_COLLECTION)
+                    Disposable disposable = utils.ByDish().add(dish, ID_System_Collection.ID_GPT_RECIPE.getId())
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(id -> {
@@ -260,6 +264,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
             }
         }
 
+        // Перевіряємо кожну секунду отримання історії діалогу
         TrackingTask trackingLoadingMessages = new TrackingTask(1000);
         trackingLoadingMessages.startTracking(() -> {
             if (!flagInitializationMessagesTread.get() && !messagesTread.isEmpty()) {
@@ -284,31 +289,40 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         }
     }
 
+    /**
+     * Додає повідомлення у чат з GPT.
+     *
+     * @param role відправник
+     * @param message повідомлення
+     */
     private void addMessageToDialog(String role, String message) {
-        if (isDestroyed() || isFinishing() || GPTDialogRecyclerView == null) return;
+        // Формуємо бокс повідомлення
+        DialogItemContainer container = new DialogItemContainer(this);
+        container.setRole_item(role);
+        container.setOriginalText(message);
 
-        if (!message.isEmpty()) {
-            DialogItemContainer container = new DialogItemContainer(this);
-            container.setRole_item(role);
-            container.setOriginalText(message);
+        if (!message.contains("{")) container.setText_item(message);
+        else {  // Якщо повідомлення містить {, то отже це форматований рецепт, а не просто відповідь.
+            container.setVisibilityAddButton(View.VISIBLE); // Показуємо кнопку додавання страви від GPT собі в колекцію
 
-            if (!message.contains("{")) container.setText_item(message);
-            else {
-                container.setVisibilityAddButton(View.VISIBLE);
-                container.setText_item(client.getTextFromParsedAnswer(client.parsedAnswerGPT(message)));
-            }
+            // Пасимо форматований рецепт в страв, а потом в текст для відображення у повідомленні
+            container.setText_item(client.getTextFromParsedAnswer(client.parsedAnswerGPT(message)));
+        }
 
-            if (dialogGPTAdapter != null && GPTDialogRecyclerView != null) {
-                dialogGPTAdapter.addContainer(container);
-                GPTDialogRecyclerView.post(() -> GPTDialogRecyclerView.scrollToPosition(dialogGPTAdapter.getItemCount() - 1));
-            }
+        if (dialogGPTAdapter != null && GPTDialogRecyclerView != null) {
+            dialogGPTAdapter.addContainer(container);
+            GPTDialogRecyclerView.post(() -> GPTDialogRecyclerView.scrollToPosition(dialogGPTAdapter.getItemCount() - 1));
         }
     }
 
+    /**
+     * Надсилає повідомлення у GPT
+     *
+     * @param message повідомлення
+     */
     public void sendPromptToGPT(String message) {
-        if (isDestroyed() || isFinishing()) return;
-
         if (flagInitializationGPTClient.get() && !message.isEmpty()) {
+            // Анімація відправки повідомлення GPT замість кнопки відправки
             AnimationDrawable animationDrawable = (AnimationDrawable) ContextCompat.getDrawable(this, R.drawable.loading_animation);
             GPTSendButton.setImageDrawable(animationDrawable);
             animationDrawable.start();
@@ -320,7 +334,8 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                             answer -> {
                                 animationDrawable.stop();
 
-                                if (Objects.equals(preferencesController.getTheme(), themeArray[1])) {
+                                // Повертаємо зображення кнопки відправки замість анімації
+                                if (Objects.equals(preferencesController.getThemeString(), themeArray[1])) {
                                     GPTSendButton.setImageResource(R.drawable.icon_send);
                                 } else {
                                     GPTSendButton.setImageResource(R.drawable.icon_send);
@@ -332,7 +347,8 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                             throwable -> {
                                 animationDrawable.stop();
 
-                                if (Objects.equals(preferencesController.getTheme(), themeArray[1])) {
+                                // Повертаємо зображення кнопки відправки замість анімації
+                                if (Objects.equals(preferencesController.getThemeString(), themeArray[1])) {
                                     GPTSendButton.setImageResource(R.drawable.icon_send);
                                 } else {
                                     GPTSendButton.setImageResource(R.drawable.icon_send);
@@ -343,19 +359,5 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                     );
             compositeDisposable.add(disposable);
         }
-    }
-
-    private String[] getStringArrayForLocale(int resId, Locale locale) {
-        Resources resources = this.getResources();
-        Configuration config = new Configuration(resources.getConfiguration());
-        config.setLocale(locale);
-        Context localizedContext = new ContextWrapper(this).createConfigurationContext(config);
-        return localizedContext.getResources().getStringArray(resId);
-    }
-
-    private boolean checkInternet() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 }

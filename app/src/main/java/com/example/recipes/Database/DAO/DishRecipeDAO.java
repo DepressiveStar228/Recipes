@@ -16,6 +16,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+/**
+ * @author Артем Нікіфоров
+ * @version 1.0
+ *
+ * Інтерфейс DAO для роботи з таблицею "dish_recipe" у базі даних.
+ */
 @Dao
 public interface DishRecipeDAO {
     String TABLE_NAME = "dish_recipe";

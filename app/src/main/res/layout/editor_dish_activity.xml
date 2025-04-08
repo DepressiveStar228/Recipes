@@ -9,6 +9,7 @@
     android:background="?attr/colorBackground">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/editor_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/colorBackground">
@@ -140,10 +141,9 @@
                             <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/addRecipeRecycler"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="400dp"
                                 android:layout_marginTop="10dp"
                                 android:paddingVertical="5dp"
-                                android:nestedScrollingEnabled="false"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
@@ -168,44 +168,29 @@
                             app:layout_constraintTop_toBottomOf="@+id/recipeDataContainer">
 
                             <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/add_container_to_recipe"
-                                android:layout_width="45dp"
-                                android:layout_height="45dp"
-                                android:layout_margin="5dp"
-                                android:background="@drawable/rounded_background_button"
-                                android:focusable="true"
-                                android:focusableInTouchMode="true"
-                                android:src="@drawable/icon_add"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:tint="@color/white" />
-
-                            <androidx.appcompat.widget.AppCompatImageView
                                 android:id="@+id/add_textContainer_to_recipe"
                                 android:layout_width="45dp"
                                 android:layout_height="45dp"
-                                android:layout_margin="5dp"
+                                android:layout_margin="10dp"
+                                android:layout_marginEnd="10dp"
                                 android:background="@drawable/rounded_background_button"
                                 android:src="@drawable/icon_post_add"
-                                android:visibility="gone"
-                                app:layout_constraintTop_toTopOf="parent"
                                 app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toStartOf="@+id/add_container_to_recipe"
+                                app:layout_constraintEnd_toStartOf="@+id/add_imageContainer_to_recipe"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
                                 app:tint="@color/white" />
 
                             <androidx.appcompat.widget.AppCompatImageView
                                 android:id="@+id/add_imageContainer_to_recipe"
                                 android:layout_width="45dp"
                                 android:layout_height="45dp"
-                                android:layout_margin="5dp"
+                                android:layout_margin="10dp"
                                 android:background="@drawable/rounded_background_button"
                                 android:src="@drawable/icon_image_add"
-                                android:visibility="gone"
-                                app:layout_constraintTop_toTopOf="parent"
                                 app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toEndOf="@+id/add_container_to_recipe"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
                                 app:tint="@color/white" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -328,9 +313,8 @@
                             <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/addIngredientRecyclerViewEditAct"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="400dp"
                                 android:padding="5dp"
-                                android:nestedScrollingEnabled="false"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintHorizontal_bias="0.0"

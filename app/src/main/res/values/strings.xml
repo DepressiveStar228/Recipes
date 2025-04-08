@@ -56,10 +56,11 @@
     <string name="hint_short_text_name_ingredient">Назва інг.</string>
     <string name="hint_short_text_numbs">Кіл.</string>
     <string name="theme">Тема</string>
-    <string-array name="options_array">
+    <string-array name="ingredient_types">
         <item>г.</item>
         <item>кг.</item>
         <item>мл.</item>
+        <item>л.</item>
         <item>шт.</item>
         <item>ч.л</item>
         <item>ст.л</item>
@@ -93,7 +94,7 @@
     <string name="copy_clipboard_text">Скопійовано в буфер обміну</string>
     <string name="import_recipe">Імпорт рецептів</string>
     <string name="export_recipe">Експорт рецептів</string>
-    <string name="successful_import">Рецепти успішно імпортовані з файлу:</string>
+    <string name="successful_import">Рецепти успішно імпортовані</string>
     <string name="successful_export">Рецепти успішно експортовані</string>
     <string name="error_import">Помилка при імпорті рецептів</string>
     <string name="error_export">Помилка при експорті рецептів</string>
@@ -154,7 +155,7 @@
     <string name="error_have_permissions_read">Дозвіл на читання файлів не надано</string>
     <string name="error_have_permissions_write">Дозвіл на запис файлів не надано</string>
     <string name="warning_request_time">Зачекайте, перш ніж надсилати інший запит</string>
-    <string name="warning_empty_message">Повідомлення не може бути пустою</string>
+    <string name="warning_empty_message">Повідомлення не може бути пустим</string>
     <string name="warning_max_length_message">Повідомлення перевищує максимальну довжину</string>
     <string name="warning_daily_request_limit">Перевищено денний ліміт запитів</string>
     <string name="warning_char_limit">Досягнуто ліміту символів</string>
@@ -227,4 +228,11 @@
     <string name="photo">Фото</string>
     <string name="gallery">Галерея</string>
     <string name="error_access_translation">Помилка. Перекладач ще не завантажено</string>
+    <string name="clear_db">Очищення базы даних</string>
+    <string name="confirm_clear_db">Підтвердіть очищення бази даних</string>
+    <string name="warning_clear_db">Ви дійсно хочете очистити всю базу даних?</string>
+    <string name="double_warning_clear_db">Абсолютно вся ваша інформація буде видалена. Ви точно згодні?</string>
+    <string name="successful_clear_db">База даних успішно очищена</string>
+    <string name="error_clear_db">Помилка очищення бази даних</string>
+    <string name="daily_request_limit_exceeded">Перевищено денний ліміт запитів</string>
 </resources>

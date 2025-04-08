@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="18"
         android:textColor="?attr/colorText"
-        android:entries="@array/options_array" />
+        android:entries="@array/ingredient_types" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imageButton"
