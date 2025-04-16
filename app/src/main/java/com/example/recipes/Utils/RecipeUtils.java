@@ -8,7 +8,6 @@ import android.widget.Toast;
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.example.recipes.Controller.ImageController;
-import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.DAO.DishCollectionDAO;
 import com.example.recipes.Database.DAO.DishDAO;
@@ -17,7 +16,6 @@ import com.example.recipes.Database.DAO.IngredientDAO;
 import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
 import com.example.recipes.Database.RecipeDatabase;
-import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Database.ViewModels.CollectionViewModel;
 import com.example.recipes.Database.ViewModels.DishCollectionViewModel;
 import com.example.recipes.Database.ViewModels.DishRecipeViewModel;
@@ -150,10 +148,10 @@ public class RecipeUtils {
         /**
          * Додає страву до вказаної колекції.
          * @param item Об'єкт страви для додавання
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<Long> ID створеної страви
          */
-        public Single<Long> add(Dish item, long id_collection) {
+        public Single<Long> add(Dish item, long idCollection) {
             if (item != null && item.getId() != 0) item.setId(0L); // Щоб БД само видало вільний ID
 
             return getUniqueName(item.getName())
@@ -164,7 +162,7 @@ public class RecipeUtils {
                     .flatMap(id -> {
                         if (id > 0) {
                             item.setId(id);
-                            return ByDish_Collection().addWithCheckExist(new Dish_Collection(id, id_collection))
+                            return ByDish_Collection().addWithCheckExist(new Dish_Collection(id, idCollection))
                                     .flatMap(status -> {
                                         if (status) { return ByIngredient().addAll(id, item.getIngredients()); }
                                         else {
@@ -209,12 +207,12 @@ public class RecipeUtils {
         /**
          * Додає список страв до вказаної колекції.
          * @param items Список страв для додавання
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<Boolean> Результат операції
          */
-        public Single<Boolean> addAll(ArrayList<Dish> items, long id_collection) {
+        public Single<Boolean> addAll(ArrayList<Dish> items, long idCollection) {
             return Observable.fromIterable(items)
-                    .flatMapSingle(item -> add(item, id_collection))
+                    .flatMapSingle(item -> add(item, idCollection))
                     .map(id -> id > 0)
                     .toList()
                     .map(results -> {
@@ -537,13 +535,13 @@ public class RecipeUtils {
 
         /**
          * Додає список інгредієнтів для конкретної страви.
-         * @param id_dish ID страви
+         * @param idDish ID страви
          * @param items Список інгредієнтів для додавання
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addAll(Long id_dish, ArrayList<Ingredient> items) {
+        public Single<Boolean> addAll(Long idDish, ArrayList<Ingredient> items) {
             return Observable.fromIterable(items)
-                    .flatMapSingle(ing -> dao.insert(new Ingredient(ing.getName().trim(), ing.getAmount(), ing.getType(), id_dish))
+                    .flatMapSingle(ing -> dao.insert(new Ingredient(ing.getName().trim(), ing.getAmount(), ing.getType(), idDish))
                             .flatMap(id -> Single.just(id > 0)))
                     .toList()
                     .map(results -> {
@@ -567,11 +565,11 @@ public class RecipeUtils {
 
         /**
          * Отримує інгредієнти для конкретної страви.
-         * @param id_dish ID страви
+         * @param idDish ID страви
          * @return Single<List<Ingredient>> Список інгредієнтів
          */
-        public Single<List<Ingredient>> getAllByIDDish(Long id_dish) {
-            return dao.getAllByIDDish(id_dish);
+        public Single<List<Ingredient>> getAllByIDDish(Long idDish) {
+            return dao.getAllByIDDish(idDish);
         }
 
         /**
@@ -841,11 +839,11 @@ public class RecipeUtils {
 
         /**
          * Отримує всі страви у колекції.
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<List<Dish>> Список страв у колекції
          */
-        public Single<List<Dish>> getDishes(long id_collection) {
-            return ByDish_Collection().dao.getAllIDsDishByIDCollection(id_collection)
+        public Single<List<Dish>> getDishes(long idCollection) {
+            return ByDish_Collection().dao.getAllIDsDishByIDCollection(idCollection)
                     .flatMap(ids -> {
                         if (ids == null || ids.isEmpty()) {
                             return Single.just(new ArrayList<>());
@@ -934,7 +932,7 @@ public class RecipeUtils {
 
                                 try {
                                     secondPart = name.substring(indexNumb + 2);
-                                } catch (Exception e) {}
+                                } catch (Exception e) { }
 
                                 newDishName = firstPart + suffix + secondPart;
                             } else {
@@ -1201,7 +1199,7 @@ public class RecipeUtils {
                         if (!isInCollection) {
                             return add(item).map(id -> (id > 0));
                         } else {
-                            return ByCollection().getByID(item.getId_collection())
+                            return ByCollection().getByID(item.getIdCollection())
                                     .map(collection -> getCustomNameSystemCollection(collection.getName()))
                                     .flatMap(name -> {
                                         if (name != null) {
@@ -1227,9 +1225,9 @@ public class RecipeUtils {
                     .flatMapSingle(item -> isExist(item)
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
-                                    return add(new Dish_Collection(item.getId_dish(), item.getId_collection())).map(id -> id > 0);
+                                    return add(new Dish_Collection(item.getIdDish(), item.getIdCollection())).map(id -> id > 0);
                                 } else {
-                                    return ByCollection().getByID(item.getId_collection())
+                                    return ByCollection().getByID(item.getIdCollection())
                                             .map(collection -> getCustomNameSystemCollection(collection.getName()))
                                             .flatMap(name -> {
                                                 if (name != null) {
@@ -1256,11 +1254,11 @@ public class RecipeUtils {
         /**
          * Додає страву до кількох колекцій.
          * @param dish Об'єкт страви
-         * @param id_collections Список ID колекцій
+         * @param idCollections Список ID колекцій
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addAll(Dish dish, ArrayList<Long> id_collections) {
-            return Observable.fromIterable(id_collections)
+        public Single<Boolean> addAll(Dish dish, ArrayList<Long> idCollections) {
+            return Observable.fromIterable(idCollections)
                     .flatMapSingle(id_collection -> isExist(new Dish_Collection(dish.getId(), id_collection))
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
@@ -1294,12 +1292,12 @@ public class RecipeUtils {
         /**
          * Додає список страв до однієї колекції.
          * @param dishes Список страв
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addAll(ArrayList<Dish> dishes, long id_collection) {
+        public Single<Boolean> addAll(ArrayList<Dish> dishes, long idCollection) {
             return Observable.fromIterable(dishes)
-                    .flatMapSingle(dish -> add(new Dish_Collection(dish.getId(), id_collection)).map(id -> id > 0))
+                    .flatMapSingle(dish -> add(new Dish_Collection(dish.getId(), idCollection)).map(id -> id > 0))
                     .toList()
                     .map(results -> {
                         for (Boolean result : results) {
@@ -1314,17 +1312,17 @@ public class RecipeUtils {
         /**
          * Додає список страв до колекції з перевіркою на наявність.
          * @param dishes Список страв
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addAllWithCheckExist(ArrayList<Dish> dishes, long id_collection) {
+        public Single<Boolean> addAllWithCheckExist(ArrayList<Dish> dishes, long idCollection) {
             return Observable.fromIterable(dishes)
-                    .flatMapSingle(dish -> isExist(new Dish_Collection(dish.getId(), id_collection))
+                    .flatMapSingle(dish -> isExist(new Dish_Collection(dish.getId(), idCollection))
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
-                                    return add(new Dish_Collection(dish.getId(), id_collection)).map(id -> id > 0);
+                                    return add(new Dish_Collection(dish.getId(), idCollection)).map(id -> id > 0);
                                 } else {
-                                    return ByCollection().getByID(id_collection)
+                                    return ByCollection().getByID(idCollection)
                                             .map(collection -> getCustomNameSystemCollection(collection.getName()))
                                             .flatMap(name -> {
                                                 if (name != null) {
@@ -1372,25 +1370,25 @@ public class RecipeUtils {
 
         /**
          * Отримує зв'язок за ID страви та ID колекції.
-         * @param id_dish ID страви
-         * @param id_collection ID колекції
+         * @param idDish ID страви
+         * @param idCollection ID колекції
          * @return Single<Dish_Collection> Об'єкт зв'язку
          */
-        public Single<Dish_Collection> getByData(long id_dish, long id_collection) {
-            return dao.getByIDDishAndIDCollection(id_dish, id_collection)
+        public Single<Dish_Collection> getByData(long idDish, long idCollection) {
+            return dao.getByIDDishAndIDCollection(idDish, idCollection)
                     .toSingle()
                     .onErrorReturnItem(new Dish_Collection(0, 0));
         }
 
         /**
          * Перевіряє, чи існує зв'язок між стравою та колекцією.
-         * @param dish_collection Об'єкт зв'язку для перевірки
+         * @param dishCollection Об'єкт зв'язку для перевірки
          * @return Single<Boolean> Результат перевірки (true - існує, false - не існує)
          */
-        public Single<Boolean> isExist(Dish_Collection dish_collection) {
-            return dao.getByIDDishAndIDCollection(dish_collection.getId_dish(), dish_collection.getId_collection())
-                    .map(dishCollection -> {
-                        Log.d("isDishInCollection", "Страва з айді " + dish_collection.getId_dish() + " знайдена в колекції");
+        public Single<Boolean> isExist(Dish_Collection dishCollection) {
+            return dao.getByIDDishAndIDCollection(dishCollection.getIdDish(), dishCollection.getIdCollection())
+                    .map(dishCollection2 -> {
+                        Log.d("isDishInCollection", "Страва з айді " + dishCollection2.getIdDish() + " знайдена в колекції");
                         return true;
                     })
                     .defaultIfEmpty(false)
@@ -1400,17 +1398,17 @@ public class RecipeUtils {
 
         /**
          * Копіює страви з однієї колекції до інших.
-         * @param id_collection_origin ID вихідної колекції
-         * @param id_collections Список ID цільових колекцій
+         * @param idCollectionOrigin ID вихідної колекції
+         * @param idCollections Список ID цільових колекцій
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> copyDishesToAnotherCollections(long id_collection_origin, ArrayList<Long> id_collections) {
-            return ByCollection().getDishes(id_collection_origin)
+        public Single<Boolean> copyDishesToAnotherCollections(long idCollectionOrigin, ArrayList<Long> idCollections) {
+            return ByCollection().getDishes(idCollectionOrigin)
                     .flatMap(dishes -> {
                         if (dishes.isEmpty()) {
                             return Single.just(false);
                         }
-                        return Observable.fromIterable(id_collections)
+                        return Observable.fromIterable(idCollections)
                                 .flatMapSingle(id_collection ->
                                         Observable.fromIterable(dishes)
                                                 .flatMapSingle(dish ->
@@ -1441,12 +1439,12 @@ public class RecipeUtils {
 
         /**
          * Перевіряє наявність дубліката зв'язку.
-         * @param id_dish ID страви
-         * @param id_collection ID колекції
+         * @param idDish ID страви
+         * @param idCollection ID колекції
          * @return Single<Boolean> Результат перевірки (true - дублікат існує, false - немає дубліката)
          */
-        public Single<Boolean> checkDuplicateData(long id_dish, long id_collection) {
-            return dao.getByIDDishAndIDCollection(id_dish, id_collection)
+        public Single<Boolean> checkDuplicateData(long idDish, long idCollection) {
+            return dao.getByIDDishAndIDCollection(idDish, idCollection)
                     .map(dishCollection -> true)
                     .defaultIfEmpty(false);
         }
@@ -1502,13 +1500,13 @@ public class RecipeUtils {
 
         /**
          * Видаляє всі зв'язки для вказаної колекції.
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> deleteAllByIDCollection(long id_collection) {
-            return dao.getAllIDsDishByIDCollection(id_collection)
+        public Single<Boolean> deleteAllByIDCollection(long idCollection) {
+            return dao.getAllIDsDishByIDCollection(idCollection)
                     .flatMapObservable(items -> Observable.fromIterable(items)
-                            .flatMapSingle(item -> dao.getByIDDishAndIDCollection(item, id_collection)
+                            .flatMapSingle(item -> dao.getByIDDishAndIDCollection(item, idCollection)
                                     .toSingle()
                                     .flatMap(dish_collection -> dao.delete(dish_collection)
                                             .andThen(Single.just(true))
@@ -1587,10 +1585,10 @@ public class RecipeUtils {
         /**
          * Додає інгредієнт до списку покупок разом з типами кількостей.
          * @param item Об'єкт IngredientShopList для додавання
-         * @param id_dish ID страви (якщо інгредієнт додається зі страви)
+         * @param idDish ID страви (якщо інгредієнт додається зі страви)
          * @return Single<Long> ID створеного інгредієнта
          */
-        public Single<Long> add(@NonNull IngredientShopList item, Long id_dish) {
+        public Single<Long> add(@NonNull IngredientShopList item, Long idDish) {
             Map<IngredientType, ArrayList<String>> amountType = item.getGroupedAmountType();
 
             return dao.insert(item)
@@ -1599,7 +1597,7 @@ public class RecipeUtils {
                             return Observable.fromIterable(amountType.entrySet())
                                     .flatMap(entry -> Observable.fromIterable(entry.getValue())
                                             .flatMapSingle(amount -> ByIngredientShopList_AmountType()
-                                                    .add(new IngredientShopList_AmountType(amount, entry.getKey(), id, id_dish))
+                                                    .add(new IngredientShopList_AmountType(amount, entry.getKey(), id, idDish))
                                             )
                                     )
                                     .toList()
@@ -1640,12 +1638,12 @@ public class RecipeUtils {
 
         /**
          * Додає список інгредієнтів до вказаної колекції.
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @param items Список інгредієнтів (можуть бути IngredientShopList, Ingredient або String)
          * @param <T> Тип інгредієнта
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public <T> Single<Boolean> addAll(@NonNull long id_collection, @NonNull ArrayList<T> items) {
+        public <T> Single<Boolean> addAll(@NonNull long idCollection, @NonNull ArrayList<T> items) {
             return Observable.fromIterable(items)
                     .flatMapSingle(ing -> {
                         if (ing instanceof IngredientShopList) {
@@ -1653,21 +1651,21 @@ public class RecipeUtils {
                             return add(
                                     new IngredientShopList(
                                             ingSH.getName().trim(),
-                                            id_collection,
+                                            idCollection,
                                             ingSH.getIsBuy()
                                     )).flatMap(id -> Single.just(id > 0));
                         } else if (ing instanceof Ingredient) {
                             Ingredient ingN = (Ingredient) ing;
-                            return ByDish().getByID(ingN.getId_dish())
+                            return ByDish().getByID(ingN.getIdDish())
                                     .flatMap(dish -> add(
                                             new IngredientShopList(
                                                     ingN.getName().trim(),
                                                     ingN.getAmount(),
                                                     ingN.getType(),
-                                                    id_collection
+                                                    idCollection
                                             )).flatMap(id -> Single.just(id > 0)));
                         } else if (ing instanceof String) {
-                            return add(new IngredientShopList((String) ing, id_collection)).flatMap(id -> Single.just(id > 0));
+                            return add(new IngredientShopList((String) ing, idCollection)).flatMap(id -> Single.just(id > 0));
                         } else {
                             return Single.just(-1L).flatMap(id -> Single.just(id > 0));
                         }
@@ -1690,23 +1688,22 @@ public class RecipeUtils {
         @Override
         public Single<List<IngredientShopList>> getAll() {
             return dao.getAll().flatMap(ingredientShopLists -> {
-                        if (ingredientShopLists != null) {
-                            return Observable.fromIterable(ingredientShopLists)
-                                    .flatMapSingle(this::getDataFromIngredient)
-                                    .toList();
-                        }
-                        else { return Single.just(new ArrayList<IngredientShopList>()); }
-                    })
-                    .onErrorReturnItem(new ArrayList<>());
+                if (ingredientShopLists != null) {
+                    return Observable.fromIterable(ingredientShopLists)
+                            .flatMapSingle(this::getDataFromIngredient)
+                            .toList();
+                }
+                else { return Single.just(new ArrayList<IngredientShopList>()); }
+            }).onErrorReturnItem(new ArrayList<>());
         }
 
         /**
          * Отримує інгредієнти для вказаної колекції.
-         * @param id_collection ID колекції
+         * @param idCollection ID колекції
          * @return Single<List<IngredientShopList>> Список інгредієнтів
          */
-        public Single<List<IngredientShopList>> getAllByIDCollection(@NonNull long id_collection) {
-            return dao.getAllByIDCollection(id_collection)
+        public Single<List<IngredientShopList>> getAllByIDCollection(@NonNull long idCollection) {
+            return dao.getAllByIDCollection(idCollection)
                     .flatMap(ingredientShopLists -> {
                         if (ingredientShopLists != null) {
                             return Observable.fromIterable(ingredientShopLists)

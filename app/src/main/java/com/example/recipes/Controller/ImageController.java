@@ -1,7 +1,5 @@
 package com.example.recipes.Controller;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -15,21 +13,10 @@ import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.ImageViewTarget;
-import com.example.recipes.Adapter.RecipeAdapter;
-import com.example.recipes.Decoration.TextLoadAnimation;
-import com.example.recipes.Item.DishRecipe;
-
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,11 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Артем Нікіфоров

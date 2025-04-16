@@ -3,9 +3,7 @@ package com.example.recipes.Database.ViewModels;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.DAO.DishDAO;
-import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Item.Dish;
 
 import java.util.List;
@@ -35,10 +33,10 @@ public class DishViewModel extends ViewModel {
     /**
      * Отримує страву за її ідентифікатором у вигляді LiveData.
      *
-     * @param id_dish Ідентифікатор страви.
+     * @param idDish Ідентифікатор страви.
      * @return LiveData, яка містить страву з вказаним ідентифікатором.
      */
-    public LiveData<Dish> getByID(Long id_dish) { return dao.getByIDLive(id_dish); }
+    public LiveData<Dish> getByID(Long idDish) { return dao.getByIDLive(idDish); }
 
     /**
      * Отримує кількість страв у вигляді LiveData.

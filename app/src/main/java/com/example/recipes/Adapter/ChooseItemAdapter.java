@@ -70,11 +70,11 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
         holder.item_check.setOnCheckedChangeListener(null);
 
         // Встановлюємо стан чекбоксу в залежності від того, чи елемент вибраний
-       if (item instanceof String) {
-           holder.item_check.setChecked(selectedItem.contains(item.toString()));
-       } else {
-           holder.item_check.setChecked(selectedItem.contains(item));
-       }
+        if (item instanceof String) {
+            holder.item_check.setChecked(selectedItem.contains(item.toString()));
+        } else {
+            holder.item_check.setChecked(selectedItem.contains(item));
+        }
 
         // Обробка кліку на елемент списку
         holder.item_layout.setOnClickListener(v -> {
@@ -153,7 +153,7 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
         TextView item_name;
         CheckBox item_check;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             item_layout = itemView.findViewById(R.id.box_checkItem);
             item_name = itemView.findViewById(R.id.dish_name_checkItem);

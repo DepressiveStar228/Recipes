@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.recipes.Database.DAO.CollectionDAO;
-import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
 import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Item.Collection;
 
@@ -28,11 +27,11 @@ public class CollectionViewModel extends ViewModel {
     /**
      * Отримує колекцію за її ідентифікатором.
      *
-     * @param id_collection Ідентифікатор колекції.
+     * @param idCollection Ідентифікатор колекції.
      * @return LiveData, яке містить колекцію з вказаним ідентифікатором.
      */
-    public LiveData<Collection> getCollectionByID(long id_collection) {
-        return dao.getByID_Live(id_collection);
+    public LiveData<Collection> getCollectionByID(long idCollection) {
+        return dao.getByID_Live(idCollection);
     }
 
     /**

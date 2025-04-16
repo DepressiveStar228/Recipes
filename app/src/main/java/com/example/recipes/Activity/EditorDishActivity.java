@@ -9,7 +9,6 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.SharedElementCallback;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -17,7 +16,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,10 +25,8 @@ import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -47,7 +43,6 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
-import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -166,23 +161,22 @@ public class EditorDishActivity extends AppCompatActivity {
 
         // Асинхронне завантаження елементів активності
         compositeDisposable.add(Completable.create(emitter -> {
-                    loadClickListeners();
+            loadClickListeners();
 
-                    translateDish = new Dish("");
-                    dishID = getIntent().getLongExtra(IntentKeys.DISH_ID.name(), -1L);
-                    utils = RecipeUtils.getInstance(this);
+            translateDish = new Dish("");
+            dishID = getIntent().getLongExtra(IntentKeys.DISH_ID.name(), -1L);
+            utils = RecipeUtils.getInstance(this);
 
-                    imageController = new ImageController(this);
-                    imageController.clearCache();
+            imageController = new ImageController(this);
+            imageController.clearCache();
 
-                    importExportController = new ImportExportController(this);
-                    nameActivity = this.getClass().getSimpleName();
-                    originalDish = new Dish("");
-                    imageLoad = new TextLoadAnimation(getString(R.string.loading));
+            importExportController = new ImportExportController(this);
+            nameActivity = this.getClass().getSimpleName();
+            originalDish = new Dish("");
+            imageLoad = new TextLoadAnimation(getString(R.string.loading));
 
-                    emitter.onComplete();
-                })
-                .subscribeOn(Schedulers.io())
+            emitter.onComplete();
+        }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     // Визначення режиму роботи активності
@@ -196,7 +190,7 @@ public class EditorDishActivity extends AppCompatActivity {
                         setDataButton.setText(R.string.button_add);
                         setIngredientAdapter();
                         setRecipeAdapter();
-                    } else if (dishID == EDIT_MODE){
+                    } else if (dishID == EDIT_MODE) {
                         mode = EDIT_MODE;
                         setDataButton.setText(R.string.edit);
                         setObserveDish();
@@ -225,7 +219,7 @@ public class EditorDishActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
         Log.d(nameActivity, "Активність успішно створена");
     }
@@ -316,7 +310,7 @@ public class EditorDishActivity extends AppCompatActivity {
      * Ініціалізація елементів інтерфейсу
      */
     @SuppressLint("ResourceType")
-    private void loadItemsActivity(){
+    private void loadItemsActivity() {
         nameTextViewContainer = findViewById(R.id.nameTextViewContainer);
         nameDishContainerWithBorder = findViewById(R.id.nameDishContainerWithBorder);
         nameDishContainer = findViewById(R.id.nameDishContainer);
@@ -648,7 +642,7 @@ public class EditorDishActivity extends AppCompatActivity {
         AtomicInteger portion = new AtomicInteger(0);
 
         try { portion.set(Integer.parseInt(portionEditText.getText().toString().trim())); }
-        catch (Exception e) {}
+        catch (Exception e) { }
 
         if (TextUtils.isEmpty(name)) {
             Toast.makeText(this, getString(R.string.warning_void_name_dish), Toast.LENGTH_SHORT).show();
@@ -1030,7 +1024,7 @@ public class EditorDishActivity extends AppCompatActivity {
      * @param isAnimatingForward Напрямок анімації (true - вперед, false - назад)
      */
     private void setWightNameEditText(boolean isAnimatingForward) {
-        int match_parentWidth = nameDishContainerWithBorder.getWidth();
+        int matchParentWidth = nameDishContainerWithBorder.getWidth();
 
         nameEditText.measure(
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -1040,7 +1034,7 @@ public class EditorDishActivity extends AppCompatActivity {
 
         ViewGroup.LayoutParams params = nameEditText.getLayoutParams();
 
-        if (isAnimatingForward) params.width = Math.min(match_parentWidth, newWidth);
+        if (isAnimatingForward) params.width = Math.min(matchParentWidth, newWidth);
         else params.width = ViewGroup.LayoutParams.MATCH_PARENT;
 
         nameEditText.setLayoutParams(params);
@@ -1085,7 +1079,7 @@ public class EditorDishActivity extends AppCompatActivity {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {  // Блокуємо можливість клікати на період анімації
                 flagAccessAnimation.set(true);
                 if (loadScreen != null) loadScreen.setVisibility(View.GONE);
-            }, duration*5L);
+            }, duration * 5L);
 
             if (duration <= 0) duration = 10;
 
@@ -1104,8 +1098,8 @@ public class EditorDishActivity extends AppCompatActivity {
                     ValueAnimator biasAnimator = ValueAnimator.ofFloat(0f, 0.5f);
                     biasAnimator.setDuration(duration);
                     biasAnimator.addUpdateListener(animation -> {
-                        float bias_ = (float) animation.getAnimatedValue();
-                        setBiasNameEditText(bias_);
+                        float bias = (float) animation.getAnimatedValue();
+                        setBiasNameEditText(bias);
                     });
                     biasAnimator.start();
                 } else {
@@ -1142,9 +1136,9 @@ public class EditorDishActivity extends AppCompatActivity {
                     });
                     if (mode != READ_MODE) {
                         alphaBackgroundAnimator.setStartDelay(duration);
-                        alphaBackgroundAnimator.setDuration(duration*3L);
+                        alphaBackgroundAnimator.setDuration(duration * 3L);
                     }
-                    else alphaBackgroundAnimator.setDuration(duration/2L);
+                    else alphaBackgroundAnimator.setDuration(duration / 2L);
                     alphaBackgroundAnimator.start();
                 }
 
@@ -1154,8 +1148,8 @@ public class EditorDishActivity extends AppCompatActivity {
                 ObjectAnimator alphaNameContainerAnimator = ObjectAnimator.ofFloat(nameTextViewContainer, "alpha", isRead ? 1f : 0f, isRead ? 0f : 1f);
                 if (mode != READ_MODE) {
                     alphaNameContainerAnimator.setStartDelay(duration);
-                    alphaNameContainerAnimator.setDuration(duration*3L);
-                } else alphaNameContainerAnimator.setDuration(duration/2L);
+                    alphaNameContainerAnimator.setDuration(duration * 3L);
+                } else alphaNameContainerAnimator.setDuration(duration / 2L);
 
 
                 AnimatorSet animatorSet = new AnimatorSet();
@@ -1182,8 +1176,8 @@ public class EditorDishActivity extends AppCompatActivity {
                 else AnimationUtils.smoothVisibility(translate, AnimationUtils.HIDE, duration);
             }
             if (drawerLayout != null) {
-                if (isRead) drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED );
-                else drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED );
+                if (isRead) drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                else drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             }
             if (setDataButton != null) {
                 if (isRead) AnimationUtils.smoothVisibility(setDataButton, AnimationUtils.HIDE, duration);
@@ -1356,7 +1350,7 @@ public class EditorDishActivity extends AppCompatActivity {
                                 builder.setView(dialogView)
                                         .setPositiveButton(R.string.button_add, (dialog, which) -> {
                                             ArrayList<Long> selectedCollectionIds = adapter.getSelectedCollectionIds();
-                                            if (!selectedCollectionIds.isEmpty()){
+                                            if (!selectedCollectionIds.isEmpty()) {
                                                 Disposable disposable1 = utils.ByDish_Collection().addAll(originalDish, selectedCollectionIds)
                                                         .subscribeOn(Schedulers.newThread())
                                                         .observeOn(AndroidSchedulers.mainThread())

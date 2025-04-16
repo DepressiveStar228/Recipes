@@ -144,7 +144,7 @@ public class DishGetAdapter extends ListAdapter<Dish, DishGetAdapter.ViewHolder>
         TextView name;
         ImageView menu;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.dish_name);
             menu = itemView.findViewById(R.id.menu_dish_imageView);

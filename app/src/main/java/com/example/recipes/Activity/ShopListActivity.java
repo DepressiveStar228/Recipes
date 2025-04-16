@@ -195,7 +195,7 @@ public class ShopListActivity extends AppCompatActivity {
         Log.d(nameActivity, "Елементи активності успішно завантажені");
     }
 
-    private void loadClickListeners(){
+    private void loadClickListeners() {
         linearLayout1.setOnClickListener(v -> handleEditName());
         linearLayout2.setOnClickListener(v -> handlerCopyAsTest());
         linearLayout3.setOnClickListener(v -> handleClear());
@@ -274,8 +274,8 @@ public class ShopListActivity extends AppCompatActivity {
                                     .subscribeOn(Schedulers.newThread())
                                     .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(
-                                            () -> flagAccessDelete.set(true)
-                                            ,throwable -> flagAccessDelete.set(true)
+                                            () -> flagAccessDelete.set(true),
+                                            throwable -> flagAccessDelete.set(true)
                                     );
 
                             compositeDisposable.add(disposable);
@@ -400,23 +400,23 @@ public class ShopListActivity extends AppCompatActivity {
      * Метод для додавання інгредієнтів до списку покупків
      *
      * @param ingredients інгредієнти для списку покупків
-     * @param id_dish ID страви
+     * @param idDish ID страви
      * @return статус успішності додавання
      */
-    private Single<Boolean> addIngredientShopList_AmountFromIngredientsShopList(List<IngredientShopList> ingredients, Long id_dish) {
+    private Single<Boolean> addIngredientShopList_AmountFromIngredientsShopList(List<IngredientShopList> ingredients, Long idDish) {
         // Перебираємо кожен новий інгредієнт та перевіряємо чи існує інгредієнт з такою ж назвою у списку покупок
         return Observable.fromIterable(ingredients)
                 .flatMapSingle(ingredient -> utils.ByIngredientShopList()
                         .getByNameAndIDCollection(ingredient.getName(), shopList.getId())
                         .flatMap(item -> {
-                            if (item.getId() > 0 && item.getId_collection() > 0) { // Якщо існує, то додаємо в БД лише записи кількості/типу цього інгредієнта
+                            if (item.getId() > 0 && item.getIdCollection() > 0) { // Якщо існує, то додаємо в БД лише записи кількості/типу цього інгредієнта
                                 ingredient.setId(item.getId());
-                                ingredient.setId_collection(shopList.getId());
+                                ingredient.setIdCollection(shopList.getId());
                                 return utils.ByIngredientShopList_AmountType()
-                                        .addAll(utils.ByIngredientShopList().createIngredientShopList_AmountTypesFromGroupedAmountType(ingredient, id_dish));
+                                        .addAll(utils.ByIngredientShopList().createIngredientShopList_AmountTypesFromGroupedAmountType(ingredient, idDish));
                             } else {                                               // Якщо не існує, то додаємо в БД і сам інгредієнт також
-                                ingredient.setId_collection(shopList.getId());
-                                return utils.ByIngredientShopList().add(ingredient, id_dish)
+                                ingredient.setIdCollection(shopList.getId());
+                                return utils.ByIngredientShopList().add(ingredient, idDish)
                                         .flatMap(id -> Single.just(id > 0));
                             }
                         })
@@ -435,14 +435,14 @@ public class ShopListActivity extends AppCompatActivity {
     /**
      * Метод для отримання інгредієнтів списку покупків
      *
-     * @param id_dish_collection ID списку покупків
+     * @param idDishCollection ID списку покупків
      * @return інгредієнти списку покупків, які відфільтровані за чорним списком
      */
-    private Single<List<Ingredient>> getIngredientsFromDishCollection(long id_dish_collection) {
-        return utils.ByDish_Collection().getByID(id_dish_collection)
+    private Single<List<Ingredient>> getIngredientsFromDishCollection(long idDishCollection) {
+        return utils.ByDish_Collection().getByID(idDishCollection)
                 .flatMap(dish_collection -> {
-                    if (dish_collection.getId_dish() > 0 && dish_collection.getId_collection() > 0) {
-                        return utils.ByIngredient().getAllByIDDish(dish_collection.getId_dish());
+                    if (dish_collection.getIdDish() > 0 && dish_collection.getIdCollection() > 0) {
+                        return utils.ByIngredient().getAllByIDDish(dish_collection.getIdDish());
                     } else { return Single.just(new ArrayList<Ingredient>()); }
                 })
                 .flatMap(ingredients -> utils.ByIngredientShopList().filteredBlackList(new ArrayList<>(ingredients)));
@@ -451,15 +451,15 @@ public class ShopListActivity extends AppCompatActivity {
     /**
      * Метод для додавання інгредієнтів до списку покупків
      *
-     * @param ingredients_ інгредієнти
-     * @param id_dish_collection ID списку покупків
+     * @param ingredientsBox інгредієнти
+     * @param idDishCollection ID списку покупків
      * @return статус успішності додавання
      */
-    private Single<Boolean> setIngredientFromDishesToShopList(List<Ingredient> ingredients_, Long id_dish_collection) {
+    private Single<Boolean> setIngredientFromDishesToShopList(List<Ingredient> ingredientsBox, Long idDishCollection) {
         flagAccessDelete.set(false);
-        return utils.ByIngredientShopList().convertIngredientsToIngredientsShopList(new ArrayList<>(ingredients_))
+        return utils.ByIngredientShopList().convertIngredientsToIngredientsShopList(new ArrayList<>(ingredientsBox))
                 .flatMap(ingredients -> utils.ByIngredientShopList().groupIngredients(ingredients, shopList))
-                .flatMap(ingredients -> addIngredientShopList_AmountFromIngredientsShopList(ingredients, id_dish_collection));
+                .flatMap(ingredients -> addIngredientShopList_AmountFromIngredientsShopList(ingredients, idDishCollection));
     }
 
     /**
@@ -527,14 +527,14 @@ public class ShopListActivity extends AppCompatActivity {
         if (addButton != null) {
             addButton.setOnClickListener(v -> {
                 if (name != null && amount != null && type != null) {
-                    String name_ = name.getText().toString();
-                    String amount_ = amount.getText().toString();
-                    String type_ = type.getSelectedItem().toString();
+                    String nameBox = name.getText().toString();
+                    String amountBox = amount.getText().toString();
+                    String typeBox = type.getSelectedItem().toString();
 
                     // Перевірка наявності введених даних
-                    if (!name_.isEmpty() && !amount_.isEmpty() && !type_.isEmpty()) { // Перевіряємо наявність даних
+                    if (!nameBox.isEmpty() && !amountBox.isEmpty() && !typeBox.isEmpty()) { // Перевіряємо наявність даних
                         ArrayList<Ingredient> ingredients = new ArrayList<>();
-                        ingredients.add(new Ingredient(name_.replaceFirst("\\s+$", ""), amount_, IngredientTypeConverter.toIngredientType(type_), shopList.getId()));
+                        ingredients.add(new Ingredient(nameBox.replaceFirst("\\s+$", ""), amountBox, IngredientTypeConverter.toIngredientType(typeBox), shopList.getId()));
 
                         // Додавання інгредієнта до списку покупок
                         Disposable disposable = setIngredientFromDishesToShopList(ingredients, null)
@@ -585,7 +585,7 @@ public class ShopListActivity extends AppCompatActivity {
                                         if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, dishes.isEmpty());
 
                                         // Налаштування пошуку та вибору страв
-                                        searchController = new SearchController(this, editText, dishesRecyclerView, new ChooseItemAdapter<Dish>(this, (checkBox, item) -> {}));
+                                        searchController = new SearchController(this, editText, dishesRecyclerView, new ChooseItemAdapter<Dish>(this, (checkBox, item) -> { }));
                                         searchController.setArrayData(new ArrayList<>(dishes));
 
                                         ChooseItemAdapter<Dish> adapterChooseObjects = (ChooseItemAdapter) searchController.getAdapter();
@@ -729,7 +729,8 @@ public class ShopListActivity extends AppCompatActivity {
                     } else if (!collectionName.equals(shopList.getName())) {
                         // Перевірка на дублікат назви та оновлення назви списку
                         Disposable disposable = utils.ByCollection().getIdByNameAndType(collectionName, CollectionType.SHOP_LIST)
-                                .flatMap(id -> {
+                                .flatMap(
+                                        id -> {
                                             if (id != -1) { // Перевірка на дублікат назви списку покупок
                                                 Toast.makeText(this, R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
                                                 return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));

@@ -5,7 +5,6 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
-import androidx.room.Transaction;
 import androidx.room.Update;
 
 import com.example.recipes.Item.Dish_Collection;
@@ -30,28 +29,28 @@ public interface DishCollectionDAO {
     String ID_COLLECTION = "id_collection";
 
     @Insert
-    Single<Long> insert(Dish_Collection dish_collection);
+    Single<Long> insert(Dish_Collection dishCollection);
 
     @Update
-    Completable update(Dish_Collection dish_collection);
+    Completable update(Dish_Collection dishCollection);
 
     @Delete
-    Completable delete(Dish_Collection dish_collection);
+    Completable delete(Dish_Collection dishCollection);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish AND " + ID_COLLECTION + " = :id_collection ")
-    Maybe<Dish_Collection> getByIDDishAndIDCollection(long id_dish, long id_collection);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish AND " + ID_COLLECTION + " = :idCollection ")
+    Maybe<Dish_Collection> getByIDDishAndIDCollection(long idDish, long idCollection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     Maybe<Dish_Collection> getByID(long id);
 
-    @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection ")
-    Single<List<Long>> getAllIDsDishByIDCollection(long id_collection);
+    @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ")
+    Single<List<Long>> getAllIDsDishByIDCollection(long idCollection);
 
-    @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection ")
-    LiveData<List<Long>> getAllDishIDsLive(long id_collection);
+    @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ")
+    LiveData<List<Long>> getAllDishIDsLive(long idCollection);
 
-    @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish ")
-    Single<List<Long>> getAllIDsCollectionByIDDish(long id_dish);
+    @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ")
+    Single<List<Long>> getAllIDsCollectionByIDDish(long idDish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

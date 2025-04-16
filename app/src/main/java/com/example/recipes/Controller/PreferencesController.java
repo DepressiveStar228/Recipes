@@ -2,13 +2,10 @@ package com.example.recipes.Controller;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.util.Log;
-
-import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.recipes.Enum.Tips;
 import com.example.recipes.R;
@@ -33,7 +30,7 @@ public class PreferencesController {
     private Boolean status_ing_hints = false, tip_shop_list_buttons = false;
     private Context context;
 
-    private PreferencesController() {}
+    private PreferencesController() { }
 
     /**
      * Повертає єдиний екземпляр класу PreferencesController (Singleton).
@@ -254,6 +251,10 @@ public class PreferencesController {
             case "Green" -> {
                 if (theme.equals("Light")) return R.style.AppTheme_Green_Light;
                 else if (theme.equals("Dark")) return R.style.AppTheme_Green_Dark;
+            }
+            default -> {
+                if (theme.equals("Light")) return R.style.AppTheme_Brown_Light;
+                else if (theme.equals("Dark")) return R.style.AppTheme_Brown_Dark;
             }
         }
         return R.style.AppTheme_Brown_Light;

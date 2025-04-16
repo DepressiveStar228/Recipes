@@ -93,10 +93,10 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
             }
         }
 
-        int counter_dishes = collection.getDishes().size();
+        int counterDishes = collection.getDishes().size();
 
-        holder.counter_dishes.setText(String.valueOf(counter_dishes));
-        holder.collection_name.setPadding(0,0,countDigits(counter_dishes),0);
+        holder.counter_dishes.setText(String.valueOf(counterDishes));
+        holder.collection_name.setPadding(0, 0, countDigits(counterDishes), 0);
 
         holder.menu_img.setOnClickListener(v -> {
             if (collectionClickListener != null) {

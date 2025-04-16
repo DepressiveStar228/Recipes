@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.TypedValue;
 import android.widget.EditText;
 import android.widget.Toast;
 

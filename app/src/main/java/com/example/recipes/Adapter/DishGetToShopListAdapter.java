@@ -3,7 +3,6 @@ package com.example.recipes.Adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,7 +12,6 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -103,7 +101,7 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
         TextView dishName;
         ImageView delete;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             dishName = itemView.findViewById(R.id.dishNameItemTextView);
             delete = itemView.findViewById(R.id.deleteButton);

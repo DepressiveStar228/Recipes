@@ -5,19 +5,12 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -40,7 +33,6 @@ import com.example.recipes.Fragments.SearchDishFragment;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
-import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,10 +91,10 @@ public class MainActivity extends FragmentActivity {
         loadScreenAnimation.startLoadingScreenAnimation();  // Початок анімації завантаження активності
 
         compositeDisposable.add(Completable.fromAction(() -> {
-                    utils = RecipeUtils.getInstance(this);
-                    importExportController = new ImportExportController(this);
-                    initialDB(); // Створення системний колекцій, якщо їх немає
-                }).subscribeOn(Schedulers.io())
+            utils = RecipeUtils.getInstance(this);
+            importExportController = new ImportExportController(this);
+            initialDB(); // Створення системний колекцій, якщо їх немає
+        }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     initializeUI(); // Ініціалізація фрагментів та об'єктів на активності
@@ -224,7 +216,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void loadClickListeners(){
+    private void loadClickListeners() {
         View.OnClickListener imageClickListener = v -> {
             Log.d("MainActivity", "Слухач помітив зміну фрагмента");
             animateImage(v);

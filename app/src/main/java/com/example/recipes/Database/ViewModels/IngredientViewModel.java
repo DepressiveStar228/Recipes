@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.recipes.Database.DAO.IngredientDAO;
-import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
 import com.example.recipes.Item.Ingredient;
 
 import java.util.List;
@@ -28,11 +27,11 @@ public class IngredientViewModel extends ViewModel {
     /**
      * Отримує список інгредієнтів для конкретної страви за її ідентифікатором у вигляді LiveData.
      *
-     * @param id_dish Ідентифікатор страви.
+     * @param idDish Ідентифікатор страви.
      * @return LiveData, яка містить список інгредієнтів для вказаної страви.
      */
-    public LiveData<List<Ingredient>> getAllByIDDish(@NonNull Long id_dish) {
-        return dao.getAllByIDDishLive(id_dish);
+    public LiveData<List<Ingredient>> getAllByIDDish(@NonNull Long idDish) {
+        return dao.getAllByIDDishLive(idDish);
     }
 
     /**

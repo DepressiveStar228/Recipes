@@ -8,12 +8,6 @@ import android.os.Build;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 /**
  * @author Артем Нікіфоров
  * @version 1.0
@@ -27,7 +21,7 @@ public class FileUtils {
      * @param context Контекст додатка
      * @param uri Uri файла для відправки
      */
-    public static void sendFileByUri (Context context, Uri uri) {
+    public static void sendFileByUri(Context context, Uri uri) {
         Intent sendIntent = new Intent(Intent.ACTION_SEND);
         sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
         sendIntent.setType("application/json");

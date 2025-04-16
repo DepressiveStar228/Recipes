@@ -13,42 +13,37 @@ import androidx.room.PrimaryKey;
  */
 @Entity(
         tableName = "dish_collection",
-        foreignKeys = {
-                @ForeignKey(
+        foreignKeys = {@ForeignKey(
                         entity = Dish.class,
                         parentColumns = "id",
                         childColumns = "id_dish",
                         onDelete = ForeignKey.CASCADE
-                ),
-                @ForeignKey(
+                ), @ForeignKey(
                         entity = Collection.class,
                         parentColumns = "id",
                         childColumns = "id_collection",
                         onDelete = ForeignKey.CASCADE
                 )
         },
-        indices = {
-                @Index(value = "id_dish"),
-                @Index(value = "id_collection")
-        }
+        indices = {@Index(value = "id_dish"), @Index(value = "id_collection")}
 )
 public class Dish_Collection {
     @PrimaryKey(autoGenerate = true) private long id;
-    @ColumnInfo(name = "id_dish") private long id_dish;
-    @ColumnInfo(name = "id_collection") private long id_collection;
+    @ColumnInfo(name = "id_dish") private long idDish;
+    @ColumnInfo(name = "id_collection") private long idCollection;
 
 
     // Конструктори
     @Ignore
-    public Dish_Collection(long id, long id_dish, long id_collection) {
+    public Dish_Collection(long id, long idDish, long idCollection) {
         this.id = id;
-        this.id_dish = id_dish;
-        this.id_collection = id_collection;
+        this.idDish = idDish;
+        this.idCollection = idCollection;
     }
 
-    public Dish_Collection(long id_dish, long id_collection) {
-        this.id_dish = id_dish;
-        this.id_collection = id_collection;
+    public Dish_Collection(long idDish, long idCollection) {
+        this.idDish = idDish;
+        this.idCollection = idCollection;
     }
 
 
@@ -57,23 +52,23 @@ public class Dish_Collection {
         return id;
     }
 
-    public long getId_collection() {
-        return id_collection;
+    public long getIdCollection() {
+        return idCollection;
     }
 
-    public long getId_dish() {
-        return id_dish;
+    public long getIdDish() {
+        return idDish;
     }
 
     public void setId(long id) {
         this.id = id;
     }
 
-    public void setId_dish(long id_dish) {
-        this.id_dish = id_dish;
+    public void setIdDish(long idDish) {
+        this.idDish = idDish;
     }
 
-    public void setId_collection(long id_collection) {
-        this.id_collection = id_collection;
+    public void setIdCollection(long idCollection) {
+        this.idCollection = idCollection;
     }
 }

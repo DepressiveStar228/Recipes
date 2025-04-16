@@ -36,8 +36,8 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<List<IngredientShopList_AmountType>> getByIDIngredient(long id_ingredient) {
-        return dao.getByIDIngredientLive(id_ingredient);
+    public LiveData<List<IngredientShopList_AmountType>> getByIDIngredient(long idIngredient) {
+        return dao.getByIDIngredientLive(idIngredient);
     }
 
     /**
@@ -45,8 +45,8 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long id_dish) {
-        return dao.getByIDDishLive(id_dish);
+    public LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long idDish) {
+        return dao.getByIDDishLive(idDish);
     }
 
     /**
@@ -54,7 +54,7 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<Integer> getCountByID(long id_ingredient) {
-        return dao.getCountByID(id_ingredient);
+    public LiveData<Integer> getCountByID(long idIngredient) {
+        return dao.getCountByID(idIngredient);
     }
 }

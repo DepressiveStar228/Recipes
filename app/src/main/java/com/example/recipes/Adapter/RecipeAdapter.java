@@ -3,8 +3,6 @@ package com.example.recipes.Adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -16,9 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -27,12 +23,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.ImageViewTarget;
-import com.bumptech.glide.request.target.Target;
 import com.example.recipes.Controller.ImageController;
 import com.example.recipes.Decoration.TextLoadAnimation;
 import com.example.recipes.Enum.DishRecipeType;
@@ -46,13 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Handler;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -125,10 +112,10 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             textWatcher = new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
 
                 @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
 
                 @Override
                 public void afterTextChanged(Editable editable) {
@@ -328,7 +315,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             }
 
             @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {}
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) { }
 
             @Override
             public boolean isLongPressDragEnabled() {
@@ -465,7 +452,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         if (disposableForCache != null) disposableForCache.dispose();
 
         if (item != null && resource != null) {
-            disposableForCache = imageController.addImageToCache(((BitmapDrawable)resource).getBitmap())
+            disposableForCache = imageController.addImageToCache(((BitmapDrawable) resource).getBitmap())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(url -> {

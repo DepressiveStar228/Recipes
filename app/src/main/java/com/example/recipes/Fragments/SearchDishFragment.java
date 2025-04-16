@@ -120,7 +120,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         restoreFocus();
         updateRecipesData();
@@ -138,7 +138,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
         compositeDisposable.clear();
     }
@@ -147,7 +147,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
      * Ініціалізація UI елементів
      * @param view кореневий View фрагмента
      */
-    private void loadItemsActivity(View view){
+    private void loadItemsActivity(View view) {
         mainLayout = view.findViewById(R.id.mainLayout);
         ConstraintLayout linearLayout = view.findViewById(R.id.search_LinearLayout);
         gptFragment = view.findViewById(R.id.gpt_container);
@@ -204,17 +204,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
 
                 if (gptFragment != null) {
                     gptFragment.getLocationOnScreen(location);
-                    int x = location[0];
-                    int y = location[1];
-                    int w = gptFragment.getWidth();
-                    int h = gptFragment.getHeight();
-
-                    if (event.getRawX() >= x && event.getRawX() <= (x + w) &&
-                            event.getRawY() >= y && event.getRawY() <= (y + h)) {
-
-                    } else {
-
-                    }
 
                     if (searchEditText != null && searchEditText.hasFocus()) {
                         if (flagAccessAnimation.get()) {
@@ -241,13 +230,15 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         // Обробники кнопок
         if (sortButton != null) { sortButton.setOnClickListener(v -> onSortClick()); }
         if (filtersButton != null) { filtersButton.setOnClickListener(v -> onFiltersClick()); }
-        if (add_dish_button != null) { add_dish_button.setOnClickListener(v -> {
-            if (v.getId() == R.id.add_dish) {
-                Intent intent = new Intent(getContext(), EditorDishActivity.class);
-                intent.putExtra(IntentKeys.DISH_ID.name(), -1);
-                startActivity(intent);
-            }
-        });}
+        if (add_dish_button != null) {
+            add_dish_button.setOnClickListener(v -> {
+                if (v.getId() == R.id.add_dish) {
+                    Intent intent = new Intent(getContext(), EditorDishActivity.class);
+                    intent.putExtra(IntentKeys.DISH_ID.name(), -1);
+                    startActivity(intent);
+                }
+            });
+        }
         Log.d("SearchDishFragment", "Слухачі фрагмента успішно завантажені.");
     }
 
@@ -315,14 +306,14 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         View dialogView = inflater.inflate(R.layout.dialog_sort_search_result, null);
 
         // Отримання елементів сортування
-        LinearLayout sort_alphabetBox = dialogView.findViewById(R.id.sort_alphabetBox);
-        LinearLayout sort_TimeBox = dialogView.findViewById(R.id.sort_TimeBox);
+        LinearLayout sortAlphabetBox = dialogView.findViewById(R.id.sort_alphabetBox);
+        LinearLayout sortTimeBox = dialogView.findViewById(R.id.sort_TimeBox);
 
-        if (sort_alphabetBox != null && sort_TimeBox != null) {
+        if (sortAlphabetBox != null && sortTimeBox != null) {
             // Налаштування радіо-кнопок сортування
             ArrayList<RadioGroup> radioGroups = new ArrayList<>();
-            radioGroups.add(sort_alphabetBox.findViewById(R.id.sort_alphabet_radioButtonGroup));
-            radioGroups.add(sort_TimeBox.findViewById(R.id.sort_time_radioButtonGroup));
+            radioGroups.add(sortAlphabetBox.findViewById(R.id.sort_alphabet_radioButtonGroup));
+            radioGroups.add(sortTimeBox.findViewById(R.id.sort_time_radioButtonGroup));
 
             ArrayList<ArrayList<RadioButton>> arrayRadioButtons = getRadioButtons(radioGroups);
 
@@ -381,7 +372,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 names -> {
-                                    if (names != null){
+                                    if (names != null) {
                                         if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, names.isEmpty());
 
                                         // Ініціалізація контролера пошуку інгредієнтів

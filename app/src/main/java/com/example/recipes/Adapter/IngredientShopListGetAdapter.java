@@ -154,7 +154,7 @@ public class IngredientShopListGetAdapter extends ListAdapter<IngredientShopList
         ImageView delete;
         View line;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             isBuy = itemView.findViewById(R.id.isBuy_checkBox);
             ingredientName = itemView.findViewById(R.id.ingredientNameItemTextView);

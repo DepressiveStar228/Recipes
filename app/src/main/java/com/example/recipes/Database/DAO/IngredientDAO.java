@@ -5,10 +5,8 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
-import androidx.room.Transaction;
 import androidx.room.Update;
 
-import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.Ingredient;
 
 import java.util.List;
@@ -41,17 +39,17 @@ public interface IngredientDAO {
     @Delete
     Completable delete(Ingredient ingredient);
 
-    @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + ID_DISH + " = :id_dish")
-    Maybe<Long> getIDByNameAndIDDish(String name, long id_dish);
+    @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + ID_DISH + " = :idDish")
+    Maybe<Long> getIDByNameAndIDDish(String name, long idDish);
 
     @Query("SELECT * FROM " + TABLE_NAME)
     Single<List<Ingredient>> getAll();
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    Single<List<Ingredient>> getAllByIDDish(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
+    Single<List<Ingredient>> getAllByIDDish(long idDish);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    LiveData<List<Ingredient>> getAllByIDDishLive(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
+    LiveData<List<Ingredient>> getAllByIDDishLive(long idDish);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     Maybe<Ingredient> getByID(long id);

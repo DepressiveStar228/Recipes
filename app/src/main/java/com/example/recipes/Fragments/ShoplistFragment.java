@@ -122,7 +122,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
      * Завантажує UI елементи фрагмента
      * @param view Кореневий view фрагмента
      */
-    private void loadItemsActivity(View view){
+    private void loadItemsActivity(View view) {
         data_box = view.findViewById(R.id.data_box);
         addShopListButton = view.findViewById(R.id.add_shopListButton);
         blackListIngredientButton = view.findViewById(R.id.blackListButton);
@@ -159,7 +159,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                         public void onMenuIconClick(ShopList shopList, View v) {
                             PopupMenu popupMenu = new PopupMenu(getContext(), v, Gravity.END);
                             popupMenu.getMenuInflater().inflate(R.menu.context_menu_shop_list, popupMenu.getMenu());
-                            String[] themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options,"en");
+                            String[] themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
 
                             for (int i = 0; i < popupMenu.getMenu().size(); i++) {
                                 MenuItem item = popupMenu.getMenu().getItem(i);
@@ -304,7 +304,8 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                                 .flatMap(name -> utils.ByCollection().add(new Collection(name, CollectionType.SHOP_LIST)))
                                 .subscribeOn(Schedulers.newThread())
                                 .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(id -> {
+                                .subscribe(
+                                        id -> {
                                             if (id > 0) {
                                                 Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
                                                 Log.d("ShoplistFragment", "Колекція успішно створена");
@@ -318,7 +319,8 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                         compositeDisposable.add(disposable);
                     } else {
                         Disposable disposable = utils.ByCollection().getIdByName(collectionName)
-                                .flatMap(id -> {
+                                .flatMap(
+                                        id -> {
                                             if (id != -1) {
                                                 Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
                                                 return Single.just(null);
@@ -404,7 +406,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                                 if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, data.first.isEmpty());
 
                                 // Налаштовуємо пошук по інгредієнтам
-                                searchController = new SearchController<>(getContext(), editText, ingredientsRecyclerView, new ChooseItemAdapter<String>(getContext(), (checkBox, item) -> {}));
+                                searchController = new SearchController<>(getContext(), editText, ingredientsRecyclerView, new ChooseItemAdapter<String>(getContext(), (checkBox, item) -> { }));
                                 searchController.setArrayData(new ArrayList<>(data.first));
                                 searchController.setArraySelectedData(new ArrayList<>(data.second));
                                 searchController.setSearchEditText(editText);
@@ -561,7 +563,8 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                         compositeDisposable.add(disposable);
                     } else if (!collectionName.equals(collection.getName())) {
                         Disposable disposable = utils.ByCollection().getIdByNameAndType(collectionName, CollectionType.SHOP_LIST)
-                                .flatMap(id -> {
+                                .flatMap(
+                                        id -> {
                                             if (id != -1) {
                                                 Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
                                                 return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));

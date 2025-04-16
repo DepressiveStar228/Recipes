@@ -6,7 +6,6 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.RawQuery;
-import androidx.room.Transaction;
 import androidx.room.Update;
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
@@ -53,17 +52,17 @@ public interface DishDAO {
     @RawQuery(observedEntities = { Dish.class })
     Single<List<Dish>> getWithFiltersAndSorting(SimpleSQLiteQuery query);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id_dish")
-    Maybe<Dish> getByID(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :idDish")
+    Maybe<Dish> getByID(long idDish);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id_dish")
-    LiveData<Dish> getByIDLive(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :idDish")
+    LiveData<Dish> getByIDLive(long idDish);
 
-    @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name_dish")
-    Maybe<Long> getIDByName(String name_dish);
+    @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :nameDish")
+    Maybe<Long> getIDByName(String nameDish);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :name_dish")
-    Maybe<Dish> getByName(String name_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :nameDish")
+    Maybe<Dish> getByName(String nameDish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

@@ -1,9 +1,5 @@
 package com.example.recipes.Activity;
 
-import android.content.Context;
-import android.content.ContextWrapper;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
@@ -76,7 +72,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         preferencesController = PreferencesController.getInstance();
-        themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options,"en");
+        themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
 
         super.onCreate(savedInstanceState);
         preferencesController.setPreferencesToActivity(this);
@@ -124,7 +120,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         GPTStatusLoadTextView = findViewById(R.id.statusLoadTextView);
         GPTEditText = findViewById(R.id.GPT_edit_text_my_dish);
         GPTSendButton = findViewById(R.id.send_promt_GPT_imageView);
-        GPTBack= findViewById(R.id.back);
+        GPTBack = findViewById(R.id.back);
         GPTDialogRecyclerView = findViewById(R.id.dialogRecyclerView);
     }
 

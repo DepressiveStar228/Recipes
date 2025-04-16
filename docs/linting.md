@@ -1,0 +1,44 @@
+# Linter for Java project
+Since my project is written in Java, I researched linters specifically for this language. I found a plugin in IntelliJ IDEA called CheckStyle. It is a static code analyzer for Java that helps developers adhere to certain coding standards. It allows you to check parameters such as indentation, whitespace, bracket positions, empty lines, class and variable naming, the presence and correctness of JavaDoc comments, method length, nesting depth, and much more.
+
+## Main features
+- FileTabCharacter: Prevents tab characters from being used in files
+- LineLength: Limits the length of a line to 200 characters, with exceptions for imports and URLs
+- AvoidStarImport: Prevents imports using an asterisk (import java.util.*)
+- IllegalImport: Blocks illegal imports
+- RedundantImport: Detects redundant imports
+- UnusedImports: Finds unused imports
+- AnnotationLocation: Checks for proper annotation placement for classes, interfaces, enumerations, methods, and constructors 
+- EmptyBlock: Requires content for code blocks (if, try, catch, etc.)
+- Indentation: Configures indentation:
+- Basic indentation: 4 spaces
+- Indentation for various constructs: 4 spaces
+- WhitespaceAround: Requires whitespace around statements
+- WhitespaceAfter: Requires whitespace after certain characters
+- NoWhitespaceAfter: Prevents spaces after certain characters
+- NoWhitespaceBefore: Disallows spaces before certain characters
+- OperatorWrap: Checks operator wrapping
+- GenericWhitespace: Checks for spaces in generic types
+- MethodParamPad: Checks for spaces in method parameters
+- ParenPad: Checks for spaces in parentheses
+- TypecastParenPad: Checks for spaces in parentheses when casting types
+- MethodLength: Limits method length to 120 lines
+- ParameterNumber: Limits the number of method parameters to 7
+- JavadocMethod: Checks Javadoc for methods, allows skipping @param and @return tags
+- ConstantName: Checks for constant naming
+- LocalFinalVariableName: Checks for final local variable naming
+- LocalVariableName: Checks for local variable naming
+- PackageName: Checks for package naming
+- ParameterName: Checks for parameter naming
+- EmptyStatement: Disallows empty statements (;)
+- EqualsHashCode: Requires hashCode() to be overridden when equals() is overridden
+- HiddenField: Detects hidden fields, with exceptions for constructors and setters
+- IllegalInstantiation: Disallows direct instantiation of certain types
+- InnerAssignment: Disallows assignments in expressions
+- MissingSwitchDefault: Requires default in switch
+- RedundantModifier: Detects redundant modifiers
+- SimplifyBooleanExpression: Requires simplification of boolean expressions
+- SimplifyBooleanReturn: Requires simplification of boolean returns
+- StringLiteralEquality: Disallows string comparisons using == instead of equals()
+- NestedIfDepth: Limits nesting of if conditionals to 4 levels
+- NestedTryDepth: Limits nesting of try blocks to 2 levels

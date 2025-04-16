@@ -57,7 +57,7 @@ public class TextLoadAnimation {
      *
      * @param baseText Новий базовий текст
      */
-    public void setBaseTextIntoTextView (String baseText) {
+    public void setBaseTextIntoTextView(String baseText) {
         this.baseText = baseText;
         if (textView != null) {
             textView.setText(baseText);

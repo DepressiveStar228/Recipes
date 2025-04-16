@@ -33,21 +33,10 @@ import com.example.recipes.Item.IngredientShopList_AmountType;
  */
 @Database(
         version = 2,
-        entities = {
-                Dish.class,
-                DishRecipe.class,
-                Ingredient.class,
-                Collection.class,
-                Dish_Collection.class,
-                IngredientShopList.class,
-                IngredientShopList_AmountType.class
-        },
+        entities = {Dish.class, DishRecipe.class, Ingredient.class, Collection.class, Dish_Collection.class, IngredientShopList.class, IngredientShopList_AmountType.class},
         exportSchema = false
 )
-@TypeConverters({
-        CollectionTypeConverter.class,
-        IngredientTypeConverter.class
-})
+@TypeConverters({CollectionTypeConverter.class, IngredientTypeConverter.class})
 public abstract class RecipeDatabase extends RoomDatabase {
     public abstract DishDAO dishDao();
     public abstract DishRecipeDAO dishRecipeDao();

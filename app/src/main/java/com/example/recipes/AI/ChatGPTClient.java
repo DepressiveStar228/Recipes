@@ -31,7 +31,6 @@ import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
-import com.example.recipes.Utils.RecipeUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -89,7 +88,7 @@ public class ChatGPTClient {
      * @param context       Контекст додатку.
      * @param roleAssistant Роль асистента (Chef або Translator).
      */
-    public ChatGPTClient (Context context, ChatGPTRole roleAssistant) {
+    public ChatGPTClient(Context context, ChatGPTRole roleAssistant) {
         this.context = context;
         this.roleAssistant = roleAssistant;
 
@@ -370,14 +369,14 @@ public class ChatGPTClient {
         for (String recipe : dish.getRecipeText()) {
             stringBuilder.append("[").append(recipe).append("]");
 
-            if (dish.getRecipeText().size()-1 != dish.getRecipeText().indexOf(recipe)) stringBuilder.append(",");
+            if (dish.getRecipeText().size() - 1 != dish.getRecipeText().indexOf(recipe)) stringBuilder.append(",");
         }
         stringBuilder.append(">}");
         stringBuilder.append("{portion=[").append(dish.getPortion()).append("]},");
         stringBuilder.append("{ingredients=<");
         for (Ingredient ing : dish.getIngredients()) {
             stringBuilder.append("[").append(ing.getName()).append("]");
-            if (dish.getIngredients().size()-1 != dish.getIngredients().indexOf(ing)) stringBuilder.append(",");
+            if (dish.getIngredients().size() - 1 != dish.getIngredients().indexOf(ing)) stringBuilder.append(",");
         }
         stringBuilder.append(">}");
 
@@ -476,7 +475,7 @@ public class ChatGPTClient {
         try {
             String portionText = recipeMap.get("portion");
             if (portionText != null) portion = Integer.parseInt(portionText);
-        } catch (Exception e) {}
+        } catch (Exception e) { }
 
         // Створення об'єкта Dish на основі розпарсених даних
         Dish dish = new Dish(recipeMap.get("name"), portion);
@@ -484,8 +483,8 @@ public class ChatGPTClient {
         ArrayList<Ingredient> ingredients = new ArrayList<>();
 
         for (Map<String, String> ingredient : ingredientsList) {
-            Ingredient ingredient_ = new Ingredient(ingredient.get("name"), ingredient.get("quantity"), IngredientTypeConverter.toIngredientType(ingredient.get("unit")));
-            ingredients.add(ingredient_);
+            Ingredient box = new Ingredient(ingredient.get("name"), ingredient.get("quantity"), IngredientTypeConverter.toIngredientType(ingredient.get("unit")));
+            ingredients.add(box);
         }
 
         dish.setIngredients(ingredients);

@@ -7,7 +7,6 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.Item.IngredientShopList_AmountType;
 
 import java.util.List;
@@ -49,18 +48,18 @@ public interface IngredientShopList_AmountTypeDAO {
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     Single<IngredientShopList_AmountType> getByID(long id);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :id_ingredient")
-    Maybe<List<IngredientShopList_AmountType>> getByIDIngredient(long id_ingredient);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
+    Maybe<List<IngredientShopList_AmountType>> getByIDIngredient(long idIngredient);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    Single<List<IngredientShopList_AmountType>> getByIDDish(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
+    Single<List<IngredientShopList_AmountType>> getByIDDish(long idDish);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :id_ingredient")
-    LiveData<List<IngredientShopList_AmountType>> getByIDIngredientLive(long id_ingredient);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
+    LiveData<List<IngredientShopList_AmountType>> getByIDIngredientLive(long idIngredient);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish")
-    LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
+    LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long idDish);
 
-    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :id_ingredient")
-    LiveData<Integer> getCountByID(long id_ingredient);
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
+    LiveData<Integer> getCountByID(long idIngredient);
 }

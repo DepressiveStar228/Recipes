@@ -1,8 +1,6 @@
 package com.example.recipes.Adapter;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -13,39 +11,22 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.PreferencesController;
-import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
-import com.example.recipes.Utils.ClassUtils;
-import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
-import android.os.Handler;
-import android.os.Looper;
-
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Артем Нікіфоров
@@ -225,10 +206,10 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             // Обробка зміни тексту у полі для вводу назви
             nameIngredientEditText.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
                 @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) { }
 
                 @Override
                 public void afterTextChanged(Editable s) {
@@ -243,10 +224,10 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             // Обробка зміни тексту у полі для вводу кількості
             countIngredientEditText.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
                 @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) { }
 
                 @Override
                 public void afterTextChanged(Editable s) {
@@ -268,7 +249,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
 
                 @Override
-                public void onNothingSelected(AdapterView<?> parent) {}
+                public void onNothingSelected(AdapterView<?> parent) { }
             });
         }
 

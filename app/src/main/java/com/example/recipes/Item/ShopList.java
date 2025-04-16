@@ -2,8 +2,6 @@ package com.example.recipes.Item;
 
 import android.content.Context;
 
-import androidx.room.Ignore;
-
 import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.R;
 
@@ -63,9 +61,9 @@ public class ShopList extends Collection {
         this.ingredients.addAll(ingredients);
     }
 
-    public void setIds_dish_collection(ArrayList<Long> ids_dish_collection) {
+    public void setIds_dish_collection(ArrayList<Long> idsDishCollection) {
         this.ingredients.clear();
-        this.ids_dish_collection.addAll(ids_dish_collection);
+        this.ids_dish_collection.addAll(idsDishCollection);
     }
 
 

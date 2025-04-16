@@ -2,18 +2,13 @@ package com.example.recipes.ViewItem;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.recipes.R;
-
-import java.util.Objects;
 
 /**
  * @author Артем Нікіфоров

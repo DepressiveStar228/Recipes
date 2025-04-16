@@ -12,7 +12,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.core.view.GravityCompat;
@@ -64,7 +63,7 @@ public class SettingPanel {
     public SettingPanel(@NonNull Activity activity, View rootView) {
         try {
             this.drawerLayout = (DrawerLayout) rootView;
-        } catch (Exception e) {}
+        } catch (Exception e) { }
         preferencesController = PreferencesController.getInstance();
         utils = RecipeUtils.getInstance(activity);
         importExportController = new ImportExportController(activity);
@@ -118,7 +117,7 @@ public class SettingPanel {
                 }
 
                 languageArray = preferencesController.getStringArrayForLocale(R.array.language_values, "en");
-                themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options,"en");
+                themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
                 paletteArray = preferencesController.getStringArrayForLocale(R.array.palette_options, "en");
 
                 Log.d(nameActivity, "Завантаження всіх об'єктів налаштувань");
@@ -223,7 +222,7 @@ public class SettingPanel {
                                                     }
 
                                                     @Override
-                                                    public void getDisposable(Disposable disposable) {}
+                                                    public void getDisposable(Disposable disposable) { }
                                                 });
                                             })
                                             .setNegativeButton(activity.getString(R.string.no), null).show();

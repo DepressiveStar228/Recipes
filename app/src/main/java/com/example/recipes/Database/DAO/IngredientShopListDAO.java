@@ -7,7 +7,6 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.IngredientShopList;
 
 import java.util.List;
@@ -48,27 +47,27 @@ public interface IngredientShopListDAO {
     @Query("SELECT * FROM " + TABLE_NAME)
     LiveData<List<IngredientShopList>> getAllLive();
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID+ " = :id")
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     Single<IngredientShopList> getById(long id);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION+ " = :id_collection AND " + NAME + " = :name")
-    Maybe<IngredientShopList> getByNameAndIDCollection(String name, Long id_collection);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + NAME + " = :name")
+    Maybe<IngredientShopList> getByNameAndIDCollection(String name, Long idCollection);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection")
-    Single<List<IngredientShopList>> getAllByIDCollection(long id_collection);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
+    Single<List<IngredientShopList>> getAllByIDCollection(long idCollection);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection")
-    LiveData<List<IngredientShopList>> getAllByIDCollection_Live(long id_collection);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
+    LiveData<List<IngredientShopList>> getAllByIDCollection_Live(long idCollection);
 
-    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection")
-    Single<Integer> getCountByIdShopList(long id_collection);
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
+    Single<Integer> getCountByIdShopList(long idCollection);
 
-    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection AND " + IS_BUY + " = 1")
-    Single<Integer> getBoughtCountByIdShopList(long id_collection);
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + IS_BUY + " = 1")
+    Single<Integer> getBoughtCountByIdShopList(long idCollection);
 
-    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection")
-    LiveData<Integer> getCountByIdShopList_Live(long id_collection);
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
+    LiveData<Integer> getCountByIdShopList_Live(long idCollection);
 
-    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :id_collection AND " + IS_BUY + " = 1")
-    LiveData<Integer> getBoughtCountByIdShopList_Live(long id_collection);
+    @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + IS_BUY + " = 1")
+    LiveData<Integer> getBoughtCountByIdShopList_Live(long idCollection);
 }

@@ -7,13 +7,11 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -52,11 +50,11 @@ public interface DishRecipeDAO {
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     LiveData<DishRecipe> getByIDLive(long id);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish ORDER BY " + POSITION)
-    Single<List<DishRecipe>> getByDishID(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ORDER BY " + POSITION)
+    Single<List<DishRecipe>> getByDishID(long idDish);
 
-    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :id_dish ORDER BY " + POSITION)
-    LiveData<List<DishRecipe>> getByDishIDLive(long id_dish);
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ORDER BY " + POSITION)
+    LiveData<List<DishRecipe>> getByDishIDLive(long idDish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

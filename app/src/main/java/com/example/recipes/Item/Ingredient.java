@@ -1,7 +1,5 @@
 package com.example.recipes.Item;
 
-import android.content.Context;
-
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
@@ -12,7 +10,6 @@ import androidx.room.PrimaryKey;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Interface.Item;
-import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.Objects;
 
@@ -23,42 +20,41 @@ import java.util.Objects;
 @Entity(
         tableName = "ingredient",
         indices = @Index(value = "id_dish"),
-        foreignKeys = {
-        @ForeignKey(
+        foreignKeys = {@ForeignKey(
                 entity = Dish.class,
                 parentColumns = "id",
                 childColumns = "id_dish",
-                onDelete = ForeignKey.CASCADE
-        )}
+                onDelete = ForeignKey.CASCADE)
+        }
 )
 public class Ingredient implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
     @ColumnInfo(name = "amount") private String amount;
     @ColumnInfo(name = "type") private IngredientType type;
-    @ColumnInfo(name = "id_dish") private long id_dish;
+    @ColumnInfo(name = "id_dish") private long idDish;
 
 
     // Конструктори
     @Ignore
-    public Ingredient(long id, String name, String amount, IngredientType type, long id_dish) {
+    public Ingredient(long id, String name, String amount, IngredientType type, long idDish) {
         this.id = id;
         this.name = name;
         this.amount = amount;
         this.type = type;
-        this.id_dish = id_dish;
+        this.idDish = idDish;
     }
 
     @Ignore
-    public Ingredient(String name, String amount, IngredientType type, long id_dish) {
+    public Ingredient(String name, String amount, IngredientType type, long idDish) {
         this.name = name;
         this.amount = amount;
         this.type = type;
-        this.id_dish = id_dish;
+        this.idDish = idDish;
     }
 
     @Ignore
-    public Ingredient() {}
+    public Ingredient() { }
 
     public Ingredient(String name, String amount, IngredientType type) {
         this.name = name;
@@ -86,8 +82,8 @@ public class Ingredient implements Item {
         return type;
     }
 
-    public long getId_dish() {
-        return id_dish;
+    public long getIdDish() {
+        return idDish;
     }
 
     public void setId(long id) {
@@ -107,8 +103,8 @@ public class Ingredient implements Item {
         this.type = type;
     }
 
-    public void setId_dish(long id_dish) {
-        this.id_dish = id_dish;
+    public void setIdDish(long idDish) {
+        this.idDish = idDish;
     }
 
 
@@ -128,11 +124,11 @@ public class Ingredient implements Item {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Ingredient that = (Ingredient) object;
-        return id == that.id && id_dish == that.id_dish && Objects.equals(name, that.name) && Objects.equals(amount, that.amount) && Objects.equals(type, that.type);
+        return id == that.id && idDish == that.idDish && Objects.equals(name, that.name) && Objects.equals(amount, that.amount) && Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, amount, type, id_dish);
+        return Objects.hash(id, name, amount, type, idDish);
     }
 }

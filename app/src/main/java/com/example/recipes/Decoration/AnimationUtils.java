@@ -7,16 +7,10 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.util.SparseBooleanArray;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.EditText;
 
 import com.google.firebase.crashlytics.buildtools.reloc.javax.annotation.Nonnegative;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.annotations.Nullable;
 
 /**
  * @author Артем Нікіфоров
@@ -34,8 +28,13 @@ public class AnimationUtils {
     public static final boolean SHOW = true;
     public static final boolean HIDE = false;
 
+    private static final int FULL_ALPHA = 255;
+    private static final int ZERO_ALPHA = 0;
+
+    private static final float ROTATION_ANGLE = 45f;
+
     // Відстежує стан анімацій для запобігання накладання
-    private static final SparseBooleanArray animationFlags = new SparseBooleanArray();
+    private static final SparseBooleanArray ANIMATION_FLAGS = new SparseBooleanArray();
 
     /**
      * Виконує плавне обертання View.
@@ -49,19 +48,19 @@ public class AnimationUtils {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
 
-        if (animationFlags.get(viewId, true)) {
-            animationFlags.put(viewId, false);
+        if (ANIMATION_FLAGS.get(viewId, true)) {
+            ANIMATION_FLAGS.put(viewId, false);
 
             ObjectAnimator rotationAnimator = new ObjectAnimator();
 
-            if (way % 2 == 0) rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, 45f);
-            else rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 45f, 0f);
+            if (way % 2 == 0) rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, ROTATION_ANGLE);
+            else rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", ROTATION_ANGLE, 0f);
 
             rotationAnimator.setDuration(durationAnimation);
             rotationAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animationFlags.put(viewId, true);
+                    ANIMATION_FLAGS.put(viewId, true);
                     onAnimationEnd.run();
                 }
             });
@@ -79,12 +78,14 @@ public class AnimationUtils {
      * @param durationAnimation Тривалість в мілісекундах
      * @param onAnimationEnd Колбек після завершення
      */
-    public static void smoothSlipVisibility(@NonNull View view, @NonNull @Nonnegative int way, @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative float translationValue, @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
+    public static void smoothSlipVisibility(@NonNull View view, @NonNull @Nonnegative int way,
+                                            @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative float translationValue,
+                                            @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
 
-        if (animationFlags.get(viewId, true)) {
-            animationFlags.put(viewId, false);
+        if (ANIMATION_FLAGS.get(viewId, true)) {
+            ANIMATION_FLAGS.put(viewId, false);
             float firstTranslationValue = 0f, secondTranslationValue = 0f, mainTranslationValue = translationValue;
             String propertyName;
 
@@ -127,7 +128,7 @@ public class AnimationUtils {
             animatorSet.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animationFlags.put(viewId, true);
+                    ANIMATION_FLAGS.put(viewId, true);
                     onAnimationEnd.run();
 
                     if (mode) { view.setVisibility(View.VISIBLE); }
@@ -148,14 +149,14 @@ public class AnimationUtils {
     public static void smoothVisibility(@NonNull View view, @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative int durationAnimation) {
         int viewKey  = view.hashCode();
 
-        if (animationFlags.get(viewKey , true)) {
+        if (ANIMATION_FLAGS.get(viewKey, true)) {
             if (view.getVisibility() == View.VISIBLE) view.setAlpha(1f);
             if (view.getVisibility() == View.INVISIBLE || view.getVisibility() == View.GONE) view.setAlpha(0f);
 
             if (mode == (view.getAlpha() == 1f)) return;
             if (!mode == (view.getAlpha() == 0f)) return;
 
-            animationFlags.put(viewKey , false);
+            ANIMATION_FLAGS.put(viewKey, false);
 
             ValueAnimator alphaAnimator = ValueAnimator.ofFloat(mode ? 0f : 1f, mode ? 1f : 0f);
             alphaAnimator.setDuration(durationAnimation);
@@ -173,7 +174,7 @@ public class AnimationUtils {
                 public void onAnimationEnd(Animator animation) {
                     if (!mode) view.setVisibility(View.GONE);
                     view.setEnabled(mode);
-                    animationFlags.put(viewKey, true);
+                    ANIMATION_FLAGS.put(viewKey, true);
                 }
             });
             alphaAnimator.start();
@@ -190,13 +191,13 @@ public class AnimationUtils {
     public static ValueAnimator backgroundVisibility(@NonNull View view, @NonNull @Nonnegative boolean mode) {
         int viewKey = view.hashCode();
 
-        if (animationFlags.get(viewKey , true)) {
-            boolean flag = view.getBackground().getAlpha() == 255;
+        if (ANIMATION_FLAGS.get(viewKey, true)) {
+            boolean flag = view.getBackground().getAlpha() == FULL_ALPHA;
             if (mode == flag) return null;
 
-            animationFlags.put(viewKey, false);
+            ANIMATION_FLAGS.put(viewKey, false);
 
-            ValueAnimator alphaAnimator = ValueAnimator.ofInt(mode ? 0 : 255, mode ? 255 : 0);
+            ValueAnimator alphaAnimator = ValueAnimator.ofInt(mode ? ZERO_ALPHA : FULL_ALPHA, mode ? FULL_ALPHA : ZERO_ALPHA);
             alphaAnimator.addUpdateListener(animation -> {
                 int alpha = (int) animation.getAnimatedValue();
                 view.getBackground().setAlpha(alpha);
@@ -205,7 +206,7 @@ public class AnimationUtils {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     view.getBackground().setVisible(mode, false);
-                    animationFlags.put(viewKey , true);
+                    ANIMATION_FLAGS.put(viewKey, true);
                 }
             });
             return alphaAnimator;

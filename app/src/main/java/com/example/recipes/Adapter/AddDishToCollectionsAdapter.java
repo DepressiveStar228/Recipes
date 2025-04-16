@@ -134,7 +134,7 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
         ImageView collection_img;
         CheckBox collection_check;
 
-        public CollectionViewHolder(@NonNull View itemView) {
+        CollectionViewHolder(@NonNull View itemView) {
             super(itemView);
             collection_name = itemView.findViewById(R.id.collection_name_checkItem);
             collection_img = itemView.findViewById(R.id.collection_imageView_checkItem);
@@ -152,10 +152,10 @@ public class AddDishToCollectionsAdapter extends RecyclerView.Adapter<AddDishToC
 
             collection_name.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
                 @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) { }
 
                 @Override
                 public void afterTextChanged(Editable s) {

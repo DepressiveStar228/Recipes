@@ -2,7 +2,6 @@ package com.example.recipes.Controller;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
@@ -35,7 +34,6 @@ import java.util.zip.ZipOutputStream;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -62,18 +60,18 @@ public class ImportExportController {
     /**
      * Імпортує дані рецептів з ZIP-файлу.
      *
-     * @param context Контекст додатку.
+     * @param ctx Контекст додатку.
      * @param uri     URI ZIP-файлу.
      * @return Completable, який повідомляє про успішний імпорт або помилку.
      */
-    public Completable importRecipeDataToFile(Context context, Uri uri) {
+    public Completable importRecipeDataToFile(Context ctx, Uri uri) {
         return Completable.fromAction(() -> {
-            File importDir = new File(context.getExternalFilesDir(null), IMPORT_FILE);
+            File importDir = new File(ctx.getExternalFilesDir(null), IMPORT_FILE);
             if (!importDir.exists()) {
                 importDir.mkdirs(); // Створення папки для імпорту, якщо вона не існує
             }
 
-            try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
+            try (InputStream inputStream = ctx.getContentResolver().openInputStream(uri);
                  ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
 
                 ZipEntry zipEntry;
@@ -136,7 +134,7 @@ public class ImportExportController {
                     }
 
                     Gson gson = new Gson();
-                    Type dishListType = new TypeToken<ArrayList<Dish>>() {}.getType();
+                    Type dishListType = new TypeToken<ArrayList<Dish>>() { }.getType();
                     dishes = gson.fromJson(jsonString.toString(), dishListType); // Парсинг JSON у список страв
 
                     emitter.onSuccess(dishes);
@@ -167,8 +165,8 @@ public class ImportExportController {
 
         return utils.ByDish().addAll(dishes, ID_System_Collection.ID_IMPORT_RECIPE.getId())
                 .flatMapCompletable(status -> {
-                   if (status) return Completable.complete();
-                   else return Completable.error(new Throwable("Помилка додавання страв до бази даних"));
+                    if (status) return Completable.complete();
+                    else return Completable.error(new Throwable("Помилка додавання страв до бази даних"));
                 });
     }
 
@@ -185,19 +183,19 @@ public class ImportExportController {
     /**
      * Експортує дані рецептів з колекції у ZIP-файл.
      *
-     * @param context    Контекст додатку.
+     * @param ctx    Контекст додатку.
      * @param collection Колекція страв для експорту.
      * @param callback   Callback для повернення результату.
      */
-    public void exportRecipeData(Context context, Collection collection, ExportCallbackUri callback) {
-        RecipeUtils utils = RecipeUtils.getInstance(context);
+    public void exportRecipeData(Context ctx, Collection collection, ExportCallbackUri callback) {
+        RecipeUtils utils = RecipeUtils.getInstance(ctx);
         Disposable disposable = utils.ByCollection().getDishes(collection.getId())
-                .flatMap(dishes -> createExportDir(context, collection.getName(), new ArrayList<>(dishes)))
+                .flatMap(dishes -> createExportDir(ctx, collection.getName(), new ArrayList<>(dishes)))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(zipFile  -> {
                     if (zipFile.exists()) {
-                        callback.onSuccess(FileProvider.getUriForFile(context, "com.example.recipes.file-provider", zipFile));
+                        callback.onSuccess(FileProvider.getUriForFile(ctx, "com.example.recipes.file-provider", zipFile));
                     }
                     else callback.onError(new Throwable("ZIP file do not exist"));
                 });
@@ -208,17 +206,17 @@ public class ImportExportController {
     /**
      * Експортує дані рецептів у ZIP-файл.
      *
-     * @param context  Контекст додатку.
+     * @param ctx  Контекст додатку.
      * @param dishes   Список страв для експорту.
      * @param callback Callback для повернення результату.
      */
-    public void exportRecipeData(Context context, List<Dish> dishes, ExportCallbackUri callback) {
-        Disposable disposable = createExportDir(context, EXPORT_FILE, new ArrayList<>(dishes))
+    public void exportRecipeData(Context ctx, List<Dish> dishes, ExportCallbackUri callback) {
+        Disposable disposable = createExportDir(ctx, EXPORT_FILE, new ArrayList<>(dishes))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(zipFile  -> {
                     if (zipFile.exists()) {
-                        callback.onSuccess(FileProvider.getUriForFile(context, "com.example.recipes.file-provider", zipFile));
+                        callback.onSuccess(FileProvider.getUriForFile(ctx, "com.example.recipes.file-provider", zipFile));
                     }
                     else callback.onError(new Throwable("ZIP file do not exist"));
                 });
@@ -229,20 +227,20 @@ public class ImportExportController {
     /**
      * Експортує одну страву у ZIP-файл.
      *
-     * @param context  Контекст додатку.
+     * @param ctx  Контекст додатку.
      * @param dish     Страва для експорту.
      * @param callback Callback для повернення результату.
      */
-    public void exportDish(Context context, Dish dish, ExportCallbackUri callback) {
+    public void exportDish(Context ctx, Dish dish, ExportCallbackUri callback) {
         ArrayList<Dish> dishes = new ArrayList<>();
         dishes.add(dish);
 
-        Disposable disposable = createExportDir(context, dish.getName(), dishes)
+        Disposable disposable = createExportDir(ctx, dish.getName(), dishes)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(zipFile  -> {
                     if (zipFile.exists()) {
-                        callback.onSuccess(FileProvider.getUriForFile(context, "com.example.recipes.file-provider", zipFile));
+                        callback.onSuccess(FileProvider.getUriForFile(ctx, "com.example.recipes.file-provider", zipFile));
                     }
                     else callback.onError(new Throwable("ZIP file do not exist"));
                 });
@@ -253,16 +251,16 @@ public class ImportExportController {
     /**
      * Створює директорію для експорту даних.
      *
-     * @param context Контекст додатку.
+     * @param ctx Контекст додатку.
      * @param nameDir Назва директорії.
      * @param dishes  Список страв для експорту.
      * @return Single<File>, який містить ZIP-файл або помилку.
      */
-    private Single<File> createExportDir(Context context, String nameDir, ArrayList<Dish> dishes) {
+    private Single<File> createExportDir(Context ctx, String nameDir, ArrayList<Dish> dishes) {
         return Single.create(emitter -> {
             ArrayList<Dish> exportDishes = new ArrayList<>();
 
-            File exportDir = new File(context.getExternalFilesDir(null), nameDir);
+            File exportDir = new File(ctx.getExternalFilesDir(null), nameDir);
             if (!exportDir.exists()) exportDir.mkdirs();
 
             for (Dish dish : dishes) {
@@ -296,7 +294,7 @@ public class ImportExportController {
                 emitter.onError(e);
             }
 
-            File zipFile = new File(context.getExternalFilesDir(null), nameDir + ".zip");
+            File zipFile = new File(ctx.getExternalFilesDir(null), nameDir + ".zip");
             zipFolder(exportDir, zipFile);
 
             deleteFolder(exportDir);

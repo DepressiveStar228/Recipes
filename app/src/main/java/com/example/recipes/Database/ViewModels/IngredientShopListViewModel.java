@@ -34,20 +34,20 @@ public class IngredientShopListViewModel extends ViewModel {
     /**
      * Отримує кількість інгредієнтів у списку покупок за ідентифікатором колекції у вигляді LiveData.
      *
-     * @param id_collection Ідентифікатор колекції.
+     * @param idCollection Ідентифікатор колекції.
      * @return LiveData, яка містить кількість інгредієнтів для вказаної колекції.
      */
-    public LiveData<Integer> getCountByIdCollection(long id_collection) {
-        return dao.getCountByIdShopList_Live(id_collection);
+    public LiveData<Integer> getCountByIdCollection(long idCollection) {
+        return dao.getCountByIdShopList_Live(idCollection);
     }
 
     /**
      * Отримує кількість придбаних інгредієнтів у списку покупок за ідентифікатором колекції у вигляді LiveData.
      *
-     * @param id_collection Ідентифікатор колекції.
+     * @param idCollection Ідентифікатор колекції.
      * @return LiveData, яка містить кількість придбаних інгредієнтів для вказаної колекції.
      */
-    public LiveData<Integer> getBoughtCountByIdCollection(long id_collection) {
-        return dao.getBoughtCountByIdShopList_Live(id_collection);
+    public LiveData<Integer> getBoughtCountByIdCollection(long idCollection) {
+        return dao.getBoughtCountByIdShopList_Live(idCollection);
     }
 }

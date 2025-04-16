@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @param <T> Тип елементів у списку результатів (може бути Item або String)
  */
-public class SearchResultsAdapter <T> extends ListAdapter<T, SearchResultsAdapter.ViewHolder> implements Search<T> {
+public class SearchResultsAdapter<T> extends ListAdapter<T, SearchResultsAdapter.ViewHolder> implements Search<T> {
     private OnItemClickListener listener;
 
     /**
@@ -128,7 +128,7 @@ public class SearchResultsAdapter <T> extends ListAdapter<T, SearchResultsAdapte
     static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView textView;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             textView = itemView.findViewById(R.id.itemResultTextView);
         }

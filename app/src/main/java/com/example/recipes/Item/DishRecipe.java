@@ -1,7 +1,5 @@
 package com.example.recipes.Item;
 
-import android.graphics.Bitmap;
-
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
@@ -19,22 +17,17 @@ import java.util.Objects;
  */
 @Entity(
         tableName = "dish_recipe",
-        foreignKeys = {
-                @ForeignKey(
+        foreignKeys = {@ForeignKey(
                         entity = Dish.class,
                         parentColumns = "id",
                         childColumns = "id_dish",
-                        onDelete = ForeignKey.CASCADE
-                )
+                        onDelete = ForeignKey.CASCADE)
         },
-        indices = {
-                @Index(value = "id_dish"),
-                @Index(value = "type_data")
-        }
+        indices = {@Index(value = "id_dish"), @Index(value = "type_data")}
 )
 public class DishRecipe {
     @PrimaryKey(autoGenerate = true) private long id;
-    @ColumnInfo(name = "id_dish") private long id_dish;
+    @ColumnInfo(name = "id_dish") private long idDish;
     @ColumnInfo(name = "textData") private String textData = "";
     @ColumnInfo(name = "position") private int position = -1;
     @ColumnInfo(name = "type_data") private DishRecipeType typeData;
@@ -42,20 +35,20 @@ public class DishRecipe {
 
     // Конструктори
     @Ignore
-    public DishRecipe() {}
+    public DishRecipe() { }
 
     @Ignore
-    public DishRecipe(long id, long id_dish, String textData, int position, DishRecipeType typeData) {
+    public DishRecipe(long id, long idDish, String textData, int position, DishRecipeType typeData) {
         this.id = id;
-        this.id_dish = id_dish;
+        this.idDish = idDish;
         this.textData = textData;
         this.position = position;
         this.typeData = typeData;
     }
 
     @Ignore
-    public DishRecipe(long id_dish, DishRecipe dishRecipe) {
-        this.id_dish = id_dish;
+    public DishRecipe(long idDish, DishRecipe dishRecipe) {
+        this.idDish = idDish;
         this.textData = dishRecipe.getTextData();
         this.position = dishRecipe.getPosition();
         this.typeData = dishRecipe.getTypeData();
@@ -63,22 +56,22 @@ public class DishRecipe {
 
     @Ignore
     public DishRecipe(String textData, DishRecipe dishRecipe) {
-        this.id_dish = dishRecipe.getId_dish();
+        this.idDish = dishRecipe.getIdDish();
         this.textData = textData;
         this.position = dishRecipe.getPosition();
         this.typeData = dishRecipe.getTypeData();
     }
 
     @Ignore
-    public DishRecipe(long id_dish, int position, DishRecipeType typeData) {
-        this.id_dish = id_dish;
+    public DishRecipe(long idDish, int position, DishRecipeType typeData) {
+        this.idDish = idDish;
         this.position = position;
         this.typeData = typeData;
     }
 
     @Ignore
-    public DishRecipe(long id_dish, DishRecipeType typeData) {
-        this.id_dish = id_dish;
+    public DishRecipe(long idDish, DishRecipeType typeData) {
+        this.idDish = idDish;
         this.typeData = typeData;
     }
 
@@ -89,8 +82,8 @@ public class DishRecipe {
         this.typeData = typeData;
     }
 
-    public DishRecipe(long id_dish, String textData, int position, DishRecipeType typeData) {
-        this.id_dish = id_dish;
+    public DishRecipe(long idDish, String textData, int position, DishRecipeType typeData) {
+        this.idDish = idDish;
         this.textData = textData;
         this.position = position;
         this.typeData = typeData;
@@ -106,12 +99,12 @@ public class DishRecipe {
         this.id = id;
     }
 
-    public long getId_dish() {
-        return id_dish;
+    public long getIdDish() {
+        return idDish;
     }
 
-    public void setId_dish(long id_dish) {
-        this.id_dish = id_dish;
+    public void setIdDish(long idDish) {
+        this.idDish = idDish;
     }
 
     public String getTextData() {
@@ -145,11 +138,11 @@ public class DishRecipe {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         DishRecipe that = (DishRecipe) object;
-        return id == that.id && id_dish == that.id_dish && position == that.position && Objects.equals(textData, that.textData) && typeData == that.typeData;
+        return id == that.id && idDish == that.idDish && position == that.position && Objects.equals(textData, that.textData) && typeData == that.typeData;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, id_dish, textData, position, typeData);
+        return Objects.hash(id, idDish, textData, position, typeData);
     }
 }

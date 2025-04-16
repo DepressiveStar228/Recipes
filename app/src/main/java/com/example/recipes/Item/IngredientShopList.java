@@ -12,7 +12,6 @@ import androidx.room.PrimaryKey;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Interface.Item;
-import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,56 +30,54 @@ import io.reactivex.rxjava3.annotations.NonNull;
 @Entity(
         tableName = "ingredient_shop_list",
         indices = {@Index("id")},
-        foreignKeys = {
-            @ForeignKey(
+        foreignKeys = {@ForeignKey(
                     entity = Collection.class,
                     parentColumns = "id",
                     childColumns = "id_collection",
-                    onDelete = ForeignKey.CASCADE
-            )
+                    onDelete = ForeignKey.CASCADE)
         }
 )
 public class IngredientShopList implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name;
     @Ignore private Map<IngredientType, ArrayList<String>> groupedAmountType = new HashMap<>();
-    @ColumnInfo(name = "id_collection") private long id_collection;
+    @ColumnInfo(name = "id_collection") private long idCollection;
     @ColumnInfo(name = "is_buy") private boolean isBuy = false;
 
 
     // Конструктори
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull Map<IngredientType, ArrayList<String>> groupedAmountType, @NonNull long id_collection){
+    public IngredientShopList(@NonNull String name, @NonNull Map<IngredientType, ArrayList<String>> groupedAmountType, @NonNull long idCollection) {
         this.name = name;
         this.groupedAmountType = groupedAmountType;
-        this.id_collection = id_collection;
+        this.idCollection = idCollection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull IngredientShopList ingredientShopList){
+    public IngredientShopList(@NonNull IngredientShopList ingredientShopList) {
         this.id = ingredientShopList.getId();
         this.name = ingredientShopList.getName();
         this.groupedAmountType = ingredientShopList.getGroupedAmountType();
-        this.id_collection = ingredientShopList.getId_collection();
+        this.idCollection = ingredientShopList.getIdCollection();
         this.isBuy = ingredientShopList.getIsBuy();
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long id_collection){
+    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long idCollection) {
         this.name = name;
         addAmountType(amount, type);
-        this.id_collection = id_collection;
+        this.idCollection = idCollection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull boolean isBuy){
+    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull boolean isBuy) {
         this.name = name;
         addAmountType(amount, type);
         this.isBuy = isBuy;
     }
 
     @Ignore
-    public IngredientShopList(Ingredient ingredient){
+    public IngredientShopList(Ingredient ingredient) {
         if (ingredient != null) {
             this.name = ingredient.getName();
             addAmountType(ingredient.getAmount(), ingredient.getType());
@@ -88,19 +85,19 @@ public class IngredientShopList implements Item {
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull long id_collection) {
+    public IngredientShopList(@NonNull String name, @NonNull long idCollection) {
         this.name = name;
-        this.id_collection = id_collection;
+        this.idCollection = idCollection;
     }
 
-    public IngredientShopList(@NonNull String name, @NonNull long id_collection, @NonNull boolean isBuy) {
+    public IngredientShopList(@NonNull String name, @NonNull long idCollection, @NonNull boolean isBuy) {
         this.name = name;
-        this.id_collection = id_collection;
+        this.idCollection = idCollection;
         this.isBuy = isBuy;
     }
 
     @Ignore
-    public IngredientShopList(){}
+    public IngredientShopList() { }
 
 
 
@@ -117,8 +114,8 @@ public class IngredientShopList implements Item {
 
     public Map<IngredientType, ArrayList<String>> getGroupedAmountType() { return groupedAmountType; }
 
-    public long getId_collection() {
-        return id_collection;
+    public long getIdCollection() {
+        return idCollection;
     }
 
     public boolean getIsBuy() {
@@ -136,8 +133,8 @@ public class IngredientShopList implements Item {
 
     public void setGroupedAmountType(@NonNull Map<IngredientType, ArrayList<String>> groupedAmountType) { this.groupedAmountType = groupedAmountType; }
 
-    public void setId_collection(@NonNull long id_collection) {
-        this.id_collection = id_collection;
+    public void setIdCollection(@NonNull long idCollection) {
+        this.idCollection = idCollection;
     }
 
     public void setIsBuy(@NonNull boolean isBuy) {
@@ -161,7 +158,6 @@ public class IngredientShopList implements Item {
     /**
      * Отримаємо текст суми кількості інгредієнтів за їх типом
      *
-     * @param context контекст активності. Потрібен для отримання текстових ресурсів
      * @return текст суми кількості інгредієнтів за їх типом
      */
     public String getGroupedAmountTypeToString(Context context) {
@@ -237,7 +233,7 @@ public class IngredientShopList implements Item {
                 float denominator = Float.parseFloat(parts[1]);
                 return numerator / denominator;
             }
-        } catch (Exception e) {}
+        } catch (Exception e) { }
         return 0;
     }
 
@@ -246,11 +242,11 @@ public class IngredientShopList implements Item {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         IngredientShopList that = (IngredientShopList) object;
-        return id == that.id && id_collection == that.id_collection && isBuy == that.isBuy && Objects.equals(name, that.name) && Objects.equals(groupedAmountType, that.groupedAmountType);
+        return id == that.id && idCollection == that.idCollection && isBuy == that.isBuy && Objects.equals(name, that.name) && Objects.equals(groupedAmountType, that.groupedAmountType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, groupedAmountType, id_collection, isBuy);
+        return Objects.hash(id, name, groupedAmountType, idCollection, isBuy);
     }
 }

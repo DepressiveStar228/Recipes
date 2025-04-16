@@ -34,7 +34,7 @@ public class Dish implements Item {
 
     // Конструктори
     @Ignore
-    public Dish(long id, String name, int portion, long timestamp){
+    public Dish(long id, String name, int portion, long timestamp) {
         this.id = id;
         this.name = name;
         this.portion = portion;
@@ -42,7 +42,7 @@ public class Dish implements Item {
     }
 
     @Ignore
-    public Dish(Dish dish){
+    public Dish(Dish dish) {
         this.id = dish.getId();
         this.name = dish.getName();
         this.portion = dish.getPortion();
@@ -52,7 +52,7 @@ public class Dish implements Item {
     }
 
     @Ignore
-    public Dish(long id, String name, int portion){
+    public Dish(long id, String name, int portion) {
         this.id = id;
         this.name = name;
         this.portion = portion;
@@ -60,7 +60,7 @@ public class Dish implements Item {
     }
 
     @Ignore
-    public Dish(long id, String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes){
+    public Dish(long id, String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes) {
         this.id = id;
         this.name = name;
         this.portion = portion;
@@ -70,7 +70,7 @@ public class Dish implements Item {
     }
 
     @Ignore
-    public Dish(String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long timestamp){
+    public Dish(String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long timestamp) {
         this.name = name;
         this.portion = portion;
         this.ingredients.addAll(ingredients);
@@ -79,12 +79,12 @@ public class Dish implements Item {
     }
 
     @Ignore
-    public Dish(String name){
+    public Dish(String name) {
         this.name = name;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public Dish(String name, int portion){
+    public Dish(String name, int portion) {
         this.name = name;
         this.portion = portion;
         this.timestamp = System.currentTimeMillis();
@@ -178,8 +178,7 @@ public class Dish implements Item {
         builder.append(name + "\n\n").append(context.getString(R.string.portionship) + ": " + portion + "\n");
         builder.append(context.getString(R.string.ingredients) + ":\n");
         for (Ingredient ingredient : ingredients) {
-            String ingredientText = ingredient.getName() + "  " +
-                    ingredient.getAmount() + ingredient.getType() + '\n';
+            String ingredientText = ingredient.getName() + "  " + ingredient.getAmount() + ingredient.getType() + '\n';
             builder.append(ingredientText);
         }
         builder.append("\n");
@@ -193,7 +192,8 @@ public class Dish implements Item {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Dish dish = (Dish) object;
-        return id == dish.id && portion == dish.portion && timestamp == dish.timestamp && Objects.equals(name, dish.name) && Objects.equals(ingredients, dish.ingredients) && Objects.equals(recipes, dish.recipes);
+        return id == dish.id && portion == dish.portion && timestamp == dish.timestamp && Objects.equals(name, dish.name)
+                && Objects.equals(ingredients, dish.ingredients) && Objects.equals(recipes, dish.recipes);
     }
 
     @Override
