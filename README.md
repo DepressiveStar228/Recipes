@@ -46,6 +46,50 @@ This project is a mobile recipe catalog, your personal electronic recipe book, b
 ## Installation
 To install the mobile application, you need to download the file _my_recipes.apk_ via the path _app/release_ and install it on the desired device.
 
+## Code documentation
+- **General principles**
+Our project uses a KDoc/JavaDoc-like syntax for documenting code. Proper documentation is crucial for understanding, maintaining, and extending the project.
+
+- **Documentation structure**
+  - Documenting methods
+```java
+/**
+* Короткий опис призначення методу (що робить метод).
+* За потреби додайте більш детальне пояснення в новому рядку.
+*
+* @param paramName Опис параметра
+* @param anotherParam Опис іншого параметра
+* @return Опис значення, що повертається
+*/
+```
+  - Documenting classes
+```java
+/**
+ * @author Ім'я Прізвище
+ * @version X.Y
+ *
+ * Короткий опис призначення класу.
+ * Додаткові деталі про клас та його відповідальності.
+ */
+```
+
+- **Recommendations**
+  - Be concise: Write clear and concise descriptions
+  - Describe behavior: Focus on what the method does, not implementation details
+  - Document exceptions: Use the @throws tag to describe possible exceptions
+  - Mention side effects: If the method changes the state of the object, state this
+
+- **Documentation generation**
+The Dokka plugin is used to generate documentation, which supports both Kotlin and Java code, including Android-specific classes.
+
+To generate documentation, do the following:
+
+```bash
+./gradlew dokkaHtml
+```
+
+The generated documentation will be available in the directory `app/build/dokka/html`.
+
 ## Development
 In the future, it is planned to introduce advertising to provide a wider range of ChatGPT API users. It is also planned to add support for cloud saving and adding a recipe from text to a photo
 
