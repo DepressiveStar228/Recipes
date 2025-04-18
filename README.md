@@ -47,11 +47,11 @@ This project is a mobile recipe catalog, your personal electronic recipe book, b
 To install the mobile application, you need to download the file _my_recipes.apk_ via the path _app/release_ and install it on the desired device.
 
 ## Code documentation
-- **General principles**
+1. **General principles**
 Our project uses a KDoc/JavaDoc-like syntax for documenting code. Proper documentation is crucial for understanding, maintaining, and extending the project.
 
-- **Documentation structure**
-  - Documenting methods
+2. **Documentation structure**
+- Documenting methods
 ```java
 /**
 * Короткий опис призначення методу (що робить метод).
@@ -62,7 +62,7 @@ Our project uses a KDoc/JavaDoc-like syntax for documenting code. Proper documen
 * @return Опис значення, що повертається
 */
 ```
-  - Documenting classes
+- Documenting classes
 ```java
 /**
  * @author Ім'я Прізвище
@@ -73,13 +73,13 @@ Our project uses a KDoc/JavaDoc-like syntax for documenting code. Proper documen
  */
 ```
 
-- **Recommendations**
+3. **Recommendations**
   - Be concise: Write clear and concise descriptions
   - Describe behavior: Focus on what the method does, not implementation details
   - Document exceptions: Use the @throws tag to describe possible exceptions
   - Mention side effects: If the method changes the state of the object, state this
 
-- **Documentation generation**
+4. **Documentation generation**
 The Dokka plugin is used to generate documentation, which supports both Kotlin and Java code, including Android-specific classes.
 
 To generate documentation, do the following:
@@ -89,6 +89,27 @@ To generate documentation, do the following:
 ```
 
 The generated documentation will be available in the directory `app/build/dokka/html`.
+
+## Developer's Guide
+1. **Required software**
+   - Android Studio Koala | 2024.1.1 Patch 1
+   - Java 17 or higher
+   - Git
+   - Gradle (built into Android Studio)
+   - Android emulator or physical device
+
+2. **Cloning a repository**
+```bash
+git clone https://github.com/DepressiveStar228/Recipes
+cd Recipes
+```
+
+3. **Project launch**
+   - Open the project in Android Studio.
+   - Select Open an existing project and specify the path to the project folder.
+   - Wait for Gradle to sync.
+   - Select the desired emulator or physical device.
+   - Click on the "Run" button (green triangle) in Android Studio.
 
 ## Development
 In the future, it is planned to introduce advertising to provide a wider range of ChatGPT API users. It is also planned to add support for cloud saving and adding a recipe from text to a photo
