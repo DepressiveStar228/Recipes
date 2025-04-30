@@ -27,6 +27,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView20" />
 
+    <include
+        android:id="@+id/collectionEmpty"
+        layout="@layout/empty_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="@+id/collections_dishRecyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/collections_dishRecyclerView" />
+
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/add_collection_button"
         android:layout_width="45dp"

@@ -227,4 +227,6 @@
     <string name="successful_clear_db">База даних успішно очищена</string>
     <string name="error_clear_db">Помилка очищення бази даних</string>
     <string name="daily_request_limit_exceeded">Перевищено денний ліміт запитів</string>
+    <string name="collections">Колекції</string>
+    <string name="error_saving_filters">Помилка при збереженні фільтрів</string>
 </resources>

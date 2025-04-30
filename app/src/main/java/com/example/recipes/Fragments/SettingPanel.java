@@ -25,9 +25,11 @@ import com.example.recipes.R;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -45,12 +47,14 @@ public class SettingPanel {
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private LinearLayout importLayout, exportLayout, deleteDBLayout;
+    private SwitchMaterial ingHintsSwitch;
     private PreferencesController preferencesController;
     private RecipeUtils utils;
     private Spinner languageSpinner, themeSpinner, paletteSpinner;
     private String[] languageArray, themeArray, paletteArray;
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
+    private boolean isIngredientHintsEnabled;
     private String nameActivity;
     private ImportExportController importExportController;
     private CompositeDisposable compositeDisposable;
@@ -65,6 +69,7 @@ public class SettingPanel {
             this.drawerLayout = (DrawerLayout) rootView;
         } catch (Exception e) { }
         preferencesController = PreferencesController.getInstance();
+        preferencesController.loadPreferences();
         utils = RecipeUtils.getInstance(activity);
         importExportController = new ImportExportController(activity);
         nameActivity = activity.getClass().getSimpleName();
@@ -89,10 +94,14 @@ public class SettingPanel {
                     languageSpinner = headerView.findViewById(R.id.language_spinner);
                     themeSpinner = headerView.findViewById(R.id.theme_spinner);
                     paletteSpinner = headerView.findViewById(R.id.palette_spinner);
-                    confirmButton = headerView.findViewById(R.id.confirm_button);
+
+                    ingHintsSwitch = headerView.findViewById(R.id.ingredientHintsSwitch);
+
                     importLayout = headerView.findViewById(R.id.importContainer);
                     exportLayout = headerView.findViewById(R.id.exportContainer);
                     deleteDBLayout = headerView.findViewById(R.id.deleteAllDBContainer);
+
+                    confirmButton = headerView.findViewById(R.id.confirm_button);
                 }
 
                 if (languageSpinner != null) {
@@ -119,6 +128,8 @@ public class SettingPanel {
                 languageArray = preferencesController.getStringArrayForLocale(R.array.language_values, "en");
                 themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
                 paletteArray = preferencesController.getStringArrayForLocale(R.array.palette_options, "en");
+
+                ingHintsSwitch.setChecked(preferencesController.getStatus_ing_hints());
 
                 Log.d(nameActivity, "Завантаження всіх об'єктів налаштувань");
             }
@@ -160,7 +171,7 @@ public class SettingPanel {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedPalette = preferencesController.getPaletteNameBySpinner(position);
-                Log.d(nameActivity, "Слушатель заметил смену палитры");
+                Log.d(nameActivity, "Слухач помітив зміну палітри");
             }
 
             @Override
@@ -169,10 +180,15 @@ public class SettingPanel {
             }
         });
 
+        ingHintsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isIngredientHintsEnabled = isChecked;
+        });
+
         confirmButton.setOnClickListener(v -> {
             Log.d(nameActivity, "Слухач помітив підтвердження налаштувань");
             preferencesController.setLocale(selectedLanguage, activity);
             preferencesController.savePreferences(selectedLanguage, selectedTheme, selectedPalette);
+            preferencesController.savePreferences(isIngredientHintsEnabled);
             drawerLayout.closeDrawer(GravityCompat.END);
 
             // Перезапуск активності для застосування змін

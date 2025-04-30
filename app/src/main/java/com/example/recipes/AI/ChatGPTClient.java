@@ -8,10 +8,14 @@ import android.widget.Toast;
 
 import com.azure.ai.openai.assistants.AssistantsClient;
 import com.azure.ai.openai.assistants.AssistantsClientBuilder;
+import com.azure.ai.openai.assistants.models.ApiResponseFormat;
 import com.azure.ai.openai.assistants.models.Assistant;
 import com.azure.ai.openai.assistants.models.AssistantCreationOptions;
 import com.azure.ai.openai.assistants.models.AssistantThread;
 import com.azure.ai.openai.assistants.models.AssistantThreadCreationOptions;
+import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormat;
+import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormatMode;
+import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormatOption;
 import com.azure.ai.openai.assistants.models.CreateRunOptions;
 import com.azure.ai.openai.assistants.models.MessageContent;
 import com.azure.ai.openai.assistants.models.MessageRole;
@@ -251,8 +255,14 @@ public class ChatGPTClient {
     private Assistant createAssistant() {
         AssistantCreationOptions assistantCreationOptions = new AssistantCreationOptions("gpt-3.5-turbo");
 
-        if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) assistantCreationOptions.setName("Chef").setInstructions(readTextFileFromAssets("asset_chef"));
-        else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) assistantCreationOptions.setName("Translator").setInstructions(readTextFileFromAssets("asset_translator"));
+        if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) {
+            assistantCreationOptions.setName("Chef").setInstructions(readTextFileFromAssets("asset_chef"));
+        }
+        else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) {
+            assistantCreationOptions.setName("Translator").setInstructions(readTextFileFromAssets("asset_translator"));
+            assistantCreationOptions.setTemperature(0.0);
+            assistantCreationOptions.setResponseFormat(new AssistantsApiResponseFormatOption(new AssistantsApiResponseFormat(ApiResponseFormat.JSON_OBJECT)));
+        }
         else assistantCreationOptions = null;
 
         return client.createAssistant(assistantCreationOptions);
@@ -310,9 +320,6 @@ public class ChatGPTClient {
      * @return Single<String>, який містить відповідь від ChatGPT або помилку.
      */
     public Single<String> sendMessage(String message) {
-        dailyRequestCount++; // Збільшуємо лічильник запитів за день
-        saveDailyLimit(); // Зберігаємо поточний ліміт запитів
-
         return Single.create(emitter -> {
             if (client != null && assistant != null && thread != null) {
                 try {
@@ -342,6 +349,7 @@ public class ChatGPTClient {
                                 String box = messageTextContent.getText().getValue();
                                 if (!box.isEmpty()) {
                                     dailyRequestCount++;
+                                    lastRequestTime = System.currentTimeMillis();
                                     saveDailyLimit();
                                     emitter.onSuccess(box); // Повертаємо відповідь
                                 } else { emitter.onError(new Throwable("Answer is empty")); }
@@ -353,34 +361,6 @@ public class ChatGPTClient {
                 }
             } else { emitter.onError(new Throwable("Data is null")); }
         });
-    }
-
-    /**
-     * Форматує об'єкт Dish у рядок для надсилання до ChatGPT.
-     *
-     * @param dish Об'єкт Dish, який потрібно форматувати.
-     * @return Рядок у форматі, зрозумілому для ChatGPT.
-     */
-    public String getFormatStringForGPT(Dish dish) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("{name=[").append(dish.getName()).append("]},");
-        stringBuilder.append("{recipes=<");
-        for (String recipe : dish.getRecipeText()) {
-            stringBuilder.append("[").append(recipe).append("]");
-
-            if (dish.getRecipeText().size() - 1 != dish.getRecipeText().indexOf(recipe)) stringBuilder.append(",");
-        }
-        stringBuilder.append(">}");
-        stringBuilder.append("{portion=[").append(dish.getPortion()).append("]},");
-        stringBuilder.append("{ingredients=<");
-        for (Ingredient ing : dish.getIngredients()) {
-            stringBuilder.append("[").append(ing.getName()).append("]");
-            if (dish.getIngredients().size() - 1 != dish.getIngredients().indexOf(ing)) stringBuilder.append(",");
-        }
-        stringBuilder.append(">}");
-
-        return stringBuilder.toString();
     }
 
     /**
@@ -537,26 +517,29 @@ public class ChatGPTClient {
     }
 
     /**
-     * Перевіряє, чи не перевищено ліміт запитів за день або інтервал між запитами.
+     * Перевіряє, чи не перевищено ліміт запитів за день.
      *
      * @return true, якщо ліміт не перевищено, інакше false.
      */
-    public boolean checkLimit() {
+    public boolean checkDailyRequestLimitLimit() {
+        if (dailyRequestCount >= MAX_REQUESTS_PER_DAY) {
+            Toast.makeText(context, context.getString(R.string.warning_daily_request_limit), Toast.LENGTH_SHORT).show();
+            return false;
+        } else return true;
+    }
+
+    /**
+     * Перевіряє, чи минув мінімальний інтервал між запитами.
+     *
+     * @return true, якщо інтервал дотримано, інакше false.
+     */
+    public boolean checkLastTimeRequest() {
         long currentTime = System.currentTimeMillis();
 
         if (currentTime - lastRequestTime < MIN_REQUEST_INTERVAL_MS) {
             Toast.makeText(context, context.getString(R.string.warning_request_time), Toast.LENGTH_SHORT).show();
             return false;
-        }
-
-        lastRequestTime = currentTime;
-
-        if (dailyRequestCount >= MAX_REQUESTS_PER_DAY) {
-            Toast.makeText(context, context.getString(R.string.warning_daily_request_limit), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        return true;
+        } else return true;
     }
 
     /**

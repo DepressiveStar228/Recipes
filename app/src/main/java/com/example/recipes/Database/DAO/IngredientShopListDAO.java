@@ -48,7 +48,7 @@ public interface IngredientShopListDAO {
     LiveData<List<IngredientShopList>> getAllLive();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
-    Single<IngredientShopList> getById(long id);
+    Maybe<IngredientShopList> getById(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + NAME + " = :name")
     Maybe<IngredientShopList> getByNameAndIDCollection(String name, Long idCollection);

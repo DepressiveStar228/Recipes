@@ -40,4 +40,14 @@ public class DishCollectionViewModel extends ViewModel {
     public LiveData<List<Long>> getAllDishIDs(long idCollection) {
         return dao.getAllDishIDsLive(idCollection);
     }
+
+    /**
+     * Отримує ідентифікатори колекцій за ідентифікатором страви.
+     *
+     * @param idDish Ідентифікатор страви.
+     * @return LiveData, яке містить ідентифікатори колекцій.
+     */
+    public LiveData<List<Long>> getAllCollectionIDs(long idDish) {
+        return dao.getAllIDsCollectionLive(idDish);
+    }
 }

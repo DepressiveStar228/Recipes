@@ -4,7 +4,17 @@ import android.content.Context;
 
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Enum.ChatGPTRole;
+import com.example.recipes.Enum.DishRecipeType;
+import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.DishRecipe;
+import com.example.recipes.Item.Ingredient;
+import com.google.gson.Gson;
+
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -40,14 +50,34 @@ public class Translator {
      * @return Single<Dish>, який містить перекладений об'єкт Dish або порожній об'єкт у разі помилки.
      */
     public Single<Dish> translateRecipe(Dish dish) {
-        // Форматуємо дані страви для надсилання до ChatGPT
-        String dataRecipes = client.getFormatStringForGPT(dish);
-
-        if (!dataRecipes.isEmpty()) {
+        if (!dish.getName().isEmpty()) {
             // Надсилаємо запит на переклад до ChatGPT
-            return client.sendMessage("Lang: " + preferencesController.getLanguageString() + "; Data: " + dataRecipes)
+            return client.sendMessage("Lang: " + preferencesController.getLanguageString() + "; Data: " + new Gson().toJson(dish))
                     .flatMap(data -> {
-                        if (!data.isEmpty()) return Single.just(client.parsedAnswerGPT(data)); // Парсимо відповідь та повертаємо перекладений об'єкт Dish
+                        if (!data.isEmpty()) {
+                            Dish translatedDish = new Gson().fromJson(data, Dish.class); // Парсимо відповідь
+
+                            // Відновлюємо типи інгредієнтів та рецептів
+                            if (!translatedDish.getName().isEmpty()) {
+                                if (translatedDish.getIngredients().size() == dish.getIngredients().size()) {
+                                    for (int i = 0; i < translatedDish.getIngredients().size(); i++) {
+                                        Ingredient ingredient = translatedDish.getIngredients().get(i);
+                                        Ingredient originalIngredient = dish.getIngredients().get(i);
+                                        ingredient.setType(originalIngredient.getType());
+                                    }
+                                }
+
+                                if (translatedDish.getRecipes().size() == dish.getRecipes().size()) {
+                                    for (int i = 0; i < translatedDish.getRecipes().size(); i++) {
+                                        DishRecipe recipe = translatedDish.getRecipes().get(i);
+                                        DishRecipe originalRecipe = dish.getRecipes().get(i);
+                                        recipe.setTypeData(originalRecipe.getTypeData());
+                                    }
+                                }
+                            }
+
+                            return Single.just(translatedDish);
+                        }
                         else return Single.just(new Dish("")); // Повертаємо порожній об'єкт Dish у разі порожньої відповіді
                     });
         } else return Single.just(new Dish(""));

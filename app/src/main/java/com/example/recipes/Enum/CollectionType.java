@@ -10,6 +10,6 @@ package com.example.recipes.Enum;
 public enum CollectionType {
     COLLECTION,
     SHOP_LIST,
-    BLACK_LIST,
+    BLACK_LIST_ING,
     VOID
 }

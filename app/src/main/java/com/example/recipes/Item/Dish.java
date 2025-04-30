@@ -8,6 +8,7 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Enum.DishRecipeType;
 import com.example.recipes.Interface.Item;
 import com.example.recipes.R;
@@ -175,10 +176,12 @@ public class Dish implements Item {
      */
     public String getAsText(Context context) {
         StringBuilder builder = new StringBuilder();
-        builder.append(name + "\n\n").append(context.getString(R.string.portionship) + ": " + portion + "\n");
+        if (portion > 0) {
+            builder.append(name + "\n\n").append(context.getString(R.string.portionship) + ": " + portion + "\n\n");
+        }
         builder.append(context.getString(R.string.ingredients) + ":\n");
         for (Ingredient ingredient : ingredients) {
-            String ingredientText = ingredient.getName() + "  " + ingredient.getAmount() + ingredient.getType() + '\n';
+            String ingredientText = " - " +  ingredient.getName() + "  " + ingredient.getAmount() + " " + IngredientTypeConverter.fromIngredientTypeBySettingLocale(ingredient.getType()) + '\n';
             builder.append(ingredientText);
         }
         builder.append("\n");
@@ -192,8 +195,12 @@ public class Dish implements Item {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Dish dish = (Dish) object;
-        return id == dish.id && portion == dish.portion && timestamp == dish.timestamp && Objects.equals(name, dish.name)
-                && Objects.equals(ingredients, dish.ingredients) && Objects.equals(recipes, dish.recipes);
+
+        return id == dish.id
+                && portion == dish.portion
+                && Objects.equals(name, dish.name)
+                && Objects.equals(ingredients, dish.ingredients)
+                && Objects.equals(recipes, dish.recipes);
     }
 
     @Override

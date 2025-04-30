@@ -12,6 +12,7 @@ import com.example.recipes.Item.DishRecipe;
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -45,7 +46,7 @@ public interface DishRecipeDAO {
     LiveData<List<DishRecipe>> getAll_Live();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
-    Single<DishRecipe> getByID(long id);
+    Maybe<DishRecipe> getByID(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     LiveData<DishRecipe> getByIDLive(long id);

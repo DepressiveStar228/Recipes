@@ -39,7 +39,7 @@ public interface CollectionDAO {
     Completable delete(Collection collection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
-    Single<Collection> getById(long id);
+    Maybe<Collection> getById(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
     LiveData<Collection> getByID_Live(long id);

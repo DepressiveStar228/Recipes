@@ -7,7 +7,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.example.recipes.Item.Dish_Collection;
+import com.example.recipes.Item.DishCollection;
 
 import java.util.List;
 
@@ -29,19 +29,22 @@ public interface DishCollectionDAO {
     String ID_COLLECTION = "id_collection";
 
     @Insert
-    Single<Long> insert(Dish_Collection dishCollection);
+    Single<Long> insert(DishCollection dishCollection);
 
     @Update
-    Completable update(Dish_Collection dishCollection);
+    Completable update(DishCollection dishCollection);
 
     @Delete
-    Completable delete(Dish_Collection dishCollection);
+    Completable delete(DishCollection dishCollection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish AND " + ID_COLLECTION + " = :idCollection ")
-    Maybe<Dish_Collection> getByIDDishAndIDCollection(long idDish, long idCollection);
+    Maybe<DishCollection> getByIDDishAndIDCollection(long idDish, long idCollection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
-    Maybe<Dish_Collection> getByID(long id);
+    Maybe<DishCollection> getByID(long id);
+
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
+    Single<List<DishCollection>> getByIDDish(long idDish);
 
     @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ")
     Single<List<Long>> getAllIDsDishByIDCollection(long idCollection);
@@ -51,6 +54,9 @@ public interface DishCollectionDAO {
 
     @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ")
     Single<List<Long>> getAllIDsCollectionByIDDish(long idDish);
+
+    @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ")
+    LiveData<List<Long>> getAllIDsCollectionLive(long idDish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

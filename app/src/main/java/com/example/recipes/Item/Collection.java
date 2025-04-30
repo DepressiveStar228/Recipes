@@ -7,6 +7,7 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import com.example.recipes.Enum.CollectionType;
+import com.example.recipes.Interface.Item;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -21,7 +22,7 @@ import java.util.Objects;
         tableName = "collection",
         indices = {@Index("id")}
 )
-public class Collection {
+public class Collection implements Item {
     public static final String SYSTEM_COLLECTION_TAG = "#%$*@";
 
     @PrimaryKey(autoGenerate = true) private long id;
@@ -61,10 +62,12 @@ public class Collection {
 
 
     // Геттери і сеттери
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -79,6 +82,7 @@ public class Collection {
         this.id = id;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
@@ -91,23 +95,16 @@ public class Collection {
 
 
     // Інші методи
-    public void addDish(Dish dish) { dishes.add(dish); }
-
-    public void deleteDish(Dish dish) {
-        dishes.remove(dish);
-    }
-
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Collection that = (Collection) object;
 
-        Collection collection = (Collection) obj;
-
-        if (id != collection.id) return false;
-        if (!name.equals(collection.name)) return false;
-        if (!type.equals(collection.type)) return false;
-        return dishes.equals(collection.dishes);
+        return id == that.id
+                && Objects.equals(name, that.name)
+                && type == that.type
+                && Objects.equals(dishes, that.dishes);
     }
 
     @Override

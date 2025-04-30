@@ -26,8 +26,9 @@ public class PreferencesController {
     public final String language_key = "language";
     public final String theme_key = "theme";
     public final String palette_key = "palette";
+    private final String status_ing_hints_key = "ing_hints";
     private String language, theme, palette;
-    private Boolean status_ing_hints = false, tip_shop_list_buttons = false;
+    private Boolean status_ing_hints, tip_shop_list_buttons = false;
     private Context context;
 
     private PreferencesController() { }
@@ -57,6 +58,7 @@ public class PreferencesController {
         language = preferences.getString(language_key, "ua");
         theme = preferences.getString(theme_key, "Light");
         palette = preferences.getString(palette_key, "Brown");
+        status_ing_hints = preferences.getBoolean(status_ing_hints_key, true);
         setLocale(language, context);
         Log.d(getActivityName(context), "Завантаження налаштувань: мова - " + language + ", тема - " + theme + ", палітра - " + palette);
     }
@@ -86,6 +88,20 @@ public class PreferencesController {
         editor.apply();
         loadPreferences();
         Log.d(getActivityName(context), "Збереження налаштувань: мова - " + language + ", тема - " + theme + ", палітра - " + palette);
+    }
+
+    /**
+     * Зберігає налаштування підказок у SharedPreferences.
+     *
+     * @param status_ing_hints Статус підказок.
+     */
+    public void savePreferences(boolean status_ing_hints) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(status_ing_hints_key, status_ing_hints);
+        editor.apply();
+        loadPreferences();
+        Log.d(getActivityName(context), "Збереження налаштувань: статус підказок - " + status_ing_hints);
+
     }
 
     /**
@@ -155,6 +171,15 @@ public class PreferencesController {
      */
     public boolean getStatusUsedTip(Tips tip) {
         return preferences.getBoolean(tip.name(), false);
+    }
+
+    /**
+     * Повертає статус підказок.
+     *
+     * @return true, якщо підказки увімкнені, інакше false.
+     */
+    public Boolean getStatus_ing_hints() {
+        return status_ing_hints;
     }
 
     /**

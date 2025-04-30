@@ -131,7 +131,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
             if (!flagAccessInternet.get()) Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
             else if (!flagInitializationGPTClient.get()) Toast.makeText(this, getString(R.string.wait_load_assistant), Toast.LENGTH_SHORT).show();
             else if (message.isEmpty()) Toast.makeText(this, getString(R.string.warning_empty_message), Toast.LENGTH_SHORT).show();
-            else if (client.checkLimit()) {
+            else if (client.checkDailyRequestLimitLimit() && client.checkLastTimeRequest()) {
                 addMessageToDialog(getString(R.string.you), message);
                 sendPromptToGPT(GPTEditText.getText().toString());
                 GPTEditText.setText("");

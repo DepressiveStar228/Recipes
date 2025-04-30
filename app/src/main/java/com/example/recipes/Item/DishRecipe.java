@@ -133,6 +133,7 @@ public class DishRecipe {
 
 
     // Інші методи
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;

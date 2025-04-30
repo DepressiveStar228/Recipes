@@ -30,17 +30,6 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.example.recipes.ViewItem.MenuItemView
-        android:id="@+id/setting_dish_add_to_collection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        app:iconSrc="@drawable/icon_book"
-        app:textTitle="@string/add_in_collection"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/optionNameContainer" />
-
-    <com.example.recipes.ViewItem.MenuItemView
         android:id="@+id/setting_dish_edit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -49,7 +38,7 @@
         app:textTitle="@string/edit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/setting_dish_add_to_collection" />
+        app:layout_constraintTop_toBottomOf="@+id/optionNameContainer" />
 
 
     <com.example.recipes.ViewItem.MenuItemView

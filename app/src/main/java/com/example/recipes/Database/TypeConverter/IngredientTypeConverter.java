@@ -37,6 +37,10 @@ public class IngredientTypeConverter {
         PreferencesController controller = PreferencesController.getInstance();
         String[] typesString = controller.getStringArrayForLocale(R.array.ingredient_types, controller.getLanguageString());
 
+        if (type == null) {
+            return typesString[10];
+        }
+
         switch (type) {
             case GRAM -> {
                 return typesString[0];

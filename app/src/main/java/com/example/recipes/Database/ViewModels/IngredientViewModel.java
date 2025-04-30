@@ -42,4 +42,13 @@ public class IngredientViewModel extends ViewModel {
     public LiveData<List<String>> getNamesUnique() {
         return dao.getNamesUniqueLive();
     }
+
+    /**
+     * Отримує список унікальних назв інгредієнтів у вигляді LiveData.
+     *
+     * @return LiveData, яка містить список унікальних назв інгредієнтів.
+     */
+    public LiveData<List<Ingredient>> getUnique() {
+        return dao.getUniqueByNameLive();
+    }
 }

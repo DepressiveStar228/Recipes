@@ -124,7 +124,7 @@ public class Ingredient implements Item {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Ingredient that = (Ingredient) object;
-        return id == that.id && idDish == that.idDish && Objects.equals(name, that.name) && Objects.equals(amount, that.amount) && Objects.equals(type, that.type);
+        return id == that.id && idDish == that.idDish && Objects.equals(name, that.name) && Objects.equals(amount, that.amount) && type == that.type;
     }
 
     @Override

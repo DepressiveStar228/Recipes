@@ -70,6 +70,13 @@ public class IngredientShopList implements Item {
     }
 
     @Ignore
+    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long idCollection, @NonNull boolean isBuy) {
+        this.name = name;
+        addAmountType(amount, type);
+        this.idCollection = idCollection;
+    }
+
+    @Ignore
     public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull boolean isBuy) {
         this.name = name;
         addAmountType(amount, type);

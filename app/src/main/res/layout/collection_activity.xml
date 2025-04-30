@@ -61,43 +61,16 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:tint="?attr/colorControlNormal" />
 
-
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <include
                 android:id="@+id/searchDishCollection"
+                layout="@layout/search_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="5dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/nameCollection_layout">
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/searchImageView"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:src="@drawable/icon_search"
-                    app:tint="?attr/colorControlNormal"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <EditText
-                    android:id="@+id/searchEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="35dp"
-                    android:inputType="textCapSentences"
-                    android:hint="@string/hint_text_search"
-                    android:textColor="?attr/colorText"
-                    android:textColorHint="?attr/colorHintText"
-                    android:textSize="20sp"
-                    app:backgroundTint="?attr/colorControlNormal"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/searchImageView"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
+                app:layout_constraintTop_toBottomOf="@+id/nameCollection_layout" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/dishCollectionRecyclerView"

@@ -1,10 +1,12 @@
 package com.example.recipes.Adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -19,6 +21,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
+import com.example.recipes.Controller.IngredientNameHints;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Enum.Limits;
@@ -64,6 +67,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         return new IngredientViewHolder(view);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull IngredientViewHolder holder, int position) {
         Ingredient ingredient = ingredients.get(position);
@@ -178,6 +182,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         EditText countIngredientEditText;
         Spinner spinnerTypeIngredient;
         ImageView deleteButton;
+        IngredientNameHints ingredientNameHints;
 
         IngredientViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -185,6 +190,9 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             countIngredientEditText = itemView.findViewById(R.id.countIngredientEditText);
             spinnerTypeIngredient = itemView.findViewById(R.id.spinnerTypeIngredient);
             deleteButton = itemView.findViewById(R.id.imageButton);
+
+            // Ініціалізуємо IngredientNameHints для підказок назв інгредієнтів
+            ingredientNameHints = new IngredientNameHints(context, allNameIngredients);
 
             // Встановлюємо обмеження на кількість символів у полях вводу
             CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Limits.MAX_CHAR_NAME_INGREDIENT);
@@ -203,6 +211,10 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 }
             });
 
+            // Налаштовуємо підказки для назви інгредієнта
+            ingredientNameHints.setAnchorView(nameIngredientEditText); // Встановлюємо як якорь поле вводу назви
+            ingredientNameHints.setPopupWindow(nameIngredientEditText); // Встановлюємо спливаюче вікно для підказок
+
             // Обробка зміни тексту у полі для вводу назви
             nameIngredientEditText.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -216,6 +228,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                     int position = getAdapterPosition();
 
                     if (position != RecyclerView.NO_POSITION) {
+                        ingredientNameHints.search(s.toString()); // Виклик методу пошуку підказок
                         ingredients.get(position).setName(s.toString());
                     }
                 }

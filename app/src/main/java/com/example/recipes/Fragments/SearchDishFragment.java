@@ -38,7 +38,6 @@ import android.widget.Toast;
 
 import com.example.recipes.Activity.EditorDishActivity;
 import com.example.recipes.Activity.GPTActivity;
-import com.example.recipes.Adapter.ChooseItemAdapter;
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Enum.IntentKeys;
@@ -46,7 +45,7 @@ import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Item.Dish;
-import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
@@ -66,7 +65,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 public class SearchDishFragment extends Fragment implements OnBackPressedListener {
     private EditText searchEditText;
-    private ArrayList<String> nameIngredients;
+    private ArrayList<String> filterIngredients;
     private RecyclerView searchResultsRecyclerView;
     private Button filtersButton, sortButton;
     private TextView head_textView;
@@ -80,7 +79,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private boolean flagOpenSearch = false;
 
     private SearchController<Dish> searchControllerForDish;
-    private SearchController<String> searchControllerForFiltersIngredient;
+    private Dialogues dialogues;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -88,8 +87,9 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
         preferences.edit().remove("scroll_position").apply();
         utils = RecipeUtils.getInstance(getContext());
+        dialogues = new Dialogues(getActivity());
         sortStatus = new ArrayList<>();
-        nameIngredients = new ArrayList<>();
+        filterIngredients = new ArrayList<>();
         sortStatus.add(true);
         sortStatus.add(null);
         compositeDisposable = new CompositeDisposable();
@@ -275,7 +275,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         utils.ByDish().getViewModel().getAll().observe(this, data -> {
             if (data != null && searchControllerForDish != null) {
                 // Отримання відфільтрованих та відсортованих даних
-                Disposable disposable = utils.ByDish().getFilteredAndSorted(nameIngredients, sortStatus)
+                Disposable disposable = utils.ByDish().getFilteredAndSorted(filterIngredients, sortStatus)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(array_dishes -> {
@@ -351,61 +351,29 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
      * Обробляє клік на кнопку фільтрів, показує діалог фільтрації
      */
     private void onFiltersClick() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
-        TextView textView = dialogView.findViewById(R.id.textView22);
-        ConstraintLayout constraintLayout = dialogView.findViewById(R.id.search_filters_LinearLayout);
-        ConstraintLayout empty = dialogView.findViewById(R.id.empty);
-        RecyclerView filtersRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
-
-        if (textView != null) { textView.setText(R.string.your_ingredients); }
-        if (constraintLayout != null) {
-            EditText editText = constraintLayout.findViewById(R.id.search_edit_text);
-
-            if (editText != null) {
-                CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Limits.MAX_CHAR_NAME_INGREDIENT);
-
-                // Отримання унікальних назв інгредієнтів
-                Disposable disposable = utils.ByIngredient().getNamesUnique()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                names -> {
-                                    if (names != null) {
-                                        if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, names.isEmpty());
-
-                                        // Ініціалізація контролера пошуку інгредієнтів
-                                        if (searchControllerForFiltersIngredient == null) {
-                                            searchControllerForFiltersIngredient = new SearchController<>(getContext(), editText, filtersRecyclerView, new ChooseItemAdapter<String>(getContext(), (checkBox, item) -> {}));
-                                        }
-
-                                        searchControllerForFiltersIngredient.setArrayData(new ArrayList<>(names));
-                                        searchControllerForFiltersIngredient.setSearchEditText(editText);
-                                        searchControllerForFiltersIngredient.setSearchResultsRecyclerView(filtersRecyclerView);
-
-                                        ChooseItemAdapter<String> chooseItemAdapter = (ChooseItemAdapter) searchControllerForFiltersIngredient.getAdapter();
-
-                                        builder.setView(dialogView)
-                                                .setPositiveButton(R.string.apply, (dialog, which) -> {
-                                                    nameIngredients = chooseItemAdapter.getSelectedItem();
-                                                    updateRecipesData(); // Оновлення з новими фільтрами
-                                                })
-                                                .setNeutralButton(R.string.reset, (dialog, which) -> {
-                                                    resetFilters(chooseItemAdapter);
-                                                })
-                                                .setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
-
-                                        builder.create().show();
-                                    } else {
-                                        Toast.makeText(getContext(), getString(R.string.empty_names_ingredient), Toast.LENGTH_SHORT).show();
-                                    }
-                                },
-                                throwable -> Log.d("SearchDishFragment", "Помилка отримання унікальних назв інгредіентів")
-                        );
-                compositeDisposable.add(disposable);
-            }
-        }
+        Disposable disposable = utils.ByIngredient().getNamesUnique()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        names -> {
+                            if (names != null) {
+                                if (dialogues != null) {
+                                    dialogues.dialogChooseItemsWithSearch(new ArrayList<>(names), filterIngredients, selectedItems -> {
+                                        filterIngredients.clear();
+                                        filterIngredients.addAll(selectedItems);
+                                        updateRecipesData();
+                                    }, () -> {
+                                        filterIngredients.clear();
+                                        updateRecipesData();
+                                    }, Limits.MAX_CHAR_NAME_INGREDIENT, R.string.your_ingredients, R.string.apply);
+                                }
+                            } else {
+                                Toast.makeText(getContext(), getString(R.string.empty_names_ingredient), Toast.LENGTH_SHORT).show();
+                            }
+                        },
+                        throwable -> Log.d("SearchDishFragment", "Помилка отримання унікальних назв інгредіентів")
+                );
+        compositeDisposable.add(disposable);
     }
 
     /**
@@ -636,16 +604,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private void resetSorting() {
         sortStatus.set(0, true); // Сортування за алфавітом (за зростанням)
         sortStatus.set(1, null); // Без сортування за часом
-        updateRecipesData();
-    }
-
-    /**
-     * Скидає вибрані фільтри інгредієнтів
-     * @param chooseItemAdapter адаптер для скидання виділених елементів
-     */
-    private void resetFilters(ChooseItemAdapter chooseItemAdapter) {
-        nameIngredients = new ArrayList<>();
-        if (chooseItemAdapter != null) { chooseItemAdapter.resetSelectionItems(); }
         updateRecipesData();
     }
 

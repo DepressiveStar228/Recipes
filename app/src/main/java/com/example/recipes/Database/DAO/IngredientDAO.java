@@ -57,6 +57,9 @@ public interface IngredientDAO {
     @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
     Single<List<String>> getNamesUnique();
 
+    @Query("SELECT DISTINCT * FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
+    LiveData<List<Ingredient>> getUniqueByNameLive();
+
     @Query("SELECT DISTINCT " + NAME + " FROM " + TABLE_NAME + " ORDER BY " + NAME + " ASC ")
     LiveData<List<String>> getNamesUniqueLive();
 

@@ -6,6 +6,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
 
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,7 @@ public class SearchController<T> {
     private Context context;
     private ArrayList<T> arrayData, searchResults;
     private EditText searchEditText;
+    private AppCompatImageView clearSearchEditText;
     private RecyclerView.Adapter<?> adapter;
     private RecyclerView searchResultsRecyclerView;
 
@@ -61,26 +63,35 @@ public class SearchController<T> {
      * Встановлює слухача для поля пошуку.
      */
     private void setListener() {
-        CharacterLimitTextWatcher.setCharacterLimit(context, searchEditText, Limits.MAX_CHAR_NAME_INGREDIENT);
+        if (searchEditText != null) {
+            searchEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    // Очищення результатів перед зміною тексту
+                    searchResults.clear();
+                    adapter.notifyDataSetChanged();
+                }
 
-        searchEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Очищення результатів перед зміною тексту
-                searchResults.clear();
-                adapter.notifyDataSetChanged();
-            }
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    search(); // Виконання пошуку при зміні тексту
+                }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                search(); // Виконання пошуку при зміні тексту
-            }
+                @Override
+                public void afterTextChanged(Editable s) {
+                    adapter.notifyDataSetChanged(); // Оновлення адаптера після зміни тексту
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                adapter.notifyDataSetChanged(); // Оновлення адаптера після зміни тексту
-            }
-        });
+                    // Показати або приховати кнопку очищення тексту
+                    if (clearSearchEditText != null) {
+                        if (s.length() > 0) {
+                            clearSearchEditText.setVisibility(AppCompatImageView.VISIBLE);
+                        } else {
+                            clearSearchEditText.setVisibility(AppCompatImageView.GONE);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -97,12 +108,12 @@ public class SearchController<T> {
 
             for (T item : arrayData) {
                 String searchBox = "";
-                if (item instanceof Item) { searchBox = ((Item)item).getName().toLowerCase(); }
+                if (item instanceof Item) { searchBox = ((Item) item).getName().toLowerCase(); }
                 else if (item instanceof String) { searchBox = item.toString().toLowerCase(); }
 
                 if (searchBox.contains(query)) {
                     result.add(item); // Додавання елемента, якщо він відповідає запиту
-                } else if (searchBox.isEmpty()){
+                } else if (searchBox.isEmpty()) {
                     result.add(item); // Додавання елемента, якщо пошуковий запит порожній
                 }
             }
@@ -127,7 +138,16 @@ public class SearchController<T> {
      * Виконує пошук за поточним текстом у полі пошуку.
      */
     public void search() {
-        updateResults(performSearch(searchEditText.getText().toString().trim()));
+        if (searchEditText != null) {
+            updateResults(performSearch(searchEditText.getText().toString().trim()));
+        }
+    }
+
+    public ArrayList<T> searchAndGetResult(String data) {
+        ArrayList<T> result = performSearch(data);
+        updateResults(result);
+
+        return result;
     }
 
     /**
@@ -179,4 +199,8 @@ public class SearchController<T> {
     }
 
     public RecyclerView getRecyclerView() { return searchResultsRecyclerView; }
+
+    public void setClearSearchEditText(AppCompatImageView clearSearchEditText) {
+        this.clearSearchEditText = clearSearchEditText;
+    }
 }

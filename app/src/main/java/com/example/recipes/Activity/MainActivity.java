@@ -323,10 +323,10 @@ public class MainActivity extends FragmentActivity {
         Disposable disposable = utils.ByCollection().getAll()
                 .flatMap(collections -> {
                     if (collections.isEmpty()) {
-                        return Observable.fromIterable(utils.getAllNameSystemCollection())
+                        return Observable.fromIterable(utils.ByCollection().getAllNameSystemCollection())
                                 .flatMapSingle(name -> {
                                     if (Objects.equals(name, getString(R.string.system_collection_tag) + 5)) {
-                                        return utils.ByCollection().add(new Collection(name, CollectionType.BLACK_LIST))
+                                        return utils.ByCollection().add(new Collection(name, CollectionType.BLACK_LIST_ING))
                                                 .flatMap(id -> Single.just(id > 0));
                                     } else {
                                         return utils.ByCollection().add(new Collection(name, CollectionType.COLLECTION))

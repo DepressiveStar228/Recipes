@@ -85,7 +85,10 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
                 selectedItem.remove(item);
                 holder.item_check.setChecked(false);
             }
-            listener.onItemClick(holder.item_check, item);
+
+            if (listener != null) {
+                listener.onItemClick(holder.item_check, item);
+            }
         });
     }
 
@@ -115,6 +118,15 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
         this.selectedItem.addAll(selectedItems);
         notifyDataSetChanged();
     }
+
+    public void setItemsAndSelected(ArrayList<T> items, ArrayList<T> selectedItems) {
+        submitList(new ArrayList<>(items), () -> {
+            this.selectedItem.clear();
+            this.selectedItem.addAll(selectedItems);
+            notifyDataSetChanged();
+        });
+    }
+
 
     @Override
     public ArrayList<T> getSelectedItem() {

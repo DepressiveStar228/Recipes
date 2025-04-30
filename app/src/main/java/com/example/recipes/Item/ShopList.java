@@ -68,14 +68,6 @@ public class ShopList extends Collection {
 
 
     // Інші методи
-    public void addIngredient(IngredientShopList ing) {
-        this.ingredients.add(ing);
-    }
-
-    public void addIngredients(ArrayList<IngredientShopList> ingredients) {
-        this.ingredients.addAll(ingredients);
-    }
-
     public void addIDDish_Collection(long id) {
         ids_dish_collection.add(id);
     }

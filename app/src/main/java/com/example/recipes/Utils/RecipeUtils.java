@@ -1,10 +1,12 @@
 package com.example.recipes.Utils;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.example.recipes.Controller.ImageController;
@@ -29,8 +31,8 @@ import com.example.recipes.Enum.ID_System_Collection;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.DishCollection;
 import com.example.recipes.Item.DishRecipe;
-import com.example.recipes.Item.Dish_Collection;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.Item.IngredientShopList_AmountType;
@@ -142,7 +144,7 @@ public class RecipeUtils {
          */
         @Override
         public Single<Long> add(Dish item) {
-            return add(item, ID_System_Collection.ID_MY_RECIPE.getId());
+            return add(item, -1);
         }
 
         /**
@@ -152,6 +154,24 @@ public class RecipeUtils {
          * @return Single<Long> ID створеної страви
          */
         public Single<Long> add(Dish item, long idCollection) {
+            return ByCollection().getByID(idCollection)
+                    .flatMap(collection -> {
+                        if (collection != null) {
+                            return add(item, new ArrayList<>(List.of(collection)));
+                        } else {
+                            Log.e("RecipeUtils", "Колекція не знайдена");
+                            return Single.just(-1L);
+                        }
+                    });
+        }
+
+        /**
+         * Додає страву до бази даних та зв'язує її з колекціями.
+         * @param item Об'єкт страви для додавання
+         * @param collections Список колекцій для зв'язування
+         * @return Single<Long> ID створеної страви
+         */
+        public Single<Long> add(Dish item, ArrayList<Collection> collections) {
             if (item != null && item.getId() != 0) item.setId(0L); // Щоб БД само видало вільний ID
 
             return getUniqueName(item.getName())
@@ -162,31 +182,20 @@ public class RecipeUtils {
                     .flatMap(id -> {
                         if (id > 0) {
                             item.setId(id);
-                            return ByDish_Collection().addWithCheckExist(new Dish_Collection(id, idCollection))
-                                    .flatMap(status -> {
-                                        if (status) { return ByIngredient().addAll(id, item.getIngredients()); }
-                                        else {
-                                            delete(item);
-                                            return Single.just(false);
-                                        }
-                                    })
-                                    .flatMap(status -> {
-                                        if (status) { return ByDishRecipe().addAll(item, item.getRecipes()); }
-                                        else {
-                                            delete(item);
-                                            return Single.just(false);
-                                        }
-                                    })
-                                    .flatMap(status -> {
-                                        if (status) {
+                            return Single.zip(
+                                    ByIngredient().addAll(id, item.getIngredients()),
+                                    ByDishRecipe().addAll(item, item.getRecipes()),
+                                    ByDish_Collection().addAll(item, collections),
+                                    (statusIngredient, statusDishRecipe, statusDishCollection) -> {
+                                        if (statusIngredient && statusDishRecipe && statusDishCollection) {
                                             Log.d("RecipeUtils", "Страва додалась до бази");
-                                            return Single.just(id);
-                                        }
-                                        else {
+                                            return id;
+                                        } else {
                                             Log.e("RecipeUtils", "Страва не додалась до бази");
-                                            return Single.just(-1L);
+                                            return -1L;
                                         }
                                     });
+
                         } else {
                             Log.e("RecipeUtils", "Страва не додалась до бази");
                             return Single.just(-1L);
@@ -296,27 +305,27 @@ public class RecipeUtils {
 
         /**
          * Отримує відфільтровані та відсортовані страви.
-         * @param ingredientNames Список інгредієнтів для фільтрації
+         * @param nameIngredients Список назв інгредієнтів для фільтрації
          * @param sortStatus Статус сортування
          * @return Single<List<Dish>> Список страв
          */
-        public Single<List<Dish>> getFilteredAndSorted(ArrayList<String> ingredientNames, ArrayList<Boolean> sortStatus) {
+        public Single<List<Dish>> getFilteredAndSorted(ArrayList<String> nameIngredients, ArrayList<Boolean> sortStatus) {
             String DISH_TABLE_NAME = "dish";
             String INGREDIENT_TABLE_NAME = "ingredient";
 
             StringBuilder query = new StringBuilder();
             query.append("SELECT d.* FROM " + DISH_TABLE_NAME + " d ");
 
-            if (ingredientNames != null && !ingredientNames.isEmpty()) {
+            if (nameIngredients != null && !nameIngredients.isEmpty()) {
                 query.append("INNER JOIN " + INGREDIENT_TABLE_NAME + " ing ON d.id = ing.id_dish ");
                 query.append("WHERE ing.name IN ('");
-                for (int i = 0; i < ingredientNames.size(); i++) {
-                    query.append(ingredientNames.get(i));
-                    if (i < ingredientNames.size() - 1) query.append("', '");
+                for (int i = 0; i < nameIngredients.size(); i++) {
+                    query.append(nameIngredients.get(i));
+                    if (i < nameIngredients.size() - 1) query.append("', '");
                 }
                 query.append("') ");
                 query.append("GROUP BY d.id ");
-                query.append("HAVING COUNT(DISTINCT ing.name) = ").append(ingredientNames.size());
+                query.append("HAVING COUNT(DISTINCT ing.name) = ").append(nameIngredients.size());
             }
 
             query.append(" ORDER BY ");
@@ -584,7 +593,7 @@ public class RecipeUtils {
 
         /**
          * Отримує список унікальних назв інгредієнтів.
-         * @return Single<List<String>> Список унікальних назв
+         * @return Single<List<String>> Список унікальних назв інгредієнтів
          */
         public Single<List<String>> getNamesUnique() {
             return dao.getNamesUnique();
@@ -723,7 +732,7 @@ public class RecipeUtils {
             return dao.getAll()
                     .flatMap(collections -> Observable.fromIterable(collections)
                             .flatMapSingle(collection -> {
-                                String customName = getCustomNameSystemCollection(collection.getName());
+                                String customName = getCustomNameSystemCollectionByName(collection.getName());
                                 collection.setName(customName);
                                 return Single.just(collection);
                             })
@@ -741,7 +750,7 @@ public class RecipeUtils {
             return dao.getAllByType(type)
                     .flatMap(collections -> Observable.fromIterable(collections)
                             .flatMapSingle(collection -> {
-                                String customName = getCustomNameSystemCollection(collection.getName());
+                                String customName = getCustomNameSystemCollectionByName(collection.getName());
                                 collection.setName(customName);
                                 return Single.just(collection);
                             })
@@ -761,16 +770,12 @@ public class RecipeUtils {
         @Override
         public Single<Collection> getByID(long id) {
             return dao.getById(id)
+                    .switchIfEmpty(Single.just(new Collection(-1, "Unknown Collection",  CollectionType.COLLECTION, new ArrayList<>())))
                     .flatMap(collection -> {
-                        String customName = getCustomNameSystemCollection(collection.getName());
+                        String customName = getCustomNameSystemCollectionByName(collection.getName());
                         return Single.just(new Collection(collection.getId(), customName, CollectionType.COLLECTION, collection.getDishes()));
                     })
-                    .flatMap(this::getDataForCollection)
-                    .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
-                    .onErrorResumeNext(throwable -> {
-                        Log.e("RxError", "Возврат пустой коллекции из-за ошибки", throwable);
-                        return Single.just(new Collection(-1, "Unknown Collection",  CollectionType.COLLECTION, new ArrayList<>()));
-                    });
+                    .flatMap(this::getDataForCollection);
         }
 
         /**
@@ -781,7 +786,7 @@ public class RecipeUtils {
         public Single<Collection> getByName(String name) {
             return dao.getByName(name)
                     .flatMap(collection -> {
-                        String customName = getCustomNameSystemCollection(collection.getName());
+                        String customName = getCustomNameSystemCollectionByName(collection.getName());
                         return Single.just(new Collection(collection.getId(), customName, collection.getType(), collection.getDishes()));
                     })
                     .flatMap(this::getDataForCollection)
@@ -867,7 +872,7 @@ public class RecipeUtils {
                     (allCollection, dishesCollection) -> {
                         ArrayList<Collection> unused_collection = new ArrayList<>();
                         for (Collection collection : allCollection) {
-                            collection.setName(getCustomNameSystemCollection(collection.getName()));
+                            collection.setName(getCustomNameSystemCollectionByName(collection.getName()));
 
                             if (!dishesCollection.contains(collection)) {
                                 unused_collection.add(collection);
@@ -892,7 +897,7 @@ public class RecipeUtils {
                     (allCollection, dishesCollection) -> {
                         ArrayList<Collection> unused_collection = new ArrayList<>();
                         for (Collection collection : ClassUtils.getListOfType(allCollection, Collection.class)) {
-                            collection.setName(getCustomNameSystemCollection(collection.getName()));
+                            collection.setName(getCustomNameSystemCollectionByName(collection.getName()));
 
                             if (!dishesCollection.contains(collection)) {
                                 unused_collection.add(collection);
@@ -997,6 +1002,53 @@ public class RecipeUtils {
                                         return Single.just(item);
                                     })
                     );
+        }
+
+        public Drawable getDrawableByName(String name) {
+            if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "1") || Objects.equals(name, context.getString(R.string.favorites))) {
+                return ContextCompat.getDrawable(context, R.drawable.icon_star);
+            }
+            else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "2") || Objects.equals(name, context.getString(R.string.my_recipes))) {
+                return ContextCompat.getDrawable(context, R.drawable.icon_book_a);
+            }
+            else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "3") || Objects.equals(name, context.getString(R.string.gpt_recipes))) {
+                return ContextCompat.getDrawable(context, R.drawable.icon_neurology);
+            }
+            else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "4") || Objects.equals(name, context.getString(R.string.import_recipes))) {
+                return ContextCompat.getDrawable(context, R.drawable.icon_download);
+            }
+            else return ContextCompat.getDrawable(context, R.drawable.icon_book);
+        }
+
+        /**
+         * Отримує список назв системних колекцій.
+         *
+         * @return ArrayList<String> Список назв системних колекцій
+         */
+        public ArrayList<String> getAllNameSystemCollection() {
+            String systemTag = context.getString(R.string.system_collection_tag);
+            ArrayList<String> names = new ArrayList<>();
+            for (int i = 1; i <= ID_System_Collection.values().length; i++) {
+                names.add(systemTag + i);
+            }
+            return names;
+        }
+
+        /**
+         * Отримує користувацьку назву системної колекції за її технічною назвою.
+         * Якщо передана назва не є системною колекцією, повертається оригінальна назва.
+         *
+         * @param name Назва системної колекції для користувача
+         * @return String Користувацька назва колекції або оригінальна назва
+         */
+        public String getCustomNameSystemCollectionByName(String name) {
+            String systemTag = context.getString(R.string.system_collection_tag);
+
+            if (Objects.equals(name, systemTag + "1")) { return context.getString(R.string.favorites); }
+            else if (Objects.equals(name, systemTag + "2")) { return context.getString(R.string.my_recipes); }
+            else if (Objects.equals(name, systemTag + "3")) { return context.getString(R.string.gpt_recipes); }
+            else if (Objects.equals(name, systemTag + "4")) { return context.getString(R.string.import_recipes); }
+            else { return name; }
         }
 
         /**
@@ -1155,9 +1207,9 @@ public class RecipeUtils {
 
     /**
      * Внутрішній клас для роботи зі зв'язками між стравами та колекціями.
-     * Реалізує інтерфейс Utils<Dish_Collection> та надає методи для роботи з таблицею dish_collection.
+     * Реалізує інтерфейс Utils<DishCollection> та надає методи для роботи з таблицею dish_collection.
      */
-    public class ByDish_Collection implements Utils<Dish_Collection> {
+    public class ByDish_Collection implements Utils<DishCollection> {
         private final DishCollectionDAO dao;
         private final DishCollectionViewModel viewModel;
 
@@ -1180,27 +1232,27 @@ public class RecipeUtils {
 
         /**
          * Додає новий зв'язок між стравою та колекцією.
-         * @param item Об'єкт Dish_Collection для додавання
+         * @param item Об'єкт DishCollection для додавання
          * @return Single<Long> ID створеного зв'язку
          */
         @Override
-        public Single<Long> add(Dish_Collection item) {
+        public Single<Long> add(DishCollection item) {
             return dao.insert(item);
         }
 
         /**
          * Додає зв'язок між стравою та колекцією з перевіркою на наявність.
-         * @param item Об'єкт Dish_Collection для додавання
+         * @param item Об'єкт DishCollection для додавання
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addWithCheckExist(Dish_Collection item) {
+        public Single<Boolean> addWithCheckExist(DishCollection item) {
             return isExist(item)
                     .flatMap(isInCollection -> {
                         if (!isInCollection) {
                             return add(item).map(id -> (id > 0));
                         } else {
                             return ByCollection().getByID(item.getIdCollection())
-                                    .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                    .map(collection -> ByCollection().getCustomNameSystemCollectionByName(collection.getName()))
                                     .flatMap(name -> {
                                         if (name != null) {
                                             Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
@@ -1216,19 +1268,19 @@ public class RecipeUtils {
 
         /**
          * Додає список зв'язків між стравами та колекціями.
-         * @param items Список об'єктів Dish_Collection для додавання
+         * @param items Список об'єктів DishCollection для додавання
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
         @Override
-        public Single<Boolean> addAll(ArrayList<Dish_Collection> items) {
+        public Single<Boolean> addAll(ArrayList<DishCollection> items) {
             return Observable.fromIterable(items)
                     .flatMapSingle(item -> isExist(item)
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
-                                    return add(new Dish_Collection(item.getIdDish(), item.getIdCollection())).map(id -> id > 0);
+                                    return add(new DishCollection(item.getIdDish(), item.getIdCollection())).map(id -> id > 0);
                                 } else {
                                     return ByCollection().getByID(item.getIdCollection())
-                                            .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                            .map(collection -> ByCollection().getCustomNameSystemCollectionByName(collection.getName()))
                                             .flatMap(name -> {
                                                 if (name != null) {
                                                     Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
@@ -1254,27 +1306,20 @@ public class RecipeUtils {
         /**
          * Додає страву до кількох колекцій.
          * @param dish Об'єкт страви
-         * @param idCollections Список ID колекцій
+         * @param collections Список колекцій
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> addAll(Dish dish, ArrayList<Long> idCollections) {
-            return Observable.fromIterable(idCollections)
-                    .flatMapSingle(id_collection -> isExist(new Dish_Collection(dish.getId(), id_collection))
+        public Single<Boolean> addAll(Dish dish, ArrayList<Collection> collections) {
+            return Observable.fromIterable(collections)
+                    .flatMapSingle(collection -> isExist(new DishCollection(dish.getId(), collection.getId()))
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
-                                    return add(new Dish_Collection(dish.getId(), id_collection)).map(id -> id > 0);
+                                    return add(new DishCollection(dish.getId(), collection.getId())).map(id -> id > 0);
                                 } else {
-                                    return ByCollection().getByID(id_collection)
-                                            .map(collection -> getCustomNameSystemCollection(collection.getName()))
-                                            .flatMap(name -> {
-                                                if (name != null) {
-                                                    Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
-                                                    Log.d("RecipeUtils", "Страва " + dish.getName() + " вже є в колекції " + name);
-                                                    return Single.just(true);
-                                                } else {
-                                                    return Single.just(false);
-                                                }
-                                            });
+                                    String name = ByCollection().getCustomNameSystemCollectionByName(collection.getName());
+                                    Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
+                                    Log.d("RecipeUtils", "Страва " + dish.getName() + " вже є в колекції " + name);
+                                    return Single.just(true);
                                 }
                             })
                     )
@@ -1297,7 +1342,7 @@ public class RecipeUtils {
          */
         public Single<Boolean> addAll(ArrayList<Dish> dishes, long idCollection) {
             return Observable.fromIterable(dishes)
-                    .flatMapSingle(dish -> add(new Dish_Collection(dish.getId(), idCollection)).map(id -> id > 0))
+                    .flatMapSingle(dish -> add(new DishCollection(dish.getId(), idCollection)).map(id -> id > 0))
                     .toList()
                     .map(results -> {
                         for (Boolean result : results) {
@@ -1317,13 +1362,13 @@ public class RecipeUtils {
          */
         public Single<Boolean> addAllWithCheckExist(ArrayList<Dish> dishes, long idCollection) {
             return Observable.fromIterable(dishes)
-                    .flatMapSingle(dish -> isExist(new Dish_Collection(dish.getId(), idCollection))
+                    .flatMapSingle(dish -> isExist(new DishCollection(dish.getId(), idCollection))
                             .concatMap(isInCollection -> {
                                 if (!isInCollection) {
-                                    return add(new Dish_Collection(dish.getId(), idCollection)).map(id -> id > 0);
+                                    return add(new DishCollection(dish.getId(), idCollection)).map(id -> id > 0);
                                 } else {
                                     return ByCollection().getByID(idCollection)
-                                            .map(collection -> getCustomNameSystemCollection(collection.getName()))
+                                            .map(collection -> ByCollection().getCustomNameSystemCollectionByName(collection.getName()))
                                             .flatMap(name -> {
                                                 if (name != null) {
                                                     Toast.makeText(context, context.getString(R.string.dish_dublicate_in_collection) + " " + name, Toast.LENGTH_SHORT).show();
@@ -1352,32 +1397,41 @@ public class RecipeUtils {
          * @return Single<List<Collection>> Список усіх зв'язків
          */
         @Override
-        public Single<List<Dish_Collection>> getAll() {
+        public Single<List<DishCollection>> getAll() {
             return null;
         }
 
         /**
          * Отримує зв'язок за ID.
          * @param id ID зв'язку
-         * @return Single<Dish_Collection> Об'єкт зв'язку
+         * @return Single<DishCollection> Об'єкт зв'язку
          */
         @Override
-        public Single<Dish_Collection> getByID(long id) {
+        public Single<DishCollection> getByID(long id) {
             return dao.getByID(id)
                     .toSingle()
-                    .onErrorReturnItem(new Dish_Collection(0, 0));
+                    .onErrorReturnItem(new DishCollection(0, 0));
+        }
+
+        /**
+         * Отримує зв'язок за ID страви.
+         * @param idDish ID страви
+         * @return Single<DishCollection> Об'єкт зв'язку
+         */
+        public Single<List<DishCollection>> getByIDDish(long idDish) {
+            return dao.getByIDDish(idDish);
         }
 
         /**
          * Отримує зв'язок за ID страви та ID колекції.
          * @param idDish ID страви
          * @param idCollection ID колекції
-         * @return Single<Dish_Collection> Об'єкт зв'язку
+         * @return Single<DishCollection> Об'єкт зв'язку
          */
-        public Single<Dish_Collection> getByData(long idDish, long idCollection) {
+        public Single<DishCollection> getByData(long idDish, long idCollection) {
             return dao.getByIDDishAndIDCollection(idDish, idCollection)
                     .toSingle()
-                    .onErrorReturnItem(new Dish_Collection(0, 0));
+                    .onErrorReturnItem(new DishCollection(0, 0));
         }
 
         /**
@@ -1385,7 +1439,7 @@ public class RecipeUtils {
          * @param dishCollection Об'єкт зв'язку для перевірки
          * @return Single<Boolean> Результат перевірки (true - існує, false - не існує)
          */
-        public Single<Boolean> isExist(Dish_Collection dishCollection) {
+        public Single<Boolean> isExist(DishCollection dishCollection) {
             return dao.getByIDDishAndIDCollection(dishCollection.getIdDish(), dishCollection.getIdCollection())
                     .map(dishCollection2 -> {
                         Log.d("isDishInCollection", "Страва з айді " + dishCollection2.getIdDish() + " знайдена в колекції");
@@ -1398,24 +1452,24 @@ public class RecipeUtils {
 
         /**
          * Копіює страви з однієї колекції до інших.
-         * @param idCollectionOrigin ID вихідної колекції
-         * @param idCollections Список ID цільових колекцій
+         * @param collectionOrigin вихідна колекція
+         * @param collections Список цільових колекцій
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
-        public Single<Boolean> copyDishesToAnotherCollections(long idCollectionOrigin, ArrayList<Long> idCollections) {
-            return ByCollection().getDishes(idCollectionOrigin)
+        public Single<Boolean> copyDishesToAnotherCollections(Collection collectionOrigin, ArrayList<Collection> collections) {
+            return ByCollection().getDishes(collectionOrigin.getId())
                     .flatMap(dishes -> {
                         if (dishes.isEmpty()) {
                             return Single.just(false);
                         }
-                        return Observable.fromIterable(idCollections)
-                                .flatMapSingle(id_collection ->
+                        return Observable.fromIterable(collections)
+                                .flatMapSingle(collection ->
                                         Observable.fromIterable(dishes)
                                                 .flatMapSingle(dish ->
-                                                        checkDuplicateData(dish.getId(), id_collection)
+                                                        checkDuplicateData(dish.getId(), collection.getId())
                                                                 .flatMap(isDuplicate -> {
                                                                     if (!isDuplicate) {
-                                                                        return ByDish_Collection().addWithCheckExist(new Dish_Collection(dish.getId(), id_collection));
+                                                                        return ByDish_Collection().addWithCheckExist(new DishCollection(dish.getId(), collection.getId()));
                                                                     } else {
                                                                         return Single.just(true);
                                                                     }
@@ -1455,7 +1509,7 @@ public class RecipeUtils {
          * @return Completable Результат операції
          */
         @Override
-        public Completable update(Dish_Collection item) {
+        public Completable update(DishCollection item) {
             return null;
         }
 
@@ -1465,7 +1519,7 @@ public class RecipeUtils {
          * @return Completable Результат операції
          */
         @Override
-        public Completable delete(Dish_Collection item) {
+        public Completable delete(DishCollection item) {
             return dao.delete(item);
         }
 
@@ -1475,7 +1529,7 @@ public class RecipeUtils {
          * @return Single<Boolean> Результат операції (true - успішно, false - помилка)
          */
         @Override
-        public Single<Boolean> deleteAll(ArrayList<Dish_Collection> items) {
+        public Single<Boolean> deleteAll(ArrayList<DishCollection> items) {
             return Observable.fromIterable(items)
                     .flatMapSingle(item ->
                             dao.delete(item)
@@ -1793,6 +1847,7 @@ public class RecipeUtils {
         @Override
         public Single<IngredientShopList> getByID(@NonNull long id) {
             return dao.getById(id)
+                    .switchIfEmpty(Single.just(new IngredientShopList("", "", IngredientType.VOID, false)))
                     .flatMap(ingredient -> {
                         if (ingredient != null) { return getDataFromIngredient(ingredient); }
                         else { return Single.just(new IngredientShopList()); }
@@ -2238,7 +2293,7 @@ public class RecipeUtils {
          */
         @Override
         public Single<DishRecipe> getByID(long id) {
-            return dao.getByID(id);
+            return dao.getByID(id).switchIfEmpty(Single.just(new DishRecipe()));
         }
 
         /**
@@ -2320,46 +2375,5 @@ public class RecipeUtils {
                     })
                     .onErrorReturnItem(false);
         }
-    }
-
-
-
-
-
-    //
-    //
-    //       Other
-    //
-    //
-
-    /**
-     * Отримує список назв системних колекцій.
-     *
-     * @return ArrayList<String> Список назв системних колекцій
-     */
-    public ArrayList<String> getAllNameSystemCollection() {
-        String systemTag = context.getString(R.string.system_collection_tag);
-        ArrayList<String> names = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            names.add(systemTag + i);
-        }
-        return names;
-    }
-
-    /**
-     * Отримує користувацьку назву системної колекції за її технічною назвою.
-     * Якщо передана назва не є системною колекцією, повертається оригінальна назва.
-     *
-     * @param name Назва системної колекції для користувача
-     * @return String Користувацька назва колекції або оригінальна назва
-     */
-    public String getCustomNameSystemCollection(String name) {
-        String systemTag = context.getString(R.string.system_collection_tag);
-
-        if (Objects.equals(name, systemTag + "1")) { return context.getString(R.string.favorites); }
-        else if (Objects.equals(name, systemTag + "2")) { return context.getString(R.string.my_recipes); }
-        else if (Objects.equals(name, systemTag + "3")) { return context.getString(R.string.gpt_recipes); }
-        else if (Objects.equals(name, systemTag + "4")) { return context.getString(R.string.import_recipes); }
-        else { return name; }
     }
 }

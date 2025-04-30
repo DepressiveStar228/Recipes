@@ -25,7 +25,7 @@ import io.reactivex.rxjava3.annotations.Nullable;
                         childColumns = "id_ingredient",
                         onDelete = ForeignKey.CASCADE
                 ), @ForeignKey(
-                        entity = Dish_Collection.class,
+                        entity = DishCollection.class,
                         parentColumns = "id",
                         childColumns = "id_dish",
                         onDelete = ForeignKey.CASCADE)

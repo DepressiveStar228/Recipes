@@ -7,6 +7,8 @@ import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import java.util.Objects;
+
 /**
  * @author Артем Нікіфоров
  * @version 1.0
@@ -27,7 +29,7 @@ import androidx.room.PrimaryKey;
         },
         indices = {@Index(value = "id_dish"), @Index(value = "id_collection")}
 )
-public class Dish_Collection {
+public class DishCollection {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "id_dish") private long idDish;
     @ColumnInfo(name = "id_collection") private long idCollection;
@@ -35,13 +37,13 @@ public class Dish_Collection {
 
     // Конструктори
     @Ignore
-    public Dish_Collection(long id, long idDish, long idCollection) {
+    public DishCollection(long id, long idDish, long idCollection) {
         this.id = id;
         this.idDish = idDish;
         this.idCollection = idCollection;
     }
 
-    public Dish_Collection(long idDish, long idCollection) {
+    public DishCollection(long idDish, long idCollection) {
         this.idDish = idDish;
         this.idCollection = idCollection;
     }
@@ -70,5 +72,19 @@ public class Dish_Collection {
 
     public void setIdCollection(long idCollection) {
         this.idCollection = idCollection;
+    }
+
+    // Інші методи
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        DishCollection that = (DishCollection) object;
+        return id == that.id && idDish == that.idDish && idCollection == that.idCollection;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, idDish, idCollection);
     }
 }

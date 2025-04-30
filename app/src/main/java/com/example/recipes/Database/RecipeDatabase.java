@@ -18,8 +18,8 @@ import com.example.recipes.Database.TypeConverter.CollectionTypeConverter;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
+import com.example.recipes.Item.DishCollection;
 import com.example.recipes.Item.DishRecipe;
-import com.example.recipes.Item.Dish_Collection;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.Item.IngredientShopList_AmountType;
@@ -33,7 +33,7 @@ import com.example.recipes.Item.IngredientShopList_AmountType;
  */
 @Database(
         version = 2,
-        entities = {Dish.class, DishRecipe.class, Ingredient.class, Collection.class, Dish_Collection.class, IngredientShopList.class, IngredientShopList_AmountType.class},
+        entities = {Dish.class, DishRecipe.class, Ingredient.class, Collection.class, DishCollection.class, IngredientShopList.class, IngredientShopList_AmountType.class},
         exportSchema = false
 )
 @TypeConverters({CollectionTypeConverter.class, IngredientTypeConverter.class})

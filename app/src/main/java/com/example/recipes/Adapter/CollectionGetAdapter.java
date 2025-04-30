@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.R;
+import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -29,9 +31,11 @@ import java.util.Objects;
  */
 public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetAdapter.ViewHolder> {
     private final Context context;
-    private static String[] themeArray;
-    private PreferencesController preferencesController;
-    private CollectionClickListener collectionClickListener;
+    private final String[] themeArray;
+    private ConstraintLayout empty;
+    private RecipeUtils recipeUtils;
+    private final PreferencesController preferencesController;
+    private final CollectionClickListener collectionClickListener;
 
     /**
      * Конструктор адаптера.
@@ -39,10 +43,12 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
      * @param context Контекст додатку.
      * @param clickListener Лістенер для обробки кліків на елементи.
      */
-    public CollectionGetAdapter(Context context, CollectionClickListener clickListener) {
+    public CollectionGetAdapter(Context context, ConstraintLayout empty, CollectionClickListener clickListener) {
         super(DIFF_CALLBACK);
         this.context = context;
         this.collectionClickListener = clickListener;
+        this.empty = empty;
+        this.recipeUtils = new RecipeUtils(context);
         preferencesController = PreferencesController.getInstance();
         themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
     }
@@ -61,36 +67,10 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
         Collection collection = getItem(currentPosition);
 
         // Вставка своїх іконок та назв для системних колекцій
-        if (Objects.equals(collection.getName(), Collection.SYSTEM_COLLECTION_TAG + "1") || Objects.equals(collection.getName(), context.getString(R.string.favorites))) {
-            holder.collection_name.setText(context.getString(R.string.favorites));
-            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_star));
-            if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
-                holder.collection_img.setColorFilter(R.color.white);
-            }
-        } else if (Objects.equals(collection.getName(), Collection.SYSTEM_COLLECTION_TAG + "2") || Objects.equals(collection.getName(), context.getString(R.string.my_recipes))) {
-            holder.collection_name.setText(context.getString(R.string.my_recipes));
-            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book_a));
-            if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
-                holder.collection_img.setColorFilter(R.color.white);
-            }
-        } else if (Objects.equals(collection.getName(), Collection.SYSTEM_COLLECTION_TAG + "3") || Objects.equals(collection.getName(), context.getString(R.string.gpt_recipes))) {
-            holder.collection_name.setText(context.getString(R.string.gpt_recipes));
-            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_neurology));
-            if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
-                holder.collection_img.setColorFilter(R.color.white);
-            }
-        } else if (Objects.equals(collection.getName(), Collection.SYSTEM_COLLECTION_TAG + "4") || Objects.equals(collection.getName(), context.getString(R.string.import_recipes))) {
-            holder.collection_name.setText(context.getString(R.string.import_recipes));
-            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_download));
-            if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
-                holder.collection_img.setColorFilter(R.color.white);
-            }
-        } else {
-            holder.collection_name.setText(collection.getName());
-            holder.collection_img.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.icon_book));
-            if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
-                holder.collection_img.setColorFilter(R.color.white);
-            }
+        holder.collection_name.setText(recipeUtils.ByCollection().getCustomNameSystemCollectionByName(collection.getName()));
+        holder.collection_img.setImageDrawable(recipeUtils.ByCollection().getDrawableByName(collection.getName()));
+        if (Objects.equals(preferencesController.getThemeString(), themeArray[0])) {
+            holder.collection_img.setColorFilter(R.color.white);
         }
 
         int counterDishes = collection.getDishes().size();
@@ -98,17 +78,27 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
         holder.counter_dishes.setText(String.valueOf(counterDishes));
         holder.collection_name.setPadding(0, 0, countDigits(counterDishes), 0);
 
-        holder.menu_img.setOnClickListener(v -> {
+        holder.imageView.setOnClickListener(v -> {
             if (collectionClickListener != null) {
-                collectionClickListener.onMenuIconClick(collection, holder.menu_img);
+                collectionClickListener.onImageViewClick(collection, holder.imageView);
             }
         });
 
         holder.itemView.setOnClickListener(v -> {
             if (collectionClickListener != null) {
-                collectionClickListener.onCollectionClick(collection, holder.childRecyclerView);
+                collectionClickListener.onCollectionClick(collection);
             }
         });
+    }
+
+    /**
+     * Перевіряє, чи список колекцій порожній, і оновлює відображення порожнього стану.
+     */
+    private void checkEmpty() {
+        if (empty != null) {
+            if (getCurrentList().isEmpty()) empty.setVisibility(View.VISIBLE);
+            else empty.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -124,6 +114,7 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
 
         submitList(newList);
         notifyDataSetChanged();
+        checkEmpty();
     }
 
     /**
@@ -145,18 +136,16 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
     /**
      * Внутрішній клас, який представляє ViewHolder для елементів списку колекцій.
      */
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView collection_img, menu_img;
+    class ViewHolder extends RecyclerView.ViewHolder {
+        ImageView collection_img, imageView;
         TextView collection_name, counter_dishes;
-        RecyclerView childRecyclerView;
 
         ViewHolder(View itemView) {
             super(itemView);
             collection_img = itemView.findViewById(R.id.collection_imageView);
             collection_name = itemView.findViewById(R.id.collection_name);
-            childRecyclerView = itemView.findViewById(R.id.child_recycler_view);
             counter_dishes = itemView.findViewById(R.id.counter_dishes);
-            menu_img = itemView.findViewById(R.id.menu_collection_imageView);
+            imageView = itemView.findViewById(R.id.menu_collection_imageView);
         }
     }
 
@@ -174,7 +163,7 @@ public class CollectionGetAdapter extends ListAdapter<Collection, CollectionGetA
      * Інтерфейс для обробки кліків на елементи списку колекцій.
      */
     public interface CollectionClickListener {
-        void onCollectionClick(Collection collection, RecyclerView childRecyclerView);
-        void onMenuIconClick(Collection collection, View anchorView);
+        void onCollectionClick(Collection collection);
+        void onImageViewClick(Collection collection, View anchorView);
     }
 }

@@ -1,9 +1,5 @@
 package com.example.recipes.Fragments;
 
-import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -15,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -29,9 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Activity.ShopListActivity;
-import com.example.recipes.Adapter.ChooseItemAdapter;
 import com.example.recipes.Adapter.ShopListGetAdapter;
-import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
@@ -41,10 +34,10 @@ import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Item.Collection;
-import com.example.recipes.Item.IngredientShopList;
+import com.example.recipes.Item.Option.ShopListOptions;
 import com.example.recipes.Item.ShopList;
 import com.example.recipes.R;
-import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
 
 import java.util.ArrayList;
@@ -53,7 +46,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
@@ -78,7 +70,8 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
     private ArrayList<ShopList> shopLists;
     private Disposable shopListDisposable;
     private String nameActivity;
-    private SearchController<String> searchController;
+    private ShopListOptions shopListOptions;
+    private Dialogues dialogues;
     private final AtomicBoolean accessUpdateShopListsFlag = new AtomicBoolean(true);
 
     @Override
@@ -90,6 +83,8 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
         compositeByIngredients = new CompositeDisposable();
         shopLists = new ArrayList<>();
         nameActivity = ShoplistFragment.class.getName();
+        shopListOptions = new ShopListOptions(requireActivity(), compositeDisposable);
+        dialogues = new Dialogues(requireActivity());
     }
 
     @Override
@@ -175,37 +170,25 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
 
                             popupMenu.setOnMenuItemClickListener(item -> {
                                 if (item.getItemId() == R.id.action_edit) {
-                                    handleEditNameCollectionAction(shopList);
+                                    shopListOptions.editName(shopList, updatedCollection -> {
+                                        int index = shopLists.indexOf(shopList);
+                                        if (index != -1) {
+                                            shopLists.set(index, updatedCollection);
+                                            adapter.notifyItemChanged(index);
+                                        }
+                                    });
                                     return true;
                                 }
                                 else if (item.getItemId() == R.id.action_delete) {
-                                    handleDeleteCollectionAction(shopList);
+                                    shopListOptions.delete(shopList, () -> Toast.makeText(getContext(), R.string.successful_delete_shop_list, Toast.LENGTH_SHORT).show());
                                     return true;
                                 }
                                 else if (item.getItemId() == R.id.action_copy_as_text) {
-                                    String text = "";
-                                    text = text + getString(R.string.list) + " " + shopList.getName() + "\n";
-
-                                    for (IngredientShopList ing : shopList.getIngredients()) {
-                                        if (!ing.getIsBuy()) {
-                                            text = text + "   - " + ing.getName() + ": " + ing.getGroupedAmountTypeToString(getContext()) + "\n";
-                                        }
-                                    }
-
-                                    text.substring(0, text.length() - 1);
-
-                                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                                    ClipData clip = ClipData.newPlainText("label", text);
-                                    clipboard.setPrimaryClip(clip);
-
+                                    shopListOptions.copyAsTest(shopList);
                                     return true;
                                 }
                                 else if (item.getItemId() == R.id.action_clear) {
-                                    new AlertDialog.Builder(getContext())
-                                            .setTitle(getString(R.string.confirm_clear_shop_list))
-                                            .setMessage(getString(R.string.warning_clear_shop_list))
-                                            .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> handleClearIngredientsCollection(shopList))
-                                            .setNegativeButton(getString(R.string.no), null).show();
+                                    shopListOptions.clear(shopList);
                                     return true;
                                 }
                                 else { return false; }
@@ -289,91 +272,81 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
      * Відображає діалогове вікно для додавання нового списку покупок.
      */
     private void showAddShopListDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_collection, null);
-        EditText editText = dialogView.findViewById(R.id.add_collection_name_editText);
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Limits.MAX_CHAR_NAME_COLLECTION);
-
-        builder.setView(dialogView)
-                .setTitle(R.string.add_collection)
-                .setPositiveButton(R.string.button_add, (dialog, which) -> {
-                    String collectionName = editText.getText().toString().trim();
-                    if (collectionName.isEmpty()) {
-                        Disposable disposable = utils.ByCollection().generateUniqueNameForShopList()
-                                .flatMap(name -> utils.ByCollection().add(new Collection(name, CollectionType.SHOP_LIST)))
-                                .subscribeOn(Schedulers.newThread())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        id -> {
-                                            if (id > 0) {
-                                                Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
-                                                Log.d("ShoplistFragment", "Колекція успішно створена");
-                                            } else {
-                                                Log.e("ShoplistFragment", "Помилка створення колекції");
-                                            }
-                                        },
-                                        throwable -> {
-                                            Log.d("ShoplistFragment", "Помилка отримання колекції за ім'ям");
-                                        });
-                        compositeDisposable.add(disposable);
-                    } else {
-                        Disposable disposable = utils.ByCollection().getIdByName(collectionName)
-                                .flatMap(
-                                        id -> {
-                                            if (id != -1) {
-                                                Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
-                                                return Single.just(null);
-                                            } else {
-                                                return Single.just(collectionName);
-                                            }
-                                        },
-                                        throwable -> {
-                                            Log.d("ShoplistFragment", "Помилка отримання айді колекції за ім'ям");
-                                            return Single.just(null);
-                                        }
-                                )
-                                .flatMap(name -> {
-                                    if (name != null) {
-                                        return utils.ByCollection().add(new Collection(name, CollectionType.SHOP_LIST))
-                                                .map(id -> new Pair<>((id > 0), name));
-                                    } else {
-                                        return Single.just(new Pair<>(false, name));
-                                    }
-                                })
-                                .flatMap(pair -> {
-                                    if (pair.first) {
-                                        Single<Collection> collectionSingle = utils.ByCollection().getByName(pair.second);
-                                        if (collectionSingle == null) {
-                                            return Single.just(new Collection("", CollectionType.SHOP_LIST, new ArrayList<>()));
+        if (dialogues != null) {
+            dialogues.dialogSetStringParamCollection(Limits.MAX_CHAR_NAME_COLLECTION, collectionName -> {
+                if (collectionName.isEmpty()) {
+                    Disposable disposable = utils.ByCollection().generateUniqueNameForShopList()
+                            .flatMap(name -> utils.ByCollection().add(new Collection(name, CollectionType.SHOP_LIST)))
+                            .subscribeOn(Schedulers.newThread())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    id -> {
+                                        if (id > 0) {
+                                            Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
+                                            Log.d("ShoplistFragment", "Колекція успішно створена");
                                         } else {
-                                            return collectionSingle;
+                                            Log.e("ShoplistFragment", "Помилка створення колекції");
                                         }
-                                    } else {
-                                        return Single.just(new Collection("", CollectionType.SHOP_LIST, new ArrayList<>()));
+                                    },
+                                    throwable -> {
+                                        Log.d("ShoplistFragment", "Помилка отримання колекції за ім'ям");
+                                    });
+                    compositeDisposable.add(disposable);
+                } else {
+                    Disposable disposable = utils.ByCollection().getIdByName(collectionName)
+                            .flatMap(
+                                    id -> {
+                                        if (id != -1) {
+                                            Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
+                                            return Single.just(null);
+                                        } else {
+                                            return Single.just(collectionName);
+                                        }
+                                    },
+                                    throwable -> {
+                                        Log.d("ShoplistFragment", "Помилка отримання айді колекції за ім'ям");
+                                        return Single.just(null);
                                     }
-                                })
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(collection -> {
-                                            if (collection != null && collection.getId() != -1) {
-                                                Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
-                                                Log.d("ShoplistFragment", "Колекція успішно створена");
-                                            } else {
-                                                Log.e("ShoplistFragment", "Помилка створення колекції");
-                                            }
-                                        },
-                                        throwable -> {
-                                            Log.d("ShoplistFragment", "Помилка отримання колекції за ім'ям");
+                            )
+                            .flatMap(name -> {
+                                if (name != null) {
+                                    return utils.ByCollection().add(new Collection(name, CollectionType.SHOP_LIST))
+                                            .map(id -> new Pair<>((id > 0), name));
+                                } else {
+                                    return Single.just(new Pair<>(false, name));
+                                }
+                            })
+                            .flatMap(pair -> {
+                                if (pair.first) {
+                                    Single<Collection> collectionSingle = utils.ByCollection().getByName(pair.second);
+                                    if (collectionSingle == null) {
+                                        return Single.just(new Collection("", CollectionType.SHOP_LIST, new ArrayList<>()));
+                                    } else {
+                                        return collectionSingle;
+                                    }
+                                } else {
+                                    return Single.just(new Collection("", CollectionType.SHOP_LIST, new ArrayList<>()));
+                                }
+                            })
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(collection -> {
+                                        if (collection != null && collection.getId() != -1) {
+                                            Toast.makeText(getContext(), R.string.successful_add_collection, Toast.LENGTH_SHORT).show();
+                                            Log.d("ShoplistFragment", "Колекція успішно створена");
+                                        } else {
+                                            Log.e("ShoplistFragment", "Помилка створення колекції");
                                         }
-                                );
+                                    },
+                                    throwable -> {
+                                        Log.d("ShoplistFragment", "Помилка отримання колекції за ім'ям");
+                                    }
+                            );
 
-                        compositeDisposable.add(disposable);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
+                    compositeDisposable.add(disposable);
+                }
+            }, R.string.add_shop_list, R.string.button_add);
+        }
     }
 
     /**
@@ -381,91 +354,60 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
      * Вибрані інгредієнти не будуть потрапляти до списку покупків
      */
     private void showBlackListDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
-
-        if (dialogView != null) {
-            TextView textView = dialogView.findViewById(R.id.textView22);
-            if (textView != null) { textView.setText(R.string.ingredient_black_list); }
-            RecyclerView ingredientsRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
-            EditText editText = dialogView.findViewById(R.id.search_edit_text);
-            ConstraintLayout empty = dialogView.findViewById(R.id.empty);
-            if (editText != null) { CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Limits.MAX_CHAR_NAME_INGREDIENT); }
-
-            if (ingredientsRecyclerView != null) {
-                Disposable disposable = Single.zip(
-                                utils.ByIngredient().getNamesUnique(),
-                                utils.ByIngredientShopList().getAllNamesByBlackList(),
-                                Pair::new
-                        )
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(data -> {
-                            if (data.first != null && data.second != null) {
-                                if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, data.first.isEmpty());
-
-                                // Налаштовуємо пошук по інгредієнтам
-                                searchController = new SearchController<>(getContext(), editText, ingredientsRecyclerView, new ChooseItemAdapter<String>(getContext(), (checkBox, item) -> { }));
-                                searchController.setArrayData(new ArrayList<>(data.first));
-                                searchController.setArraySelectedData(new ArrayList<>(data.second));
-                                searchController.setSearchEditText(editText);
-                                searchController.setSearchResultsRecyclerView(ingredientsRecyclerView);
-
-                                ChooseItemAdapter<String> adapterChooseObjects = (ChooseItemAdapter) searchController.getAdapter();
-
-                                builder.setView(dialogView)
-                                        .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                                            ArrayList<String> selectedIngredients = adapterChooseObjects.getSelectedItem();
-
-                                            Disposable disposable1 = updateBlackList(data.second, selectedIngredients)
-                                                    .subscribeOn(Schedulers.newThread())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(
-                                                            status -> {
-                                                                if (status) {
-                                                                    Toast.makeText(getContext(), getContext().getString(R.string.successfully_made_changes), Toast.LENGTH_SHORT).show();
-                                                                    Log.d(nameActivity, "Інгедієнти успішно додано до чорного списку");
-                                                                } else {
-                                                                    Toast.makeText(getContext(), getContext().getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
-                                                                    Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
-                                                                }
-                                                            },
-                                                            throwable -> {
-                                                                Toast.makeText(getContext(), getContext().getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
-                                                                Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
-                                                            }
-                                                    );
+        Disposable disposable = Single.zip(
+                        utils.ByIngredient().getNamesUnique(),
+                        utils.ByIngredientShopList().getAllNamesByBlackList(),
+                        Pair::new
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(data -> {
+                    if (dialogues != null) {
+                        dialogues.dialogChooseItemsWithSearch(new ArrayList<>(data.first), new ArrayList<>(data.second), selectedItems -> {
+                            if (selectedItems != null) {
+                                Disposable disposable1 = updateBlackList(data.second, selectedItems)
+                                        .subscribeOn(Schedulers.newThread())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe(
+                                                status -> {
+                                                    if (status) {
+                                                        Toast.makeText(getContext(), getContext().getString(R.string.successfully_made_changes), Toast.LENGTH_SHORT).show();
+                                                        Log.d(nameActivity, "Інгедієнти успішно додано до чорного списку");
+                                                    } else {
+                                                        Toast.makeText(getContext(), getContext().getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
+                                                        Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
+                                                    }
+                                                },
+                                                throwable -> {
+                                                    Toast.makeText(getContext(), getContext().getString(R.string.error_add_ingedients), Toast.LENGTH_SHORT).show();
+                                                    Log.d(nameActivity, "Помилка додавання інгредиєнтів до чорного списку");
+                                                }
+                                        );
 
 
-                                            compositeDisposable.add(disposable1);
-                                        })
-                                        .setNeutralButton(R.string.reset, (dialog, which) -> {
-                                            Disposable disposable1 = utils.ByIngredientShopList().getAllByBlackList()
-                                                    .flatMap(ingredientShopLists -> utils.ByIngredientShopList().deleteAll(new ArrayList<>(ingredientShopLists)))
-                                                    .subscribeOn(Schedulers.newThread())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(status -> {
-                                                        if (status) {
-                                                            Toast.makeText(getContext(), getContext().getString(R.string.successful_reset), Toast.LENGTH_SHORT).show();
-                                                            Log.d(nameActivity, "Успішно скинуто інгредієнти blacklist");
-                                                        } else {
-                                                            Toast.makeText(getContext(), getContext().getString(R.string.error_reset), Toast.LENGTH_SHORT).show();
-                                                            Log.d(nameActivity, "Помилка скидання інгредієнтів blacklist");
-                                                        }
-                                                    });
-
-                                            compositeDisposable.add(disposable1);
-                                        })
-                                        .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-                                builder.create().show();
+                                compositeDisposable.add(disposable1);
                             }
-                        });
+                        }, () -> {
+                            Disposable disposable1 = utils.ByIngredientShopList().getAllByBlackList()
+                                    .flatMap(ingredientShopLists -> utils.ByIngredientShopList().deleteAll(new ArrayList<>(ingredientShopLists)))
+                                    .subscribeOn(Schedulers.newThread())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(status -> {
+                                        if (status) {
+                                            Toast.makeText(getContext(), getContext().getString(R.string.successful_reset), Toast.LENGTH_SHORT).show();
+                                            Log.d(nameActivity, "Успішно скинуто інгредієнти blacklist");
+                                        } else {
+                                            Toast.makeText(getContext(), getContext().getString(R.string.error_reset), Toast.LENGTH_SHORT).show();
+                                            Log.d(nameActivity, "Помилка скидання інгредієнтів blacklist");
+                                        }
+                                    });
 
-                compositeDisposable.add(disposable);
-            }
-        }
+                            compositeDisposable.add(disposable1);
+                        }, Limits.MAX_CHAR_NAME_INGREDIENT, R.string.ingredient_black_list, R.string.confirm);
+                    }
+                });
+
+        compositeDisposable.add(disposable);
     }
 
     /**
@@ -518,142 +460,5 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                     }
                     return true;
                 });
-    }
-
-    /**
-     * Обробляє дію редагування назви списку покупків.
-     * Відображає діалогове вікно для зміни назви та оновлює дані у базі.
-     *
-     * @param collection Список покупків, який потрібно редагувати
-     */
-    private void handleEditNameCollectionAction(ShopList collection) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_collection, null);
-        EditText editText = dialogView.findViewById(R.id.edit_collection_name_editText);
-        editText.setText(collection.getName());
-        CharacterLimitTextWatcher.setCharacterLimit(getContext(), editText, Limits.MAX_CHAR_NAME_COLLECTION);
-        builder.setView(dialogView)
-                .setTitle(R.string.edit_shop_list)
-                .setPositiveButton(R.string.edit, (dialog, which) -> {
-                    String collectionName = editText.getText().toString().trim();
-
-                    if (collectionName.isEmpty()) {
-                        Disposable disposable = utils.ByCollection().generateUniqueNameForShopList()
-                                .flatMap(name -> {
-                                    collection.setName(name);
-                                    collection.setType(CollectionType.SHOP_LIST);
-                                    return utils.ByCollection().updateAndGet(collection);
-                                })
-                                .subscribeOn(Schedulers.newThread())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(collection_ -> {
-                                    if (collection_ != null && collection_.getId() != -1) {
-                                        int index = shopLists.indexOf(collection);
-                                        if (index != -1) {
-                                            shopLists.set(index, new ShopList(collection_));
-                                            adapter.notifyItemChanged(index);
-                                        }
-
-                                        Toast.makeText(getContext(), R.string.successful_edit_collection, Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(getContext(), R.string.error_edit_collection, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                        compositeDisposable.add(disposable);
-                    } else if (!collectionName.equals(collection.getName())) {
-                        Disposable disposable = utils.ByCollection().getIdByNameAndType(collectionName, CollectionType.SHOP_LIST)
-                                .flatMap(
-                                        id -> {
-                                            if (id != -1) {
-                                                Toast.makeText(getContext(), R.string.warning_dublicate_name_collection, Toast.LENGTH_SHORT).show();
-                                                return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));
-                                            } else {
-                                                collection.setName(collectionName);
-                                                return utils.ByCollection().update(collection).toSingleDefault(collection);
-                                            }
-                                        },
-                                        throwable -> {
-                                            Log.d("ShoplistFragment", "Помилка виконання запиту отримання айді колекції за ім'ям");
-                                            return Single.error(new Exception(getString(R.string.warning_dublicate_name_collection)));
-                                        }
-                                )
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        updatedCollection -> {
-                                            Toast.makeText(getContext(), R.string.successful_edit_collection, Toast.LENGTH_SHORT).show();
-
-                                            int index = shopLists.indexOf(collection);
-                                            if (index != -1) {
-                                                shopLists.set(index, updatedCollection);
-                                                adapter.notifyItemChanged(index);
-                                            }
-                                        },
-                                        throwable -> {
-                                            if (throwable.getMessage() != null && throwable.getMessage().equals(getString(R.string.warning_dublicate_name_collection))) {
-                                                Toast.makeText(getContext(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
-                                            } else {
-                                                Toast.makeText(getContext(), R.string.error_edit_collection, Toast.LENGTH_SHORT).show();
-                                            }
-                                        }
-                                );
-
-                        compositeDisposable.add(disposable);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
-    }
-
-    /**
-     * Обробляє дію видалення списку покупків.
-     * Виводить підтверджувальне діалогове вікно та видаляє список покупків з бази даних.
-     *
-     * @param shopList Список покупків, який потрібно видалити
-     */
-    private void handleDeleteCollectionAction(ShopList shopList) {
-        new AlertDialog.Builder(getContext())
-                .setTitle(getString(R.string.confirm_delete_dish))
-                .setMessage(getString(R.string.warning_delete_shop_list))
-                .setPositiveButton(getString(R.string.yes), (dialog, whichButton) -> {
-                    Disposable disposable = utils.ByCollection().clearShopList(shopList)
-                            .flatMapCompletable(status -> {
-                                if (status) {
-                                    int index = shopLists.indexOf(shopList);
-                                    shopList.setIngredients(new ArrayList<>());
-                                    shopList.setDishes(new ArrayList<>());
-                                    shopLists.set(index, shopList);
-
-                                    return utils.ByCollection().delete(shopList);
-                                } else return Completable.error(new Throwable());
-                            })
-                            .subscribeOn(Schedulers.newThread())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    () -> Toast.makeText(getContext(), R.string.successful_delete_shop_list, Toast.LENGTH_SHORT).show(),
-                                    throwable -> Toast.makeText(getContext(), R.string.error_delete_collection, Toast.LENGTH_SHORT).show()
-                            );
-
-                    compositeDisposable.add(disposable);
-                })
-                .setNegativeButton(getString(R.string.no), null).show();
-    }
-
-    /**
-     * Обробляє дію очищення списку інгредієнтів у списку покупків.
-     * Видаляє всі інгредієнти з вказаного списка покупків.
-     *
-     * @param shopList Список покупків, який потрібно очистити
-     */
-    private void handleClearIngredientsCollection(ShopList shopList) {
-        Disposable disposable = utils.ByCollection().clearShopList(shopList)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(status -> {
-                    if (status) Toast.makeText(getContext(), R.string.successful_clear_collerction, Toast.LENGTH_SHORT).show();
-                });
-        compositeDisposable.add(disposable);
     }
 }

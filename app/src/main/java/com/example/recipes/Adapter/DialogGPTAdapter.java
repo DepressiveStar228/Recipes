@@ -92,11 +92,11 @@ public class DialogGPTAdapter extends RecyclerView.Adapter<DialogGPTAdapter.Dial
     /**
      * Внутрішній клас, який представляє ViewHolder для елементів списку повідомлень.
      */
-    public static class DialogGPTItemViewHolder extends RecyclerView.ViewHolder {
+    static class DialogGPTItemViewHolder extends RecyclerView.ViewHolder {
         TextView role, contentText;
         AppCompatImageView addDishButton;
 
-        public DialogGPTItemViewHolder(@NonNull View itemView) {
+        DialogGPTItemViewHolder(@NonNull View itemView) {
             super(itemView);
             role = itemView.findViewById(R.id.roleItem);
             contentText = itemView.findViewById(R.id.textItem);
