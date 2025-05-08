@@ -4,18 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.net.Uri;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Item.Collection;
-import com.example.recipes.Item.Dish;
 import com.example.recipes.R;
 import com.example.recipes.Utils.ClassUtils;
 import com.example.recipes.Utils.Dialogues;
@@ -63,7 +58,7 @@ public class CollectionOptions {
                                 dialogues.dialogChooseItemsWithSearch(unused_dishes,
                                         selectedDishes -> {
                                             if (!selectedDishes.isEmpty()) {
-                                                Disposable disposable1 = utils.ByDish_Collection().addAllWithCheckExist(selectedDishes, collection.getId())
+                                                Disposable disposable1 = utils.ByDishCollection().addAll(selectedDishes, collection)
                                                         .subscribeOn(Schedulers.io())
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(status -> {
@@ -108,7 +103,7 @@ public class CollectionOptions {
                                     dialogues.dialogChooseItems(allCollections,
                                             selectedCollections -> {
                                                 if (!selectedCollections.isEmpty()) {
-                                                    Disposable disposable1 = utils.ByDish_Collection().copyDishesToAnotherCollections(collection, selectedCollections)
+                                                    Disposable disposable1 = utils.ByDishCollection().copyDishesToAnotherCollections(collection, selectedCollections)
                                                             .subscribeOn(Schedulers.io())
                                                             .observeOn(AndroidSchedulers.mainThread())
                                                             .subscribe(status -> {
@@ -147,7 +142,7 @@ public class CollectionOptions {
                     Toast.makeText(activity, R.string.error_empty_name, Toast.LENGTH_SHORT).show();
                 }
 
-                Disposable disposable = utils.ByCollection().getIdByName(collectionName)
+                Disposable disposable = utils.ByCollection().getIDByName(collectionName)
                         .flatMap(
                                 id -> {
                                     if (id != -1) {
@@ -230,7 +225,7 @@ public class CollectionOptions {
                 .setTitle(activity.getString(R.string.confirm_clear_collection))
                 .setMessage(activity.getString(R.string.warning_clear_collection))
                 .setPositiveButton(activity.getString(R.string.yes), (dialog, whichButton) -> {
-                    Disposable disposable = utils.ByDish_Collection().deleteAllByIDCollection(collection.getId())
+                    Disposable disposable = utils.ByDishCollection().deleteAllByIDCollection(collection.getId())
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(

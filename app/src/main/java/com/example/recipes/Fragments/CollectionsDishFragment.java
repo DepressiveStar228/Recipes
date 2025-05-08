@@ -207,7 +207,7 @@ public class CollectionsDishFragment extends Fragment implements OnBackPressedLi
             collectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
             // Слухач на зміну кількості страв в БД
-            utils.ByDish_Collection().getViewModel().getCount().observe(this, data -> {
+            utils.ByDishCollection().getViewModel().getCount().observe(this, data -> {
                 if (data != null) {
                     if (collectionDisposable != null) collectionDisposable.dispose();
 
@@ -254,7 +254,7 @@ public class CollectionsDishFragment extends Fragment implements OnBackPressedLi
                     Toast.makeText(getContext(), R.string.error_empty_name, Toast.LENGTH_SHORT).show();
                 } else {
                     // Перевірка на існування колекції з таким же ім'ям
-                    Disposable disposable = utils.ByCollection().getIdByName(collectionName)
+                    Disposable disposable = utils.ByCollection().getIDByName(collectionName)
                             .flatMap(
                                     id -> {
                                         if (id != -1) {

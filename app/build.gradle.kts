@@ -108,6 +108,7 @@ dependencies {
     testImplementation("androidx.test:core:1.6.1")
     androidTestImplementation("org.mockito:mockito-android:5.5.0")
     testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.mockito:mockito-inline:5.5.0")
     testImplementation("org.robolectric:robolectric:4.10.3")
 
     // Lifecycle

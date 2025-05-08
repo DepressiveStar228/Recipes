@@ -47,14 +47,14 @@ public class IngredientShopList implements Item {
 
     // Конструктори
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull Map<IngredientType, ArrayList<String>> groupedAmountType, @NonNull long idCollection) {
+    public IngredientShopList(String name, Map<IngredientType, ArrayList<String>> groupedAmountType, long idCollection) {
         this.name = name;
         this.groupedAmountType = groupedAmountType;
         this.idCollection = idCollection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull IngredientShopList ingredientShopList) {
+    public IngredientShopList(IngredientShopList ingredientShopList) {
         this.id = ingredientShopList.getId();
         this.name = ingredientShopList.getName();
         this.groupedAmountType = ingredientShopList.getGroupedAmountType();
@@ -63,21 +63,21 @@ public class IngredientShopList implements Item {
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long idCollection) {
+    public IngredientShopList(String name, String amount, IngredientType type, long idCollection) {
         this.name = name;
         addAmountType(amount, type);
         this.idCollection = idCollection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull long idCollection, @NonNull boolean isBuy) {
+    public IngredientShopList(String name, String amount, IngredientType type, long idCollection, boolean isBuy) {
         this.name = name;
         addAmountType(amount, type);
         this.idCollection = idCollection;
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull String amount, @NonNull IngredientType type, @NonNull boolean isBuy) {
+    public IngredientShopList(String name, String amount, IngredientType type, boolean isBuy) {
         this.name = name;
         addAmountType(amount, type);
         this.isBuy = isBuy;
@@ -92,12 +92,18 @@ public class IngredientShopList implements Item {
     }
 
     @Ignore
-    public IngredientShopList(@NonNull String name, @NonNull long idCollection) {
+    public IngredientShopList(String name, long idCollection) {
         this.name = name;
         this.idCollection = idCollection;
     }
 
-    public IngredientShopList(@NonNull String name, @NonNull long idCollection, @NonNull boolean isBuy) {
+    @Ignore
+    public IngredientShopList(long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public IngredientShopList(String name, long idCollection, boolean isBuy) {
         this.name = name;
         this.idCollection = idCollection;
         this.isBuy = isBuy;
@@ -129,34 +135,34 @@ public class IngredientShopList implements Item {
         return isBuy;
     }
 
-    public void setId(@NonNull long id) {
+    public void setId(long id) {
         this.id = id;
     }
 
     @Override
-    public void setName(@NonNull String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-    public void setGroupedAmountType(@NonNull Map<IngredientType, ArrayList<String>> groupedAmountType) { this.groupedAmountType = groupedAmountType; }
+    public void setGroupedAmountType(Map<IngredientType, ArrayList<String>> groupedAmountType) { this.groupedAmountType = groupedAmountType; }
 
-    public void setIdCollection(@NonNull long idCollection) {
+    public void setIdCollection(long idCollection) {
         this.idCollection = idCollection;
     }
 
-    public void setIsBuy(@NonNull boolean isBuy) {
+    public void setIsBuy(boolean isBuy) {
         this.isBuy = isBuy;
     }
 
 
 
     // Інші методи
-    public void addAmountType(@NonNull String amount, @NonNull IngredientType type) {
+    public void addAmountType(String amount, IngredientType type) {
         groupedAmountType.putIfAbsent(type, new ArrayList<>());
         groupedAmountType.get(type).add(amount);
     }
 
-    public void addAmountType(@NonNull IngredientShopList_AmountType amountType) {
+    public void addAmountType(IngredientShopListAmountType amountType) {
         groupedAmountType.putIfAbsent(amountType.getType(), new ArrayList<>());
         groupedAmountType.get(amountType.getType()).add(amountType.getAmount());
     }

@@ -39,16 +39,16 @@ public interface CollectionDAO {
     Completable delete(Collection collection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
-    Maybe<Collection> getById(long id);
+    Maybe<Collection> getByID(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id ")
-    LiveData<Collection> getByID_Live(long id);
+    LiveData<Collection> getByIDLive(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
-    Single<Collection> getByName(String name);
+    Maybe<Collection> getByName(String name);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name ")
-    Maybe<Long> getIdByName(String name);
+    Maybe<Long> getIDByName(String name);
 
     @Query("SELECT * FROM " + TABLE_NAME)
     Single<List<Collection>> getAll();
@@ -66,7 +66,7 @@ public interface CollectionDAO {
     LiveData<List<Collection>> getAllByTypeLive(CollectionType type);
 
     @Query("SELECT " + ID + " FROM " + TABLE_NAME + " WHERE " + NAME + " = :name AND " + TYPE + " = :type")
-    Maybe<Long> getIdByNameAndType(String name, CollectionType type);
+    Maybe<Long> getIDByNameAndType(String name, CollectionType type);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

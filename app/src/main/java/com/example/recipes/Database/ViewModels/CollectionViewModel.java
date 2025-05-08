@@ -31,7 +31,7 @@ public class CollectionViewModel extends ViewModel {
      * @return LiveData, яке містить колекцію з вказаним ідентифікатором.
      */
     public LiveData<Collection> getCollectionByID(long idCollection) {
-        return dao.getByID_Live(idCollection);
+        return dao.getByIDLive(idCollection);
     }
 
     /**

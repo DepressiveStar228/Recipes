@@ -47,10 +47,10 @@ public interface DishDAO {
     Single<List<Long>> getAllIDs();
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    LiveData<List<Dish>> getAll_Live();
+    LiveData<List<Dish>> getAllLive();
 
     @RawQuery(observedEntities = { Dish.class })
-    Single<List<Dish>> getWithFiltersAndSorting(SimpleSQLiteQuery query);
+    Maybe<List<Dish>> getWithFiltersAndSorting(SimpleSQLiteQuery query);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :idDish")
     Maybe<Dish> getByID(long idDish);

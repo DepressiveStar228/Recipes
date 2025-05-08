@@ -13,19 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="updateDish()">
+      <SelectionState runConfigName="addAll()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="getAllDishes()">
+      <SelectionState runConfigName="getByID()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="getIngredientById()">
+      <SelectionState runConfigName="getByIDIngredient()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="DishCollectionDaoTest">
+      <SelectionState runConfigName="deleteAll() (1)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="DishRecipeDaoTest">
+      <SelectionState runConfigName="Tests in 'com.example.recipes.DataBase'">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

@@ -3,8 +3,8 @@ package com.example.recipes.Database.ViewModels;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
-import com.example.recipes.Item.IngredientShopList_AmountType;
+import com.example.recipes.Database.DAO.IngredientShopListAmountTypeDAO;
+import com.example.recipes.Item.IngredientShopListAmountType;
 
 import java.util.List;
 
@@ -15,10 +15,10 @@ import java.util.List;
  * Клас, який представляє ViewModel для роботи з кількістю та типом інгредієнтів у списку покупок.
  * Використовує DAO для отримання даних про кількість та тип інгредієнтів.
  */
-public class IngredientShopList_AmountTypeViewModel extends ViewModel {
-    public final IngredientShopList_AmountTypeDAO dao;
+public class IngredientShopListAmountTypeViewModel extends ViewModel {
+    public final IngredientShopListAmountTypeDAO dao;
 
-    public IngredientShopList_AmountTypeViewModel(IngredientShopList_AmountTypeDAO dao) {
+    public IngredientShopListAmountTypeViewModel(IngredientShopListAmountTypeDAO dao) {
         this.dao = dao;
     }
 
@@ -27,7 +27,7 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<List<IngredientShopList_AmountType>> getAll() {
+    public LiveData<List<IngredientShopListAmountType>> getAll() {
         return dao.getAllLive();
     }
 
@@ -36,7 +36,7 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<List<IngredientShopList_AmountType>> getByIDIngredient(long idIngredient) {
+    public LiveData<List<IngredientShopListAmountType>> getByIDIngredient(long idIngredient) {
         return dao.getByIDIngredientLive(idIngredient);
     }
 
@@ -45,7 +45,7 @@ public class IngredientShopList_AmountTypeViewModel extends ViewModel {
      *
      * @return LiveData, яка містить список усіх записів.
      */
-    public LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long idDish) {
+    public LiveData<List<IngredientShopListAmountType>> getByIDDishLive(long idDish) {
         return dao.getByIDDishLive(idDish);
     }
 

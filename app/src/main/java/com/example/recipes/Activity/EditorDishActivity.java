@@ -47,12 +47,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.AI.Translator;
 import com.example.recipes.Adapter.CollectionAdapter;
-import com.example.recipes.Adapter.CollectionGetAdapter;
 import com.example.recipes.Adapter.IngredientGetAdapter;
 import com.example.recipes.Adapter.IngredientSetAdapter;
 import com.example.recipes.Adapter.RecipeAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
-import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.ImageController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
@@ -64,17 +62,14 @@ import com.example.recipes.Enum.ID_System_Collection;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Enum.Limits;
-import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
-import com.example.recipes.Item.Option.CollectionOptions;
 import com.example.recipes.Item.Option.DishOptions;
 import com.example.recipes.Utils.AnotherUtils;
 import com.example.recipes.Utils.ClassUtils;
 import com.example.recipes.Utils.Dialogues;
-import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 import com.google.android.material.navigation.NavigationView;
@@ -583,7 +578,7 @@ public class EditorDishActivity extends AppCompatActivity {
             collectionRecycler.setHasFixedSize(true);
 
             if (dishID > 0) {
-                utils.ByDish_Collection().getViewModel().getAllCollectionIDs(dishID).observe(this, data -> {
+                utils.ByDishCollection().getViewModel().getAllCollectionIDs(dishID).observe(this, data -> {
                     if (data != null) {
                         Disposable disposable = Observable.fromIterable(data)
                                 .flatMapSingle(collectionID -> utils.ByCollection().getByID(collectionID))
@@ -1071,15 +1066,15 @@ public class EditorDishActivity extends AppCompatActivity {
         final ArrayList<Collection> collections = new ArrayList<>();
         if (collectionAdapter != null) collections.addAll(collectionAdapter.getCollections());
 
-        return utils.ByDish_Collection().getByIDDish(newDish.getId())
-                .flatMap(dish_collections -> utils.ByDish_Collection().deleteAll(new ArrayList<>(dish_collections)))
+        return utils.ByDishCollection().getByIDDish(newDish.getId())
+                .flatMap(dish_collections -> utils.ByDishCollection().deleteAll(new ArrayList<>(dish_collections)))
                 .flatMap(status -> {
                     if (!status) {
                         Toast.makeText(this, getString(R.string.error_edit_dish), Toast.LENGTH_SHORT).show();
                         Log.e(nameActivity, "Помилка видалення колекцій страви з БД.");
                     }
 
-                    return utils.ByDish_Collection().addAll(newDish, collections);
+                    return utils.ByDishCollection().addAll(newDish, collections);
                 });
     }
 

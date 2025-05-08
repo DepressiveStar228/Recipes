@@ -26,7 +26,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.recipes.Activity.ShopListActivity;
 import com.example.recipes.Adapter.ShopListGetAdapter;
 import com.example.recipes.Controller.PreferencesController;
-import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Enum.ID_System_Collection;
@@ -235,7 +234,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                                     utils.ByIngredientShopList().getBoughtCountByIdCollection(data instanceof Collection collection ? collection.getId() : 0L),
                                     Pair::new
                             ).flatMap(pair -> {
-                                ShopList shopList = new ShopList(data instanceof ShopList collection ? collection : new ShopList("", CollectionType.SHOP_LIST));
+                                ShopList shopList = new ShopList(data instanceof ShopList collection ? collection : new ShopList(""));
 
                                 if (pair.first != null && pair.second != null) {
                                     shopList.setAllItems(pair.first);
@@ -293,7 +292,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
                                     });
                     compositeDisposable.add(disposable);
                 } else {
-                    Disposable disposable = utils.ByCollection().getIdByName(collectionName)
+                    Disposable disposable = utils.ByCollection().getIDByName(collectionName)
                             .flatMap(
                                     id -> {
                                         if (id != -1) {

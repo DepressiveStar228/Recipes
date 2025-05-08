@@ -40,7 +40,6 @@ import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Decoration.HorizontalSpaceItemDecoration;
-import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Enum.Limits;
@@ -106,7 +105,7 @@ public class ShopListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         preferencesController = PreferencesController.getInstance();
         utils = RecipeUtils.getInstance(this);
-        shopList = new ShopList("", CollectionType.VOID);
+        shopList = new ShopList("");
         compositeDisposable = new CompositeDisposable();
         compositeByIngredients = new CompositeDisposable();
         nameActivity = this.getClass().getSimpleName();
@@ -281,8 +280,8 @@ public class ShopListActivity extends AppCompatActivity {
                         if (flagAccessDelete.get()) {
                             flagAccessDelete.set(false);
 
-                            Disposable disposable = utils.ByDish_Collection().getByData(dish.getId(), shopList.getId())
-                                    .flatMapCompletable(dish_collection -> utils.ByDish_Collection().delete(dish_collection))
+                            Disposable disposable = utils.ByDishCollection().getByData(dish.getId(), shopList.getId())
+                                    .flatMapCompletable(dish_collection -> utils.ByDishCollection().delete(dish_collection))
                                     .subscribeOn(Schedulers.newThread())
                                     .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(
@@ -322,7 +321,7 @@ public class ShopListActivity extends AppCompatActivity {
         }
 
         // Слухач зміни ID страв, які належать списку покупків
-        utils.ByDish_Collection().getViewModel().getAllDishIDs(shopList.getId()).observe(this, data -> {
+        utils.ByDishCollection().getViewModel().getAllDishIDs(shopList.getId()).observe(this, data -> {
             if (data != null && !flagClear.get()) {
                 Disposable disposable = Observable.fromIterable(data)
                         .flatMapSingle(id -> utils.ByDish().getByID(id))
@@ -425,7 +424,7 @@ public class ShopListActivity extends AppCompatActivity {
                                 ingredient.setId(item.getId());
                                 ingredient.setIdCollection(shopList.getId());
                                 return utils.ByIngredientShopList_AmountType()
-                                        .addAll(utils.ByIngredientShopList().createIngredientShopList_AmountTypesFromGroupedAmountType(ingredient, idDish));
+                                        .addAll(utils.ByIngredientShopList().createIngredientShopListAmountTypesFromGroupedAmountType(ingredient, idDish));
                             } else {                                               // Якщо не існує, то додаємо в БД і сам інгредієнт також
                                 ingredient.setIdCollection(shopList.getId());
                                 return utils.ByIngredientShopList().add(ingredient, idDish)
@@ -451,7 +450,7 @@ public class ShopListActivity extends AppCompatActivity {
      * @return інгредієнти списку покупків, які відфільтровані за чорним списком
      */
     private Single<List<Ingredient>> getIngredientsFromDishCollection(long idDishCollection) {
-        return utils.ByDish_Collection().getByID(idDishCollection)
+        return utils.ByDishCollection().getByID(idDishCollection)
                 .flatMap(dish_collection -> {
                     if (dish_collection.getIdDish() > 0 && dish_collection.getIdCollection() > 0) {
                         return utils.ByIngredient().getAllByIDDish(dish_collection.getIdDish());
@@ -654,7 +653,7 @@ public class ShopListActivity extends AppCompatActivity {
      */
     private Single<Boolean> setIDsDishCollectionIntoShopList(List<Dish> dishes) {
         return Observable.fromIterable(dishes)
-                .flatMapSingle(selectedDish -> utils.ByDish_Collection().add(new DishCollection(selectedDish.getId(), shopList.getId()))
+                .flatMapSingle(selectedDish -> utils.ByDishCollection().add(new DishCollection(selectedDish.getId(), shopList.getId()))
                         .flatMap(id_dish_collection -> {
                             if (id_dish_collection > 0) {
                                 shopList.addIDDish_Collection(id_dish_collection);

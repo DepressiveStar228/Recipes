@@ -31,17 +31,18 @@ import io.reactivex.rxjava3.annotations.Nullable;
                         onDelete = ForeignKey.CASCADE)
         }
 )
-public class IngredientShopList_AmountType {
-    @PrimaryKey(autoGenerate = true) private Long id;
+public class IngredientShopListAmountType {
+    @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "amount") private String amount = "";
     @ColumnInfo(name = "type") private IngredientType type = IngredientType.VOID;
     @ColumnInfo(name = "id_ingredient") private Long idIngredient = 0L;
     @Nullable
     @ColumnInfo(name = "id_dish") private Long idDish;
 
+    // Конструктори
+    public IngredientShopListAmountType() { }
 
-    // Конструктор
-    public IngredientShopList_AmountType(String amount, IngredientType type, Long idIngredient, Long idDish) {
+    public IngredientShopListAmountType(String amount, IngredientType type, Long idIngredient, Long idDish) {
         this.amount = amount;
         this.type = type;
         this.idIngredient = idIngredient;
@@ -52,9 +53,8 @@ public class IngredientShopList_AmountType {
         }
     }
 
-
     // Геттери і сеттери
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
@@ -86,7 +86,7 @@ public class IngredientShopList_AmountType {
         this.idIngredient = idIngredient;
     }
 
-    public void setId_dish(@Nullable Long idDish) {
+    public void setIdDish(@Nullable Long idDish) {
         this.idDish = idDish;
     }
 
@@ -100,7 +100,7 @@ public class IngredientShopList_AmountType {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
-        IngredientShopList_AmountType that = (IngredientShopList_AmountType) object;
+        IngredientShopListAmountType that = (IngredientShopListAmountType) object;
         return Objects.equals(id, that.id) && Objects.equals(amount, that.amount) && Objects.equals(type, that.type) && Objects.equals(idIngredient, that.idIngredient) && Objects.equals(idDish, that.idDish);
     }
 

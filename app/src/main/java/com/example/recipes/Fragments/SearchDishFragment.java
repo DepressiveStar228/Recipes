@@ -124,16 +124,25 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         super.onResume();
         restoreFocus();
         updateRecipesData();
+
+        // Відновлення позиції скролу
+        int position = getActivity().getPreferences(Context.MODE_PRIVATE).getInt("scroll_position", 0);
+        if (position >= 0 && searchResultsRecyclerView != null) {
+            searchResultsRecyclerView.post(() -> searchResultsRecyclerView.smoothScrollToPosition(position));
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        // Збереження позиції скролу
-        LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
-        if (layoutManager != null) {
-            int position = layoutManager.findFirstVisibleItemPosition();
-            getActivity().getPreferences(Context.MODE_PRIVATE).edit().putInt("scroll_position", position).apply();
+
+        if (searchResultsRecyclerView != null) {
+            LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
+            if (layoutManager != null) {
+                // Збереження позиції скролу
+                int position = layoutManager.findFirstVisibleItemPosition();
+                getActivity().getPreferences(Context.MODE_PRIVATE).edit().putInt("scroll_position", position).apply();
+            }
         }
     }
 
@@ -282,13 +291,6 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                             if (searchControllerForDish != null) {
                                 searchControllerForDish.setArrayData(new ArrayList<>(array_dishes));
                                 searchControllerForDish.search(); // Оновлення результатів пошуку
-                            }
-
-                            // Відновлення позиції скролу
-                            LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
-                            if (layoutManager != null) {
-                                int position = getActivity().getPreferences(Context.MODE_PRIVATE).getInt("scroll_position", 0);
-                                layoutManager.scrollToPositionWithOffset(position, 0);
                             }
                         });
 

@@ -340,7 +340,7 @@ public class CollectionActivity extends AppCompatActivity {
         }
 
         // Слухач зміни страв колекції в базі даних
-        utils.ByDish_Collection().getViewModel().getAllDishIDs(collection.getId()).observe(this, data -> {
+        utils.ByDishCollection().getViewModel().getAllDishIDs(collection.getId()).observe(this, data -> {
             if (data != null) {
                 Disposable disposable = Observable.fromIterable(data)
                         .flatMapSingle(id -> utils.ByDish().getByID(id))

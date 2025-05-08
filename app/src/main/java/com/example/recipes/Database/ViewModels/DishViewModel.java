@@ -27,7 +27,7 @@ public class DishViewModel extends ViewModel {
      * @return LiveData, яка містить список усіх страв.
      */
     public LiveData<List<Dish>> getAll() {
-        return dao.getAll_Live();
+        return dao.getAllLive();
     }
 
     /**

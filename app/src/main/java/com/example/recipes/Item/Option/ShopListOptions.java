@@ -68,7 +68,7 @@ public class ShopListOptions {
                     compositeDisposable.add(disposable);
                 } else if (!collectionName.equals(shopList.getName())) {
                     // Перевірка на дублікат назви та оновлення назви списку
-                    Disposable disposable = utils.ByCollection().getIdByNameAndType(collectionName, CollectionType.SHOP_LIST)
+                    Disposable disposable = utils.ByCollection().getIDByNameAndType(collectionName, CollectionType.SHOP_LIST)
                             .flatMap(
                                     id -> {
                                         if (id != -1) { // Перевірка на дублікат назви списку покупок

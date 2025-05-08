@@ -43,7 +43,7 @@ public interface DishRecipeDAO {
     Single<List<DishRecipe>> getAll();
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    LiveData<List<DishRecipe>> getAll_Live();
+    LiveData<List<DishRecipe>> getAllLive();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
     Maybe<DishRecipe> getByID(long id);
@@ -52,7 +52,7 @@ public interface DishRecipeDAO {
     LiveData<DishRecipe> getByIDLive(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ORDER BY " + POSITION)
-    Single<List<DishRecipe>> getByDishID(long idDish);
+    Maybe<List<DishRecipe>> getByDishID(long idDish);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ORDER BY " + POSITION)
     LiveData<List<DishRecipe>> getByDishIDLive(long idDish);

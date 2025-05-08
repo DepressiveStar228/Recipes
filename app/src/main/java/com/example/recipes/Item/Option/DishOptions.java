@@ -62,7 +62,7 @@ public class DishOptions {
                                     dialogues.dialogChooseItems(unused_collections,
                                             selectedCollections -> {
                                                 if (!selectedCollections.isEmpty()) {
-                                                    Disposable disposable1 = utils.ByDish_Collection().addAll(dish, selectedCollections)
+                                                    Disposable disposable1 = utils.ByDishCollection().addAll(dish, selectedCollections)
                                                             .subscribeOn(Schedulers.io())
                                                             .observeOn(AndroidSchedulers.mainThread())
                                                             .subscribe(status -> {
@@ -190,12 +190,12 @@ public class DishOptions {
                 .setTitle(activity.getString(R.string.confirm_remove_dish))
                 .setMessage(activity.getString(R.string.warning_remove_dish))
                 .setPositiveButton(activity.getString(R.string.yes), (dialog, whichButton) -> {
-                    Disposable disposable = utils.ByDish_Collection().getByData(dish.getId(), collection.getId())
+                    Disposable disposable = utils.ByDishCollection().getByData(dish.getId(), collection.getId())
                             .flatMapCompletable(dish_collection -> {
                                 if (dish_collection.getIdDish() == 0 || dish_collection.getIdCollection() == 0) {
                                     return Completable.error(new Throwable("Error. Dish_collection was not found"));
                                 } else {
-                                    return utils.ByDish_Collection().delete(dish_collection);
+                                    return utils.ByDishCollection().delete(dish_collection);
                                 }
                             })
                             .subscribeOn(Schedulers.io())

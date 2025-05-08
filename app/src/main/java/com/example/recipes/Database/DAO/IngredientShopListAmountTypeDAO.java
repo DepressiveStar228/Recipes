@@ -7,7 +7,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.example.recipes.Item.IngredientShopList_AmountType;
+import com.example.recipes.Item.IngredientShopListAmountType;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ import io.reactivex.rxjava3.core.Single;
  * Інтерфейс DAO для роботи з таблицею "ingredient_shop_list_amount_type" у базі даних.
  */
 @Dao
-public interface IngredientShopList_AmountTypeDAO {
+public interface IngredientShopListAmountTypeDAO {
     String TABLE_NAME = "ingredient_shop_list_amount_type";
     String ID = "id";
     String AMOUNT = "amount";
@@ -31,34 +31,34 @@ public interface IngredientShopList_AmountTypeDAO {
     String ID_DISH = "id_dish";
 
     @Insert
-    Single<Long> insert(IngredientShopList_AmountType amountType);
+    Single<Long> insert(IngredientShopListAmountType amountType);
 
     @Update
-    Completable update(IngredientShopList_AmountType amountType);
+    Completable update(IngredientShopListAmountType amountType);
 
     @Delete
-    Completable delete(IngredientShopList_AmountType amountType);
+    Completable delete(IngredientShopListAmountType amountType);
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    Single<List<IngredientShopList_AmountType>> getAll();
+    Single<List<IngredientShopListAmountType>> getAll();
 
     @Query("SELECT * FROM " + TABLE_NAME)
-    LiveData<List<IngredientShopList_AmountType>> getAllLive();
+    LiveData<List<IngredientShopListAmountType>> getAllLive();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
-    Single<IngredientShopList_AmountType> getByID(long id);
+    Maybe<IngredientShopListAmountType> getByID(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
-    Maybe<List<IngredientShopList_AmountType>> getByIDIngredient(long idIngredient);
+    Maybe<List<IngredientShopListAmountType>> getByIDIngredient(long idIngredient);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
-    Single<List<IngredientShopList_AmountType>> getByIDDish(long idDish);
+    Maybe<List<IngredientShopListAmountType>> getByIDDish(long idDish);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
-    LiveData<List<IngredientShopList_AmountType>> getByIDIngredientLive(long idIngredient);
+    LiveData<List<IngredientShopListAmountType>> getByIDIngredientLive(long idIngredient);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
-    LiveData<List<IngredientShopList_AmountType>> getByIDDishLive(long idDish);
+    LiveData<List<IngredientShopListAmountType>> getByIDDishLive(long idDish);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_INGREDIENT + " = :idIngredient")
     LiveData<Integer> getCountByID(long idIngredient);

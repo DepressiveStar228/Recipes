@@ -13,7 +13,7 @@ import com.example.recipes.Database.DAO.DishDAO;
 import com.example.recipes.Database.DAO.DishRecipeDAO;
 import com.example.recipes.Database.DAO.IngredientDAO;
 import com.example.recipes.Database.DAO.IngredientShopListDAO;
-import com.example.recipes.Database.DAO.IngredientShopList_AmountTypeDAO;
+import com.example.recipes.Database.DAO.IngredientShopListAmountTypeDAO;
 import com.example.recipes.Database.TypeConverter.CollectionTypeConverter;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Item.Collection;
@@ -22,7 +22,7 @@ import com.example.recipes.Item.DishCollection;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.Item.IngredientShopList;
-import com.example.recipes.Item.IngredientShopList_AmountType;
+import com.example.recipes.Item.IngredientShopListAmountType;
 
 /**
  * @author Артем Нікіфоров
@@ -32,8 +32,8 @@ import com.example.recipes.Item.IngredientShopList_AmountType;
  * Визначає всі сутності (таблиці) та DAO для роботи з ними.
  */
 @Database(
-        version = 2,
-        entities = {Dish.class, DishRecipe.class, Ingredient.class, Collection.class, DishCollection.class, IngredientShopList.class, IngredientShopList_AmountType.class},
+        version = 3,
+        entities = {Dish.class, DishRecipe.class, Ingredient.class, Collection.class, DishCollection.class, IngredientShopList.class, IngredientShopListAmountType.class},
         exportSchema = false
 )
 @TypeConverters({CollectionTypeConverter.class, IngredientTypeConverter.class})
@@ -44,7 +44,7 @@ public abstract class RecipeDatabase extends RoomDatabase {
     public abstract CollectionDAO collectionDao();
     public abstract DishCollectionDAO dishCollectionDao();
     public abstract IngredientShopListDAO ingredientShopListDao();
-    public abstract IngredientShopList_AmountTypeDAO ingredientShopList_amountTypeDao();
+    public abstract IngredientShopListAmountTypeDAO ingredientShopListAmountTypeDao();
 
     private static volatile RecipeDatabase INSTANCE;
 

@@ -48,26 +48,26 @@ public interface IngredientShopListDAO {
     LiveData<List<IngredientShopList>> getAllLive();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID + " = :id")
-    Maybe<IngredientShopList> getById(long id);
+    Maybe<IngredientShopList> getByID(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + NAME + " = :name")
-    Maybe<IngredientShopList> getByNameAndIDCollection(String name, Long idCollection);
+    Maybe<IngredientShopList> getByNameAndIDCollection(String name, long idCollection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
-    Single<List<IngredientShopList>> getAllByIDCollection(long idCollection);
+    Maybe<List<IngredientShopList>> getAllByIDCollection(long idCollection);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
-    LiveData<List<IngredientShopList>> getAllByIDCollection_Live(long idCollection);
+    LiveData<List<IngredientShopList>> getAllByIDCollectionLive(long idCollection);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
-    Single<Integer> getCountByIdShopList(long idCollection);
+    Single<Integer> getCountByIDShopList(long idCollection);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + IS_BUY + " = 1")
-    Single<Integer> getBoughtCountByIdShopList(long idCollection);
+    Single<Integer> getBoughtCountByIDShopList(long idCollection);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
-    LiveData<Integer> getCountByIdShopList_Live(long idCollection);
+    LiveData<Integer> getCountByIDShopListLive(long idCollection);
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection AND " + IS_BUY + " = 1")
-    LiveData<Integer> getBoughtCountByIdShopList_Live(long idCollection);
+    LiveData<Integer> getBoughtCountByIDShopListLive(long idCollection);
 }

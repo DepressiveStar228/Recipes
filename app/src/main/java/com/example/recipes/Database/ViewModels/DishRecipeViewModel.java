@@ -29,7 +29,7 @@ public class DishRecipeViewModel extends ViewModel {
      * @return LiveData, яка містить список усіх рецептів страв.
      */
     public LiveData<List<DishRecipe>> getAll() {
-        return dao.getAll_Live();
+        return dao.getAllLive();
     }
 
     /**

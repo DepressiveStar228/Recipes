@@ -25,8 +25,12 @@ public class ShopList extends Collection {
         if (data instanceof ShopList shopList) this.ingredients.addAll(shopList.getIngredients());
     }
 
-    public ShopList(String name, CollectionType type) {
-        super(name, type);
+    public ShopList(long id, String name) {
+        super(id, name, CollectionType.SHOP_LIST, new ArrayList<>());
+    }
+
+    public ShopList(String name) {
+        super(name, CollectionType.SHOP_LIST);
     }
 
 

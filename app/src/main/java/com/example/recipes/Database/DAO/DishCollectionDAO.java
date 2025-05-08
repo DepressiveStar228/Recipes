@@ -44,16 +44,19 @@ public interface DishCollectionDAO {
     Maybe<DishCollection> getByID(long id);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
-    Single<List<DishCollection>> getByIDDish(long idDish);
+    Maybe<List<DishCollection>> getByIDDish(long idDish);
+
+    @Query("SELECT * FROM " + TABLE_NAME)
+    Single<List<DishCollection>> getAll();
 
     @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ")
-    Single<List<Long>> getAllIDsDishByIDCollection(long idCollection);
+    Maybe<List<Long>> getAllIDsDishByIDCollection(long idCollection);
 
     @Query("SELECT " + ID_DISH + " FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ")
     LiveData<List<Long>> getAllDishIDsLive(long idCollection);
 
     @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ")
-    Single<List<Long>> getAllIDsCollectionByIDDish(long idDish);
+    Maybe<List<Long>> getAllIDsCollectionByIDDish(long idDish);
 
     @Query("SELECT " + ID_COLLECTION + " FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish ")
     LiveData<List<Long>> getAllIDsCollectionLive(long idDish);

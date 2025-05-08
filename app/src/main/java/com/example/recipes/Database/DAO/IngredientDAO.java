@@ -46,7 +46,7 @@ public interface IngredientDAO {
     Single<List<Ingredient>> getAll();
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
-    Single<List<Ingredient>> getAllByIDDish(long idDish);
+    Maybe<List<Ingredient>> getAllByIDDish(long idDish);
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_DISH + " = :idDish")
     LiveData<List<Ingredient>> getAllByIDDishLive(long idDish);

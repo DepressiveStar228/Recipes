@@ -38,7 +38,7 @@ public class IngredientShopListViewModel extends ViewModel {
      * @return LiveData, яка містить кількість інгредієнтів для вказаної колекції.
      */
     public LiveData<Integer> getCountByIdCollection(long idCollection) {
-        return dao.getCountByIdShopList_Live(idCollection);
+        return dao.getCountByIDShopListLive(idCollection);
     }
 
     /**
@@ -48,6 +48,6 @@ public class IngredientShopListViewModel extends ViewModel {
      * @return LiveData, яка містить кількість придбаних інгредієнтів для вказаної колекції.
      */
     public LiveData<Integer> getBoughtCountByIdCollection(long idCollection) {
-        return dao.getBoughtCountByIdShopList_Live(idCollection);
+        return dao.getBoughtCountByIDShopListLive(idCollection);
     }
 }
