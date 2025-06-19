@@ -229,4 +229,7 @@
     <string name="daily_request_limit_exceeded">Daily request limit exceeded</string>
     <string name="collections">Collections</string>
     <string name="error_saving_filters">Error saving filters</string>
+    <string name="cooking_time">Cooking time</string>
+    <string name="title_cooking_time_picker">Select how much time you need for cooking from 00:00</string>
+    <string name="empty_selected_items_for_sort">There are no selected items to sort.</string>
 </resources>

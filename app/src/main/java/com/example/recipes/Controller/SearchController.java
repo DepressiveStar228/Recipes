@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,8 +15,15 @@ import com.example.recipes.Adapter.Interfaces.ChooseItem;
 import com.example.recipes.Adapter.Interfaces.Search;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.Item;
+import com.example.recipes.R;
+import com.example.recipes.Utils.ClassUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 
@@ -29,10 +37,12 @@ import io.reactivex.rxjava3.annotations.NonNull;
 public class SearchController<T> {
     private Context context;
     private ArrayList<T> arrayData, searchResults;
+    private int sortMode = 0;
     private EditText searchEditText;
-    private AppCompatImageView clearSearchEditText;
+    private AppCompatImageView clearSearchEditText, sortResultSearchButton;
     private RecyclerView.Adapter<?> adapter;
     private RecyclerView searchResultsRecyclerView;
+    private AtomicBoolean flagAccessSort = new AtomicBoolean(true);
 
     /**
      * Конструктор для ініціалізації контролера з адаптером SearchResultsAdapter.
@@ -134,6 +144,85 @@ public class SearchController<T> {
         if (adapter instanceof Search) ((Search<T>) adapter).setResultItems(searchResult);
     }
 
+    private void sortResults() {
+        if (searchResults == null || searchResults.isEmpty()) return;
+
+        sortMode++;
+
+        if (adapter instanceof ChooseItem<?>) {
+            switch (sortMode % 3) {
+                case 2: // Сортування за вибраними
+                    ArrayList<T> sortBySelectedItems = new ArrayList<>(searchResults);
+                    ArrayList<T> selectedItems = ((ChooseItem<T>) adapter).getSelectedItem();
+
+                    if (!selectedItems.isEmpty()) {
+                        Collections.sort(sortBySelectedItems, (a, b) -> {
+                            boolean aSelected = selectedItems.contains(a);
+                            boolean bSelected = selectedItems.contains(b);
+
+                            if (aSelected && !bSelected) return -1;
+                            if (!aSelected && bSelected) return 1;
+                            return 0;
+                        });
+                    } else {
+                        Log.w("SearchController", "Немає вибраних елементів для сортування.");
+                        Toast.makeText(context, R.string.empty_selected_items_for_sort, Toast.LENGTH_SHORT).show();
+                    }
+
+                    ((ChooseItem<T>) adapter).setItems(sortBySelectedItems);
+                    Log.d("SearchController", "Результати пошуку відсортовані за зростанням.");
+                    break;
+
+                case 1: // Сортування за спаданням (A → Z)
+                    sortAlgorithm(false);
+                    ((ChooseItem<T>) adapter).setItems(searchResults);
+                    break;
+
+                case 0: // Сортування за зростанням (Z → A)
+                    sortAlgorithm(true);
+                    ((ChooseItem<T>) adapter).setItems(searchResults);
+                    break;
+
+                default:
+                    Log.w("SearchController", "Невідомий режим сортування: " + sortMode);
+            }
+        } else if (adapter instanceof Search<?>) {
+            switch (sortMode % 2) {
+                case 1: // Сортування за спаданням (Z → A)
+                    sortAlgorithm(false);
+                    ((Search<T>) adapter).setResultItems(searchResults);
+                    break;
+
+                case 0: // Сортування за зростанням (A → Z)
+                    sortAlgorithm(true);
+                    ((Search<T>) adapter).setResultItems(searchResults);
+                    break;
+
+                default:
+                    Log.w("SearchController", "Невідомий режим сортування: " + sortMode);
+            }
+
+            ((Search<T>) adapter).setResultItems(searchResults);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void sortAlgorithm(boolean mode) {
+        if (searchResults == null || searchResults.isEmpty()) return;
+
+        if (ClassUtils.isListOfType(searchResults, String.class)) {
+            searchResults.sort((Comparator<T>) Comparator.comparing(String::toString, String.CASE_INSENSITIVE_ORDER));
+        } else if (ClassUtils.isListOfType(searchResults, Item.class)) {
+            searchResults.sort(Comparator.comparing(item -> ((Item) item).getName(), String.CASE_INSENSITIVE_ORDER));
+        }
+
+        if (!mode) {
+            Collections.reverse(searchResults);
+            Log.d("SearchController", "Результати пошуку відсортовані за спаданням.");
+        } else Log.d("SearchController", "Результати пошуку відсортовані за зростанням.");
+    }
+
+
     /**
      * Виконує пошук за поточним текстом у полі пошуку.
      */
@@ -158,6 +247,8 @@ public class SearchController<T> {
     public void setArrayData(ArrayList<T> arrayData) {
         this.arrayData.clear();
         this.arrayData.addAll(arrayData);
+        this.searchResults.clear();
+        this.searchResults.addAll(arrayData);
 
         if (adapter instanceof Search) ((Search<T>) adapter).setResultItems(arrayData);
     }
@@ -202,5 +293,27 @@ public class SearchController<T> {
 
     public void setClearSearchEditText(AppCompatImageView clearSearchEditText) {
         this.clearSearchEditText = clearSearchEditText;
+
+        // Додаємо обробник натискання на кнопку очищення
+        this.clearSearchEditText.setOnClickListener(v -> {
+            searchEditText.setText("");
+            search();
+        });
+    }
+
+    public void setSortResultSearchButton(AppCompatImageView sortResultSearchButton) {
+        this.sortResultSearchButton = sortResultSearchButton;
+
+        this.sortResultSearchButton.setOnClickListener(v -> {
+            if (flagAccessSort.get()) {
+                flagAccessSort.set(false);
+                sortResults();
+
+                getRecyclerView().postDelayed(() -> {
+                    flagAccessSort.set(true);
+                    getRecyclerView().smoothScrollToPosition(0); // Прокрутка до початку списку після сортування
+                }, 400);
+            }
+        });
     }
 }

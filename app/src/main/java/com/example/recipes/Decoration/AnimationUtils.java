@@ -31,8 +31,6 @@ public class AnimationUtils {
     private static final int FULL_ALPHA = 255;
     private static final int ZERO_ALPHA = 0;
 
-    private static final float ROTATION_ANGLE = 45f;
-
     // Відстежує стан анімацій для запобігання накладання
     private static final SparseBooleanArray ANIMATION_FLAGS = new SparseBooleanArray();
 
@@ -44,7 +42,7 @@ public class AnimationUtils {
      * @param durationAnimation Тривалість анімації в мілісекундах
      * @param onAnimationEnd Колбек після завершення анімації
      */
-    public static void smoothRotation(@NonNull View view, @NonNull @Nonnegative int way, @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
+    public static void smoothRotation(View view, int way, float rotationAngel, int durationAnimation, Runnable onAnimationEnd) {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
 
@@ -53,8 +51,8 @@ public class AnimationUtils {
 
             ObjectAnimator rotationAnimator = new ObjectAnimator();
 
-            if (way % 2 == 0) rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, ROTATION_ANGLE);
-            else rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", ROTATION_ANGLE, 0f);
+            if (way % 2 == 0) rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, rotationAngel);
+            else rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", rotationAngel, 0f);
 
             rotationAnimator.setDuration(durationAnimation);
             rotationAnimator.addListener(new AnimatorListenerAdapter() {

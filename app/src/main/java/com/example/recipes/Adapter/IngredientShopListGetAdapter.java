@@ -19,6 +19,7 @@ import com.example.recipes.Item.IngredientShopList;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Артем Нікіфоров
@@ -58,22 +59,10 @@ public class IngredientShopListGetAdapter extends ListAdapter<IngredientShopList
         if (currentPosition == RecyclerView.NO_POSITION) return;
         IngredientShopList ingredientShopList = getItem(currentPosition);
 
-        // Встановлюємо стан чекбоксу (куплено/не куплено)
-        holder.isBuy.setChecked(ingredientShopList.getIsBuy());
         holder.ingredientName.setText(ingredientShopList.getName());
         holder.ingredientCountType.setText(ingredientShopList.getGroupedAmountTypeToString(context));
-        updateStrikeThrough(holder.line, ingredientShopList.getIsBuy());
 
-        // Встановлюємо кольори в залежності від стану (куплено/не куплено)
-        if (ingredientShopList.getIsBuy()) {
-            holder.ingredientName.setTextColor(boughtItem);
-            holder.ingredientCountType.setTextColor(boughtItem);
-            holder.delete.setColorFilter(boughtItem);
-        } else {
-            holder.ingredientName.setTextColor(unBoughtItem);
-            holder.ingredientCountType.setTextColor(unBoughtItem);
-            holder.delete.setColorFilter(unBoughtItem);
-        }
+        changeBoughtItem(holder, ingredientShopList);
 
         // Обробка кліку на елемент списку
         holder.itemView.setOnClickListener(v -> {
@@ -96,23 +85,30 @@ public class IngredientShopListGetAdapter extends ListAdapter<IngredientShopList
      * @param newItems Новий список інгредієнтів.
      */
     public void setItems(ArrayList<IngredientShopList> newItems) {
-        ArrayList<IngredientShopList> newList = new ArrayList<>(newItems.size());
-        for (IngredientShopList item : newItems) {
-            newList.add(new IngredientShopList(item));
-        }
-
-        submitList(newList);
-        notifyDataSetChanged();
+        submitList(new ArrayList<>(newItems));
     }
 
     /**
-     * Оновлює лінію закреслення в залежності від стану (куплено/не куплено).
+     * Змінює стан купленого елемента та оновлює його відображення.
      *
-     * @param line Виджет лінії закреслення.
-     * @param isStriked Чи потрібно відображати лінію.
+     * @param holder ViewHolder для елемента списку.
+     * @param ingredientShopList Елемент списку, який потрібно оновити.
      */
-    private void updateStrikeThrough(View line, boolean isStriked) {
-        line.setVisibility(isStriked ? View.VISIBLE : View.INVISIBLE);
+    private void changeBoughtItem(@NonNull ViewHolder holder, IngredientShopList ingredientShopList) {
+        // Встановлюємо стан чекбоксу (куплено/не куплено)
+        holder.isBuy.setChecked(ingredientShopList.getIsBuy());
+        holder.line.setVisibility(ingredientShopList.getIsBuy() ? View.VISIBLE : View.INVISIBLE);
+
+        // Встановлюємо кольори в залежності від стану (куплено/не куплено)
+        if (ingredientShopList.getIsBuy()) {
+            holder.ingredientName.setTextColor(boughtItem);
+            holder.ingredientCountType.setTextColor(boughtItem);
+            holder.delete.setColorFilter(boughtItem);
+        } else {
+            holder.ingredientName.setTextColor(unBoughtItem);
+            holder.ingredientCountType.setTextColor(unBoughtItem);
+            holder.delete.setColorFilter(unBoughtItem);
+        }
     }
 
     /**

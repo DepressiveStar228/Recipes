@@ -71,7 +71,6 @@ public class SearchResultsAdapter<T> extends ListAdapter<T, SearchResultsAdapter
      */
     public void setItems(ArrayList<T> newItems) {
         submitList(new ArrayList<>(newItems));
-        notifyDataSetChanged();
     }
 
     @Override

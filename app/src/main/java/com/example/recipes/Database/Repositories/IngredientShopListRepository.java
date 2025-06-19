@@ -212,6 +212,25 @@ public class IngredientShopListRepository implements Utils<IngredientShopList> {
     }
 
     /**
+     * Отримує інгредієнти для вказаної колекції та сортує їх за статусом покупки.
+     * @param idCollection ID колекції
+     * @return Single<List<IngredientShopList>> Список інгредієнтів
+     */
+    public Single<List<IngredientShopList>> getAllByIDCollectionAndSortedByIsBuy(long idCollection) {
+        return dao.getAllByIDCollectionAndSortedByIsBuy(idCollection)
+                .switchIfEmpty(Single.just(new ArrayList<>()))
+                .flatMap(ingredientShopLists -> {
+                    if (ingredientShopLists != null) {
+                        return Observable.fromIterable(ingredientShopLists)
+                                .flatMapSingle(this::getDataFromIngredient)
+                                .toList();
+                    }
+                    else { return Single.just(new ArrayList<IngredientShopList>()); }
+                })
+                .onErrorReturnItem(new ArrayList<>());
+    }
+
+    /**
      * Отримує всі інгредієнти з чорного списку.
      * @return Single<List<IngredientShopList>> Список інгредієнтів чорного списку
      */

@@ -26,9 +26,7 @@ public interface DishRecipeDAO {
     String TABLE_NAME = "dish_recipe";
     String ID = "id";
     String ID_DISH = "id_dish";
-    String DATA = "data";
     String POSITION = "position";
-    String TYPE_DATA = "type_data";
 
     @Insert
     Single<Long> insert(DishRecipe recipe);

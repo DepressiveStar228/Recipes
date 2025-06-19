@@ -27,12 +27,12 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class CollectionOptions {
-    private Activity activity;
-    private RecipeUtils utils;
-    private String nameActivity;
-    private Dialogues dialogues;
-    private ImportExportController importExportController;
-    private CompositeDisposable compositeDisposable;
+    private final Activity activity;
+    private final RecipeUtils utils;
+    private final String nameActivity;
+    private final Dialogues dialogues;
+    private final ImportExportController importExportController;
+    private final CompositeDisposable compositeDisposable;
 
     public CollectionOptions(@NonNull Activity activity, @NonNull CompositeDisposable compositeDisposable) {
         this.activity = activity;
@@ -98,6 +98,10 @@ public class CollectionOptions {
                             if (ClassUtils.isListOfType(listData, Collection.class)) {
                                 ArrayList<Collection> allCollections = ClassUtils.getListOfType(listData, Collection.class);
                                 allCollections.remove(collection);
+
+                                for (Collection col : allCollections) {
+                                    col.setName(utils.ByCollection().getCustomNameSystemCollectionByName(col.getName()));
+                                }
 
                                 if (dialogues != null) {
                                     dialogues.dialogChooseItems(allCollections,

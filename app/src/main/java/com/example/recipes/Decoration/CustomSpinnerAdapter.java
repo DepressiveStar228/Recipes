@@ -86,9 +86,10 @@ public class CustomSpinnerAdapter extends ArrayAdapter<String> {
         // Отримання кольору тексту з атрибута теми
         TypedValue typedValue = new TypedValue();
         mContext.getTheme().resolveAttribute(R.attr.colorText, typedValue, true);
-        int textColor = typedValue.data;
+        textView.setTextColor(typedValue.data);
 
-        textView.setTextColor(textColor);
+        mContext.getTheme().resolveAttribute(R.attr.colorBackground, typedValue, true);
+        convertView.setBackgroundColor(typedValue.data);
 
         return convertView;
     }

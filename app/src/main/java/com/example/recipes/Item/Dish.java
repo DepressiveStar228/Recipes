@@ -28,28 +28,32 @@ public class Dish implements Item {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "name") private String name = "";
     @ColumnInfo(name = "portion") private int portion = 0;
-    @ColumnInfo(name = "timestamp") private long timestamp;
+    @ColumnInfo(name = "cooking_time") private long cookingTime = 0;
+    @ColumnInfo(name = "creation_time") private long creationTime;
     @Ignore private ArrayList<Ingredient> ingredients = new ArrayList<>();
     @Ignore private ArrayList<DishRecipe> recipes = new ArrayList<>();
 
 
     // Конструктори
     @Ignore
-    public Dish(long id, String name, int portion, long timestamp) {
+    public Dish(long id, String name, int portion, long creationTime) {
         this.id = id;
         this.name = name;
         this.portion = portion;
-        this.timestamp = timestamp;
+        this.creationTime = creationTime;
     }
 
     @Ignore
     public Dish(Dish dish) {
-        this.id = dish.getId();
-        this.name = dish.getName();
-        this.portion = dish.getPortion();
-        this.timestamp = dish.getTimestamp();
-        this.ingredients.addAll(dish.getIngredients());
-        this.recipes.addAll(dish.getRecipes());
+        if (dish != null) {
+            this.id = dish.getId();
+            this.name = dish.getName();
+            this.portion = dish.getPortion();
+            this.creationTime = dish.getCreationTime();
+            this.cookingTime = dish.getCookingTime();
+            this.ingredients.addAll(dish.getIngredients());
+            this.recipes.addAll(dish.getRecipes());
+        }
     }
 
     @Ignore
@@ -57,38 +61,39 @@ public class Dish implements Item {
         this.id = id;
         this.name = name;
         this.portion = portion;
-        this.timestamp = System.currentTimeMillis();
+        this.creationTime = System.currentTimeMillis();
     }
 
     @Ignore
-    public Dish(long id, String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes) {
+    public Dish(long id, String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long cookingTime) {
         this.id = id;
         this.name = name;
         this.portion = portion;
         this.ingredients.addAll(ingredients);
         this.recipes.addAll(recipes);
-        this.timestamp = System.currentTimeMillis();
+        this.creationTime = System.currentTimeMillis();
+        this.cookingTime = cookingTime;
     }
 
     @Ignore
-    public Dish(String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long timestamp) {
+    public Dish(String name, int portion, ArrayList<Ingredient> ingredients, ArrayList<DishRecipe> recipes, long creationTime) {
         this.name = name;
         this.portion = portion;
         this.ingredients.addAll(ingredients);
         this.recipes.addAll(recipes);
-        this.timestamp = timestamp;
+        this.creationTime = creationTime;
     }
 
     @Ignore
     public Dish(String name) {
         this.name = name;
-        this.timestamp = System.currentTimeMillis();
+        this.creationTime = System.currentTimeMillis();
     }
 
     public Dish(String name, int portion) {
         this.name = name;
         this.portion = portion;
-        this.timestamp = System.currentTimeMillis();
+        this.creationTime = System.currentTimeMillis();
     }
 
 
@@ -107,8 +112,12 @@ public class Dish implements Item {
         return portion;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    public long getCookingTime() {
+        return cookingTime;
     }
 
     public ArrayList<Ingredient> getIngredients() {
@@ -117,10 +126,6 @@ public class Dish implements Item {
 
     public ArrayList<DishRecipe> getRecipes() {
         return recipes;
-    }
-
-    public void setRecipes(ArrayList<DishRecipe> recipes) {
-        this.recipes = recipes;
     }
 
     public void setId(long id) {
@@ -136,8 +141,16 @@ public class Dish implements Item {
         this.portion = portion;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setCreationTime(long creationTime) {
+        this.creationTime = creationTime;
+    }
+
+    public void setCookingTime(long cookingTime) {
+        this.cookingTime = cookingTime;
+    }
+
+    public void setRecipes(ArrayList<DishRecipe> recipes) {
+        this.recipes = recipes;
     }
 
     public void setIngredients(ArrayList<Ingredient> ingredients) {
@@ -205,6 +218,6 @@ public class Dish implements Item {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, portion, timestamp, ingredients, recipes);
+        return Objects.hash(id, name, portion, creationTime, ingredients, recipes);
     }
 }

@@ -22,6 +22,7 @@ import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.R;
+import com.example.recipes.Utils.AnotherUtils;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.google.android.material.navigation.NavigationView;
@@ -29,7 +30,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -48,16 +48,16 @@ public class SettingPanel {
     private NavigationView navigationView;
     private LinearLayout importLayout, exportLayout, deleteDBLayout;
     private SwitchMaterial ingHintsSwitch;
-    private PreferencesController preferencesController;
-    private RecipeUtils utils;
+    private final PreferencesController preferencesController;
+    private final RecipeUtils utils;
     private Spinner languageSpinner, themeSpinner, paletteSpinner;
     private String[] languageArray, themeArray, paletteArray;
     private Button confirmButton;
     private String selectedLanguage, selectedTheme, selectedPalette;
     private boolean isIngredientHintsEnabled;
-    private String nameActivity;
-    private ImportExportController importExportController;
-    private CompositeDisposable compositeDisposable;
+    private final String nameActivity;
+    private final ImportExportController importExportController;
+    private final CompositeDisposable compositeDisposable;
 
     /**
      * Конструктор класу SettingPanel
@@ -74,6 +74,7 @@ public class SettingPanel {
         importExportController = new ImportExportController(activity);
         nameActivity = activity.getClass().getSimpleName();
         compositeDisposable = new CompositeDisposable();
+
         loadLayoutItems(activity, rootView); // Завантаження UI елементів
         loadClickListeners(activity);        // Налаштування обробників подій
     }
@@ -129,7 +130,8 @@ public class SettingPanel {
                 themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
                 paletteArray = preferencesController.getStringArrayForLocale(R.array.palette_options, "en");
 
-                ingHintsSwitch.setChecked(preferencesController.getStatus_ing_hints());
+                isIngredientHintsEnabled = preferencesController.getStatus_ing_hints();
+                ingHintsSwitch.setChecked(isIngredientHintsEnabled);
 
                 Log.d(nameActivity, "Завантаження всіх об'єктів налаштувань");
             }

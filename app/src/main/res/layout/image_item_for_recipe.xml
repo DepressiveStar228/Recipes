@@ -12,13 +12,13 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:padding="10dp"
         android:textColor="?attr/colorText"
         android:textSize="24sp"
-        android:padding="10dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/delete"
+        app:layout_constraintStart_toEndOf="@+id/dragHandle"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -34,15 +34,32 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_margin="5dp"
+        android:padding="5dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/icon_menu"
+        android:background="@drawable/background_day_night_without_border"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorText" />
+
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/delete"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_margin="5dp"
+        android:padding="3dp"
+        android:background="@drawable/background_day_night_without_border"
         android:clickable="true"
         android:focusable="true"
-        app:tint="?attr/colorText"
         android:src="@drawable/icon_delete"
-        android:background="?attr/colorBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorText" />
 </androidx.constraintlayout.widget.ConstraintLayout>

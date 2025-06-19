@@ -8,27 +8,23 @@
 
     <TextView
         android:id="@+id/dialogTitle"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
+        android:text="@string/exit_app"
         android:textColor="?attr/colorText"
         android:textSize="30sp"
         android:textStyle="bold"
-        app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/add_collection_name_editText"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:hint="@string/hint_text_add_collection"
-        android:inputType="textCapSentences"
+        android:text="@string/confirm_exit_app"
         android:textColor="?attr/colorText"
-        android:textColorHint="?attr/colorHintText"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="22sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dialogTitle" />
 
@@ -38,14 +34,13 @@
         android:layout_marginTop="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_collection_name_editText">
+        app:layout_constraintTop_toBottomOf="@+id/textView5">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/noButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="15dp"
-            android:text="@string/close"
+            android:text="@string/no"
             android:textSize="16sp"
             android:textColor="@color/white"
             android:background="@drawable/rounded_background_button"
@@ -57,8 +52,7 @@
             android:id="@+id/yesButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="15dp"
-            android:text=""
+            android:text="@string/yes"
             android:textSize="16sp"
             android:textColor="@color/white"
             android:background="@drawable/rounded_background_button"

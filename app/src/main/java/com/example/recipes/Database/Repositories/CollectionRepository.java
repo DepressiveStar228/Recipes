@@ -121,15 +121,18 @@ public class CollectionRepository implements Utils<Collection> {
      */
     @Override
     public Single<List<Collection>> getAll() {
-        return dao.getAll()
+        return getAllWithoutAdditionData()
                 .flatMap(collections -> Observable.fromIterable(collections)
-                        .flatMapSingle(collection -> {
-                            String customName = getCustomNameSystemCollectionByName(collection.getName());
-                            collection.setName(customName);
-                            return Single.just(collection);
-                        })
                         .flatMapSingle(this::getDataForCollection)
                         .toList());
+    }
+
+    /**
+     * Отримує всі колекції без додаткових даних (страв).
+     * @return Single<List<Collection>> Список усіх колекцій без страв
+     */
+    public Single<List<Collection>> getAllWithoutAdditionData() {
+        return dao.getAll();
     }
 
     /**
@@ -141,11 +144,6 @@ public class CollectionRepository implements Utils<Collection> {
     public <T> Single<List<T>> getAllByType(CollectionType type) {
         return dao.getAllByType(type)
                 .flatMap(collections -> Observable.fromIterable(collections)
-                        .flatMapSingle(collection -> {
-                            String customName = getCustomNameSystemCollectionByName(collection.getName());
-                            collection.setName(customName);
-                            return Single.just(collection);
-                        })
                         .flatMapSingle(collection -> {
                             if (type.equals(CollectionType.COLLECTION)) return getDataForCollection(collection).map(data -> (T) data);
                             else if (type.equals(CollectionType.SHOP_LIST)) return getDataForShopList(new ShopList(collection)).map(data -> (T) data);
@@ -163,10 +161,6 @@ public class CollectionRepository implements Utils<Collection> {
     public Single<Collection> getByID(long id) {
         return dao.getByID(id)
                 .switchIfEmpty(Single.just(new Collection(-1, "Unknown Collection",  CollectionType.COLLECTION, new ArrayList<>())))
-                .flatMap(collection -> {
-                    String customName = getCustomNameSystemCollectionByName(collection.getName());
-                    return Single.just(new Collection(collection.getId(), customName, CollectionType.COLLECTION, collection.getDishes()));
-                })
                 .flatMap(this::getDataForCollection);
     }
 
@@ -178,10 +172,6 @@ public class CollectionRepository implements Utils<Collection> {
     public Single<Collection> getByName(String name) {
         return dao.getByName(name)
                 .switchIfEmpty(Single.just(new Collection(-1, "Unknown Collection",  CollectionType.COLLECTION, new ArrayList<>())))
-                .flatMap(collection -> {
-                    String customName = getCustomNameSystemCollectionByName(collection.getName());
-                    return Single.just(new Collection(collection.getId(), customName, collection.getType(), collection.getDishes()));
-                })
                 .flatMap(this::getDataForCollection)
                 .doOnError(throwable -> Log.e("RxError", "Error occurred: ", throwable))
                 .onErrorResumeNext(throwable -> {
@@ -266,8 +256,6 @@ public class CollectionRepository implements Utils<Collection> {
                 (allCollection, dishesCollection) -> {
                     ArrayList<Collection> unusedCollection = new ArrayList<>();
                     for (Collection collection : ClassUtils.getListOfType(allCollection, Collection.class)) {
-                        collection.setName(getCustomNameSystemCollectionByName(collection.getName()));
-
                         if (!dishesCollection.contains(collection)) {
                             unusedCollection.add(collection);
                         }
@@ -374,16 +362,16 @@ public class CollectionRepository implements Utils<Collection> {
     }
 
     public Drawable getDrawableByName(String name) {
-        if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "1") || Objects.equals(name, context.getString(R.string.favorites))) {
+        if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "1")) {
             return ContextCompat.getDrawable(context, R.drawable.icon_star);
         }
-        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "2") || Objects.equals(name, context.getString(R.string.my_recipes))) {
+        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "2")) {
             return ContextCompat.getDrawable(context, R.drawable.icon_book_a);
         }
-        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "3") || Objects.equals(name, context.getString(R.string.gpt_recipes))) {
+        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "3")) {
             return ContextCompat.getDrawable(context, R.drawable.icon_neurology);
         }
-        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "4") || Objects.equals(name, context.getString(R.string.import_recipes))) {
+        else if (Objects.equals(name, Collection.SYSTEM_COLLECTION_TAG + "4")) {
             return ContextCompat.getDrawable(context, R.drawable.icon_download);
         }
         else return ContextCompat.getDrawable(context, R.drawable.icon_book);

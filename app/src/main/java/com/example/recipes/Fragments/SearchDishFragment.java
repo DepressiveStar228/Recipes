@@ -13,6 +13,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -74,6 +75,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
     private CompositeDisposable compositeDisposable;
     private ImageView add_dish_button;
     private ArrayList<Boolean> sortStatus;
+    private AppCompatImageView clearSearchText, sortSearchResultButton;
     private final int durationAnimation = 200;
     private AtomicBoolean flagAccessAnimation = new AtomicBoolean(true);
     private boolean flagOpenSearch = false;
@@ -140,7 +142,9 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
             LinearLayoutManager layoutManager = (LinearLayoutManager) searchResultsRecyclerView.getLayoutManager();
             if (layoutManager != null) {
                 // Збереження позиції скролу
-                int position = layoutManager.findFirstVisibleItemPosition();
+                int positionFirst = layoutManager.findFirstVisibleItemPosition();
+                int positionLast = layoutManager.findLastVisibleItemPosition();
+                int position = (positionFirst + positionLast) / 2;
                 getActivity().getPreferences(Context.MODE_PRIVATE).edit().putInt("scroll_position", position).apply();
             }
         }
@@ -162,7 +166,9 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         gptFragment = view.findViewById(R.id.gpt_container);
         if (gptFragment != null) gptFragment.setOnClickListener(view1 -> onGPTClick());
 
-        searchEditText = linearLayout.findViewById(R.id.search_edit_text_my_dish);
+        searchEditText = linearLayout.findViewById(R.id.searchEditText);
+        clearSearchText = linearLayout.findViewById(R.id.clearInputTextButton);
+        sortSearchResultButton = linearLayout.findViewById(R.id.sortButton);
 
         head_textView = view.findViewById(R.id.head_textView);
         searchResultsRecyclerView = view.findViewById(R.id.searchResultsRecyclerView_my_dish);
@@ -248,6 +254,18 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                 }
             });
         }
+        if (clearSearchText != null) {
+            clearSearchText.setOnClickListener(v -> {
+                if (searchEditText != null) {
+                    searchEditText.setText("");
+
+                    if (searchControllerForDish != null) {
+                        searchControllerForDish.search();
+                    }
+                }
+            });
+        }
+        if (sortSearchResultButton != null) sortSearchResultButton.setVisibility(TextView.GONE);
         Log.d("SearchDishFragment", "Слухачі фрагмента успішно завантажені.");
     }
 
@@ -274,6 +292,7 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
                 intent.putExtra(IntentKeys.DISH_ID.name(), dish.getId());
                 startActivity(intent); // Відкриття редактора страви
             }));
+            if (clearSearchText != null) searchControllerForDish.setClearSearchEditText(clearSearchText);
         }
     }
 
@@ -306,46 +325,62 @@ public class SearchDishFragment extends Fragment implements OnBackPressedListene
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_sort_search_result, null);
+        ConstraintLayout sortContainer = dialogView.findViewById(R.id.sortContainer);
+        Button yesButton = dialogView.findViewById(R.id.yesButton);
+        Button neutralButton = dialogView.findViewById(R.id.neutralButton);
+        Button noButton = dialogView.findViewById(R.id.noButton);
 
-        // Отримання елементів сортування
-        LinearLayout sortAlphabetBox = dialogView.findViewById(R.id.sort_alphabetBox);
-        LinearLayout sortTimeBox = dialogView.findViewById(R.id.sort_TimeBox);
+        if (sortContainer != null) {
+            // Отримання елементів сортування
+            LinearLayout sortAlphabetBox = sortContainer.findViewById(R.id.sort_alphabetBox);
+            LinearLayout sortTimeBox = sortContainer.findViewById(R.id.sort_TimeBox);
 
-        if (sortAlphabetBox != null && sortTimeBox != null) {
-            // Налаштування радіо-кнопок сортування
-            ArrayList<RadioGroup> radioGroups = new ArrayList<>();
-            radioGroups.add(sortAlphabetBox.findViewById(R.id.sort_alphabet_radioButtonGroup));
-            radioGroups.add(sortTimeBox.findViewById(R.id.sort_time_radioButtonGroup));
+            if (sortAlphabetBox != null && sortTimeBox != null) {
+                // Налаштування радіо-кнопок сортування
+                ArrayList<RadioGroup> radioGroups = new ArrayList<>();
+                radioGroups.add(sortAlphabetBox.findViewById(R.id.sort_alphabet_radioButtonGroup));
+                radioGroups.add(sortTimeBox.findViewById(R.id.sort_time_radioButtonGroup));
 
-            ArrayList<ArrayList<RadioButton>> arrayRadioButtons = getRadioButtons(radioGroups);
+                ArrayList<ArrayList<RadioButton>> arrayRadioButtons = getRadioButtons(radioGroups);
 
-            ArrayList<Pair<RadioGroup, ArrayList<RadioButton>>> dataRadioGroup = new ArrayList<>();
-            for (int i = 0; i < radioGroups.size(); i++) {
-                final int index = i;
+                ArrayList<Pair<RadioGroup, ArrayList<RadioButton>>> dataRadioGroup = new ArrayList<>();
+                for (int i = 0; i < radioGroups.size(); i++) {
+                    final int index = i;
 
-                dataRadioGroup.add(new Pair<>(radioGroups.get(i), arrayRadioButtons.get(i)));
+                    dataRadioGroup.add(new Pair<>(radioGroups.get(i), arrayRadioButtons.get(i)));
 
-                radioGroups.get(i).setOnCheckedChangeListener((group, checkedId) -> {
-                    if (checkedId == arrayRadioButtons.get(index).get(0).getId()) {
-                        sortStatus.set(index, true);
-                    } else if (checkedId == arrayRadioButtons.get(index).get(1).getId()) {
-                        sortStatus.set(index, false);
-                    }
-                });
-            }
+                    radioGroups.get(i).setOnCheckedChangeListener((group, checkedId) -> {
+                        if (checkedId == arrayRadioButtons.get(index).get(0).getId()) {
+                            sortStatus.set(index, true);
+                        } else if (checkedId == arrayRadioButtons.get(index).get(1).getId()) {
+                            sortStatus.set(index, false);
+                        }
+                    });
+                }
 
-            checkRadioButton(dataRadioGroup);
+                checkRadioButton(dataRadioGroup);
 
-            builder.setView(dialogView)
-                    .setPositiveButton(R.string.apply, (dialog, which) -> {
+                builder.setView(dialogView);
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
+                if (yesButton != null) {
+                    yesButton.setOnClickListener(v -> {
                         updateRecipesData();
-                    })
-                    .setNeutralButton(R.string.reset, (dialog, which) -> {
+                        dialog.dismiss();
+                    });
+                }
+                if (neutralButton != null) {
+                    neutralButton.setOnClickListener(v -> {
                         resetSorting();
-                    })
-                    .setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss())
-                    .create()
-                    .show();
+                        dialog.dismiss();
+                    });
+                }
+                if (noButton != null) {
+                    noButton.setOnClickListener(v -> dialog.dismiss());
+                }
+            }
         }
     }
 

@@ -74,7 +74,7 @@ public class CollectionActivity extends AppCompatActivity {
     private EditText searchEditText;
     private Collection collection;
     private DrawerLayout drawerLayout;
-    private AppCompatImageView clearSearchText;
+    private AppCompatImageView clearSearchText, sortButton;
     private SearchController<Dish> searchController;
     private RecipeUtils utils;
     private PreferencesController preferencesController;
@@ -93,15 +93,16 @@ public class CollectionActivity extends AppCompatActivity {
         preferencesController = PreferencesController.getInstance();
         themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
         utils = RecipeUtils.getInstance(this);
+
+        super.onCreate(savedInstanceState);
+        preferencesController.setPreferencesToActivity(this);
+        setContentView(R.layout.collection_activity);
+
         collection = new Collection("", CollectionType.VOID);
         compositeDisposable = new CompositeDisposable();
         dishOptions = new DishOptions(this, compositeDisposable);
         nameActivity = this.getClass().getSimpleName();
         collectionOptions = new CollectionOptions(this, compositeDisposable);
-
-        super.onCreate(savedInstanceState);
-        preferencesController.setPreferencesToActivity(this);
-        setContentView(R.layout.collection_activity);
     }
 
     @Override
@@ -167,6 +168,7 @@ public class CollectionActivity extends AppCompatActivity {
         ConstraintLayout searchField = findViewById(R.id.searchDishCollection);
         searchEditText = searchField.findViewById(R.id.searchEditText);
         clearSearchText = searchField.findViewById(R.id.clearInputTextButton);
+        sortButton = searchField.findViewById(R.id.sortButton);
 
         dishRecyclerView = findViewById(R.id.dishRecyclerView);
         back = findViewById(R.id.back);
@@ -233,17 +235,6 @@ public class CollectionActivity extends AppCompatActivity {
                 }
             });
         }
-        if (clearSearchText != null) {
-            clearSearchText.setOnClickListener(v -> {
-                if (searchEditText != null) {
-                    searchEditText.setText("");
-
-                    if (searchController != null) {
-                        searchController.search();
-                    }
-                }
-            });
-        }
     }
 
     /**
@@ -267,6 +258,7 @@ public class CollectionActivity extends AppCompatActivity {
 
                 searchController = new SearchController<>(this, searchEditText, dishRecyclerView, adapter);
                 if (clearSearchText != null) searchController.setClearSearchEditText(clearSearchText);
+                if (sortButton != null) searchController.setSortResultSearchButton(sortButton);
             }
         }
     }
@@ -343,7 +335,7 @@ public class CollectionActivity extends AppCompatActivity {
         utils.ByDishCollection().getViewModel().getAllDishIDs(collection.getId()).observe(this, data -> {
             if (data != null) {
                 Disposable disposable = Observable.fromIterable(data)
-                        .flatMapSingle(id -> utils.ByDish().getByID(id))
+                        .flatMapSingle(id -> utils.ByDish().getByIDWithoutAdditionData(id))
                         .toList()
                         .subscribeOn(Schedulers.newThread())
                         .observeOn(AndroidSchedulers.mainThread())

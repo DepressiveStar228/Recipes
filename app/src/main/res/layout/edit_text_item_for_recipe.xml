@@ -5,30 +5,51 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:padding="2dp"
     android:background="@drawable/border_day_night">
 
     <EditText
         android:id="@+id/editText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="5dp"
+        android:layout_marginTop="4dp"
         android:inputType="textMultiLine|textCapSentences"
         android:textColor="?attr/colorText"
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp"
         app:backgroundTint="?attr/colorControlNormal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/delete"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/dragHandle"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_margin="5dp"
+        android:padding="5dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/icon_menu"
+        android:background="@drawable/background_day_night_without_border"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorText" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/delete"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_margin="5dp"
+        android:padding="3dp"
+        android:background="@drawable/background_day_night_without_border"
         android:clickable="true"
         android:focusable="true"
         android:src="@drawable/icon_delete"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="?attr/colorText" />

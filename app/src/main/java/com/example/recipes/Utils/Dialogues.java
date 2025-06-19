@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -46,6 +47,34 @@ public class Dialogues {
         this.builder = new AlertDialog.Builder(activity);
     }
 
+    public void dialogExit(Runnable callbackPositiveButton, Runnable callbackNegativeButton) {
+        updateBuilder();
+
+        View dialogView = inflater.inflate(R.layout.dialog_exit, null);
+        if (dialogView != null) {
+            Button yesButton = dialogView.findViewById(R.id.yesButton);
+            Button noButton = dialogView.findViewById(R.id.noButton);
+
+            builder.setView(dialogView);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+
+            if (yesButton != null) {
+                yesButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    if (callbackPositiveButton != null) callbackPositiveButton.run();
+                });
+            }
+            if (noButton != null) {
+                noButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    if (callbackNegativeButton != null) callbackNegativeButton.run();
+                });
+            }
+        }
+    }
+
     /**
      * Відкриває діалог для введення рядка.
      *
@@ -72,19 +101,38 @@ public class Dialogues {
         updateBuilder();
 
         View dialogView = inflater.inflate(R.layout.dialog_set_string_param, null);
+        if (dialogView != null) {
+            TextView dialogTitle = dialogView.findViewById(R.id.dialogTitle);
+            if (dialogTitle != null) { dialogTitle.setText(nameDialogTextId); }
 
-        EditText editText = dialogView.findViewById(R.id.add_collection_name_editText);
-        if (editText != null) {
-            editText.setText(startData);
-            CharacterLimitTextWatcher.setCharacterLimit(activity, editText, limitsCharEditText);
+            Button yesButton = dialogView.findViewById(R.id.yesButton);
+            Button noButton = dialogView.findViewById(R.id.noButton);
+
+            EditText editText = dialogView.findViewById(R.id.add_collection_name_editText);
+            if (editText != null) {
+                editText.setText(startData);
+                CharacterLimitTextWatcher.setCharacterLimit(activity, editText, limitsCharEditText);
+            }
+
+            builder.setView(dialogView);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+
+            if (yesButton != null) {
+                yesButton.setText(namePositiveButtonTextId);
+
+                yesButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    if (callbackPositiveButton != null) callbackPositiveButton.accept((editText != null) ? editText.getText().toString().trim() : "");
+                });
+            }
+            if (noButton != null) {
+                noButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                });
+            }
         }
-
-        builder.setView(dialogView)
-                .setTitle(nameDialogTextId)
-                .setPositiveButton(namePositiveButtonTextId, (dialog, which) -> callbackPositiveButton.accept((editText != null) ? editText.getText().toString().trim() : ""))
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
     }
 
     /**
@@ -115,25 +163,44 @@ public class Dialogues {
         updateBuilder();
 
         View dialogView = inflater.inflate(R.layout.dialog_choose_items, null);
-        TextView textView = dialogView.findViewById(R.id.textView22);
-        if (textView != null) { textView.setText(nameDialogTextId); }
-        RecyclerView recyclerView = dialogView.findViewById(R.id.items_check_RecyclerView);
-        ConstraintLayout empty = dialogView.findViewById(R.id.empty);
+        if (dialogView != null) {
+            TextView dialogTitle = dialogView.findViewById(R.id.dialogTitle);
+            if (dialogTitle != null) { dialogTitle.setText(nameDialogTextId); }
 
-        if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, items.isEmpty());
+            Button yesButton = dialogView.findViewById(R.id.yesButton);
+            Button noButton = dialogView.findViewById(R.id.noButton);
 
-        ChooseItemAdapter<T> chooseItemAdapter = new ChooseItemAdapter<>(activity, (checkBox, item) -> { });
-        chooseItemAdapter.setItemsAndSelected(items, selectedItems);
-        recyclerView.setAdapter(chooseItemAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+            RecyclerView recyclerView = dialogView.findViewById(R.id.items_check_RecyclerView);
+            ConstraintLayout empty = dialogView.findViewById(R.id.empty);
 
-        builder.setView(dialogView)
-                .setPositiveButton(namePositiveButtonTextId, (dialog, which) -> {
+            if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, items.isEmpty());
+
+            ChooseItemAdapter<T> chooseItemAdapter = new ChooseItemAdapter<>(activity, (checkBox, item) -> { });
+            chooseItemAdapter.setItemsAndSelected(items, selectedItems);
+            if (recyclerView != null) {
+                recyclerView.setAdapter(chooseItemAdapter);
+                recyclerView.setLayoutManager(new LinearLayoutManager(activity));
+            }
+
+            builder.setView(dialogView);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+
+            if (yesButton != null) {
+                yesButton.setText(namePositiveButtonTextId);
+
+                yesButton.setOnClickListener(v -> {
+                    dialog.dismiss();
                     if (callbackPositiveButton != null) callbackPositiveButton.accept(chooseItemAdapter.getSelectedItem());
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-
-        builder.create().show();
+                });
+            }
+            if (noButton != null) {
+                noButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                });
+            }
+        }
     }
 
     /**
@@ -148,7 +215,6 @@ public class Dialogues {
      * @param <T> - тип об'єктів у списку
      */
     public <T> void dialogChooseItemsWithSearch(ArrayList<T> items, Consumer<ArrayList<T>> callbackPositiveButton, Runnable callbackNeutralButton, Limits limitsCharEditText, int nameDialogTextId, int namePositiveButtonTextId) {
-        updateBuilder();
         dialogChooseItemsWithSearch(items, new ArrayList<T>(), callbackPositiveButton, callbackNeutralButton, limitsCharEditText, nameDialogTextId, namePositiveButtonTextId);
     }
 
@@ -170,12 +236,18 @@ public class Dialogues {
         View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
 
         if (dialogView != null) {
-            TextView textView = dialogView.findViewById(R.id.textView22);
+            TextView textView = dialogView.findViewById(R.id.dialogTitle);
             if (textView != null) { textView.setText(nameDialogTextId); }
+
+            Button yesButton = dialogView.findViewById(R.id.yesButton);
+            Button neutralButton = dialogView.findViewById(R.id.neutralButton);
+            Button noButton = dialogView.findViewById(R.id.noButton);
+
             RecyclerView recyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
             ConstraintLayout searchField = dialogView.findViewById(R.id.searchField);
             EditText editText = searchField.findViewById(R.id.searchEditText);
             AppCompatImageView clearButton = searchField.findViewById(R.id.clearInputTextButton);
+            AppCompatImageView sortButton = searchField.findViewById(R.id.sortButton);
             ConstraintLayout empty = dialogView.findViewById(R.id.empty);
 
             if (editText != null) CharacterLimitTextWatcher.setCharacterLimit(activity, editText, limitsCharEditText);
@@ -188,14 +260,9 @@ public class Dialogues {
                 searchController.setSearchEditText(editText);
                 searchController.setSearchResultsRecyclerView(recyclerView);
 
-                if (clearButton != null && editText != null) {
-                    searchController.setClearSearchEditText(clearButton); // Додаємо кнопку очищення поля вводу
-
-                    // Додаємо обробник натискання на кнопку очищення
-                    clearButton.setOnClickListener(v -> {
-                        editText.setText("");
-                        searchController.search();
-                    });
+                if (editText != null) {
+                    if (clearButton != null) searchController.setClearSearchEditText(clearButton); // Додаємо кнопку очищення поля вводу
+                    if (sortButton != null) searchController.setSortResultSearchButton(sortButton); // Додаємо кнопку сортування
                 }
 
                 ChooseItemAdapter<T> adapterChooseObjects = (ChooseItemAdapter) searchController.getAdapter();
@@ -203,16 +270,36 @@ public class Dialogues {
 
                 if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, items.isEmpty());
 
-                builder.setView(dialogView)
-                        .setPositiveButton(namePositiveButtonTextId, (dialog, which) -> {
-                            if (callbackPositiveButton != null) callbackPositiveButton.accept(newSelectedItems);
-                        })
-                        .setNeutralButton(R.string.reset, (dialog, which) -> {
-                            if (callbackNeutralButton != null) callbackNeutralButton.run();
-                        })
-                        .setNegativeButton(R.string.close, (dialog, which) -> dialog.dismiss());
+                builder.setView(dialogView);
 
-                builder.create().show();
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
+                if (yesButton != null) {
+                    yesButton.setText(namePositiveButtonTextId);
+
+                    yesButton.setOnClickListener(v -> {
+                        dialog.dismiss();
+                        if (callbackPositiveButton != null) callbackPositiveButton.accept(newSelectedItems);
+                    });
+                }
+
+                if (neutralButton != null && callbackNeutralButton != null) {
+                    neutralButton.setText(R.string.reset);
+
+                    neutralButton.setOnClickListener(v -> {
+                        dialog.dismiss();
+                        callbackNeutralButton.run();
+                    });
+                } else {
+                    if (neutralButton != null) {
+                        neutralButton.setVisibility(View.GONE);
+                    }
+                }
+
+                if (noButton != null) {
+                    noButton.setOnClickListener(v -> dialog.dismiss());
+                }
             }
         }
     }

@@ -17,17 +17,16 @@
 
     <EditText
         android:id="@+id/searchEditText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="35dp"
-        android:inputType="textCapSentences"
         android:hint="@string/hint_text_search"
+        android:inputType="textCapSentences"
         android:textColor="?attr/colorText"
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp"
         app:backgroundTint="?attr/colorControlNormal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/sortButton"
         app:layout_constraintStart_toEndOf="@+id/searchImageView"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -35,11 +34,21 @@
         android:id="@+id/clearInputTextButton"
         android:layout_width="22dp"
         android:layout_height="22dp"
-        android:layout_marginEnd="5dp"
+        android:layout_marginEnd="10dp"
         android:src="@drawable/icon_close"
         android:visibility="gone"
         app:tint="?attr/colorControlNormal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/sortButton"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/sortButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/icon_sort"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorControlNormal" />
 </androidx.constraintlayout.widget.ConstraintLayout>

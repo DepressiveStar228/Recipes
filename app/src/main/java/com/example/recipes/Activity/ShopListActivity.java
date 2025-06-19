@@ -8,11 +8,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcelable;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,7 +25,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -31,8 +35,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.ChooseItemAdapter;
+import com.example.recipes.Adapter.IngredientTypeSpinnerAdapter;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
+import com.example.recipes.Decoration.AnimationUtils;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Adapter.DishGetToShopListAdapter;
 import com.example.recipes.Adapter.IngredientShopListGetAdapter;
@@ -52,15 +58,22 @@ import com.example.recipes.Item.Option.ShopListOptions;
 import com.example.recipes.Item.ShopList;
 import com.example.recipes.R;
 import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
+import com.example.recipes.ViewItem.CustomPopupWindow;
+import com.example.recipes.ViewItem.MenuItemView;
 import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexLine;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -77,26 +90,30 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @version 1.0
  */
 public class ShopListActivity extends AppCompatActivity {
-    private LinearLayout linearLayout1, linearLayout2, linearLayout3, linearLayout4;
+    private MenuItemView editOption, copyAsTestOption, clearOption, deleteOption;
     private CompositeDisposable compositeDisposable, compositeByIngredients;
     private PreferencesController preferencesController;
     private DrawerLayout drawerLayout;
-    private ConstraintLayout dishShopListLayout;
     private RecipeUtils utils;
     private ShopList shopList;
     private TextView name, bought_items, all_item;
-    private ConstraintLayout ingredientsEmpty;
-    private ImageView addDish, addIngredient, exit, setting;
+    private ConstraintLayout ingredientsEmpty, dishShopListLayout;
+    private AppCompatImageView addDish, addIngredient, exit, setting;
     private RecyclerView ingShopList, dishShopList;
     private IngredientShopListGetAdapter ingAdapter;
     private DishGetToShopListAdapter dishAdapter;
-    private SearchController<Dish> searchController;
+    private CustomPopupWindow customPopupWindow;
     private ShopListOptions shopListOptions;
+    private Dialogues dialogues;
     private String nameActivity;
+    private ArrayList<String> allIngredientTypes;
 
     // Флаги потрібні, щоб слухачі не підтягували елементи з БД під час видалення чи очистки списук покупків
-    private AtomicBoolean flagClear = new AtomicBoolean(false);
-    private AtomicBoolean flagAccessDelete = new AtomicBoolean(true);
+    private final AtomicBoolean flagClear = new AtomicBoolean(false);
+    private final AtomicBoolean flagAccessUpdate = new AtomicBoolean(true);
+    private final AtomicBoolean flagAccessDelete = new AtomicBoolean(true);
+    private final AtomicBoolean flagAccessOpenDishShopList = new AtomicBoolean(true);
+    private final AtomicBoolean flagIsOpenDishShopList = new AtomicBoolean(false);
 
     private long shopListID;
 
@@ -109,7 +126,9 @@ public class ShopListActivity extends AppCompatActivity {
         compositeDisposable = new CompositeDisposable();
         compositeByIngredients = new CompositeDisposable();
         nameActivity = this.getClass().getSimpleName();
+        dialogues = new Dialogues(this);
         shopListOptions = new ShopListOptions(this, compositeDisposable);
+        allIngredientTypes = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.ingredient_types)));
 
         super.onCreate(savedInstanceState);
         preferencesController.setPreferencesToActivity(this);
@@ -185,10 +204,10 @@ public class ShopListActivity extends AppCompatActivity {
             View headerView = navigationView.getHeaderView(0);
 
             if (headerView != null) {
-                linearLayout1 = headerView.findViewById(R.id.setting_edit);
-                linearLayout2 = headerView.findViewById(R.id.setting_copy_as_text);
-                linearLayout3 = headerView.findViewById(R.id.setting_clear);
-                linearLayout4 = headerView.findViewById(R.id.setting_delete);
+                editOption = headerView.findViewById(R.id.setting_edit);
+                copyAsTestOption = headerView.findViewById(R.id.setting_copy_as_text);
+                clearOption = headerView.findViewById(R.id.setting_clear);
+                deleteOption = headerView.findViewById(R.id.setting_delete);
             }
         }
 
@@ -196,18 +215,18 @@ public class ShopListActivity extends AppCompatActivity {
     }
 
     private void loadClickListeners() {
-        linearLayout1.setOnClickListener(v -> shopListOptions.editName(shopList, updatedCollection -> {
+        editOption.setOnClickListener(v -> shopListOptions.editName(shopList, updatedCollection -> {
             if (name != null) {
                 name.setText(updatedCollection.getName());
             }
         }));
-        linearLayout2.setOnClickListener(v -> shopListOptions.copyAsTest(shopList));
-        linearLayout3.setOnClickListener(v -> shopListOptions.clear(flagClear, shopList, shopListID, collection -> {
+        copyAsTestOption.setOnClickListener(v -> shopListOptions.copyAsTest(shopList));
+        clearOption.setOnClickListener(v -> shopListOptions.clear(flagClear, shopList, shopListID, collection -> {
             shopList = new ShopList(collection);
             setDataIntoItemsActivity();
             putIngredientsWithAmountTypesToAdapter();
         }));
-        linearLayout4.setOnClickListener(v -> shopListOptions.delete(shopList, flagAccessDelete, () -> {
+        deleteOption.setOnClickListener(v -> shopListOptions.delete(shopList, flagAccessDelete, () -> {
             Toast.makeText(this, R.string.successful_delete_shop_list, Toast.LENGTH_SHORT).show();
             finish();
         }));
@@ -302,22 +321,8 @@ public class ShopListActivity extends AppCompatActivity {
             dishShopList.setLayoutManager(flexboxLayoutManager);
             dishShopList.addItemDecoration(new HorizontalSpaceItemDecoration(5));
             dishShopList.addItemDecoration(new VerticalSpaceItemDecoration(5));
+            dishShopList.setHasFixedSize(true);
             dishShopList.getAdapter().notifyDataSetChanged();
-
-            // Зміна висоти списку страв на основі наповнення
-            dishShopList.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-                int size = dishShopList.getHeight();
-                int maxSize = AnotherUtils.dpToPx(100, this);
-                ViewGroup.LayoutParams layoutParams = dishShopList.getLayoutParams();
-
-                if (size > maxSize) {
-                    layoutParams.height = maxSize;
-
-                } else {
-                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                }
-                dishShopList.setLayoutParams(layoutParams);
-            });
         }
 
         // Слухач зміни ID страв, які належать списку покупків
@@ -333,10 +338,22 @@ public class ShopListActivity extends AppCompatActivity {
                                 dishAdapter.setItems(new ArrayList<>(dishes));
                                 shopList.setDishes(new ArrayList<>(dishes));
 
-                                if (dishes.isEmpty() && dishShopListLayout != null) {
-                                    dishShopListLayout.setVisibility(View.GONE);
-                                } else {
-                                    dishShopListLayout.setVisibility(View.VISIBLE);
+                                if (dishShopListLayout != null) {
+                                    if (!dishes.isEmpty()) dishShopListLayout.setVisibility(View.VISIBLE);
+                                    else dishShopListLayout.setVisibility(View.GONE);
+                                }
+
+                                if (dishShopList != null) {
+                                    dishShopList.postDelayed(() -> {
+                                        FlexboxLayoutManager flexboxLayoutManager = (FlexboxLayoutManager) dishShopList.getLayoutManager();
+                                        List<FlexLine> lines = Objects.requireNonNull(flexboxLayoutManager).getFlexLines();
+
+                                        int size = 84 * (Math.min(lines.size(), 3));
+                                        ViewGroup.LayoutParams layoutParams = dishShopList.getLayoutParams();
+                                        layoutParams.height = size;
+
+                                        dishShopList.setLayoutParams(layoutParams);
+                                    }, 100);
                                 }
                             }
                         });
@@ -356,15 +373,29 @@ public class ShopListActivity extends AppCompatActivity {
                     new IngredientShopListGetAdapter.IngredientShopListClickListener() {
                         @Override
                         public void onIngredientShopListClick(IngredientShopList ingredientShopList) {
-                            compositeByIngredients.clear();
+                            if (flagAccessUpdate.get()) {
+                                flagAccessUpdate.set(false);
+                                compositeByIngredients.clear();
 
-                            ingredientShopList.setIsBuy(!ingredientShopList.getIsBuy());
-                            Disposable disposable = utils.ByIngredientShopList().update(ingredientShopList)
-                                    .subscribeOn(Schedulers.newThread())
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe();
+                                IngredientShopList ingredientShopListNew = new IngredientShopList(ingredientShopList);
+                                ingredientShopListNew.setIsBuy(!ingredientShopList.getIsBuy());
 
-                            compositeByIngredients.add(disposable);
+                                Disposable disposable = utils.ByIngredientShopList().update(ingredientShopListNew)
+                                        .subscribeOn(Schedulers.newThread())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe(
+                                                () -> {
+                                                    flagAccessUpdate.set(true);
+                                                },
+                                                throwable -> {
+                                                    flagAccessUpdate.set(true);
+                                                    Log.e(nameActivity, "Error updating ingredient shop list", throwable);
+                                                }
+                                        );
+
+                                compositeByIngredients.add(disposable);
+                            }
+
                         }
 
                         @Override
@@ -384,7 +415,6 @@ public class ShopListActivity extends AppCompatActivity {
             ingShopList.setAdapter(ingAdapter);
             ingShopList.setLayoutManager(new LinearLayoutManager(this));
             ingShopList.addItemDecoration(new VerticalSpaceItemDecoration(-4));
-            ingShopList.getAdapter().notifyDataSetChanged();
         }
 
         // Два слухача потрібно для враховування всіх можливих змін елементів списку покупків.
@@ -485,7 +515,7 @@ public class ShopListActivity extends AppCompatActivity {
                         return utils.ByIngredientShopList().deleteEmptyAmountTypeByIDCollection(shopList.getId());
                     } else { return Single.just(true); }
                 })
-                .flatMap(status -> utils.ByIngredientShopList().getAllByIDCollection(shopList.getId()))
+                .flatMap(status -> utils.ByIngredientShopList().getAllByIDCollectionAndSortedByIsBuy(shopList.getId()))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ingredients -> {
@@ -510,58 +540,63 @@ public class ShopListActivity extends AppCompatActivity {
     public void onAddIngredientButtonClick() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.set_ingredient_shop_list_item, null);
-        EditText name = dialogView.findViewById(R.id.nameIngredientEditText);
-        EditText amount = dialogView.findViewById(R.id.countIngredientEditText);
-        Spinner type = dialogView.findViewById(R.id.spinnerTypeIngredient);
+        View dialogView = inflater.inflate(R.layout.dialog_set_ingredient_shop_list_item, null);
 
-        // Встановлення обмежень на кількість символів для назви та кількості інгредієнта
-        if (name != null) { CharacterLimitTextWatcher.setCharacterLimit(this, name, Limits.MAX_CHAR_NAME_INGREDIENT); }
-        if (amount != null) { CharacterLimitTextWatcher.setCharacterLimit(this, amount, Limits.MAX_CHAR_AMOUNT_INGREDIENT); }
+        if (dialogView != null) {
+            LinearLayout setIngredient = dialogView.findViewById(R.id.ingredient_shop_list_item);
 
-        // Налаштування Spinner для вибору типу інгредієнта
-        if (type != null) {
-            ArrayAdapter<String> typeAdapter = new CustomSpinnerAdapter(this, android.R.layout.simple_spinner_item, Arrays.asList(this.getResources().getStringArray(R.array.ingredient_types)));
-            typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            type.setAdapter(typeAdapter);
-            type.setSelection(IngredientType.VOID.getPosition());
-        }
+            if (setIngredient != null) {
+                EditText name = setIngredient.findViewById(R.id.nameIngredientEditText);
+                EditText amount = setIngredient.findViewById(R.id.countIngredientEditText);
+                ConstraintLayout spinnerTypeIngredient = setIngredient.findViewById(R.id.spinnerTypeIngredient);
+                TextView type = spinnerTypeIngredient.findViewById(R.id.spinnerTypeIngredientTextView);
 
-        builder.setView(dialogView)
-                .setPositiveButton(R.string.button_add, null)
-                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
+                ConstraintLayout buttonContainer = dialogView.findViewById(R.id.buttonContainer);
+                Button yesButton = buttonContainer.findViewById(R.id.yesButton);
+                Button noButton = buttonContainer.findViewById(R.id.noButton);
 
-        // Обробка натискання кнопки "Додати"
-        Button addButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        if (addButton != null) {
-            addButton.setOnClickListener(v -> {
-                if (name != null && amount != null && type != null) {
-                    String nameBox = name.getText().toString();
-                    String amountBox = amount.getText().toString();
-                    String typeBox = type.getSelectedItem().toString();
+                // Встановлення обмежень на кількість символів для назви та кількості інгредієнта
+                if (name != null) { CharacterLimitTextWatcher.setCharacterLimit(this, name, Limits.MAX_CHAR_NAME_INGREDIENT); }
+                if (amount != null) { CharacterLimitTextWatcher.setCharacterLimit(this, amount, Limits.MAX_CHAR_AMOUNT_INGREDIENT); }
 
-                    // Перевірка наявності введених даних
-                    if (!nameBox.isEmpty() && !amountBox.isEmpty() && !typeBox.isEmpty()) { // Перевіряємо наявність даних
-                        ArrayList<Ingredient> ingredients = new ArrayList<>();
-                        ingredients.add(new Ingredient(nameBox.replaceFirst("\\s+$", ""), amountBox, IngredientTypeConverter.toIngredientType(typeBox), shopList.getId()));
+                // Налаштування Spinner для вибору типу інгредієнта
+                spinnerTypeIngredient.setOnClickListener(v -> showDropDownIngredientTypeForAddIngredientShopList(spinnerTypeIngredient, type));
 
-                        // Додавання інгредієнта до списку покупок
-                        Disposable disposable = setIngredientFromDishesToShopList(ingredients, null)
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(status -> {
-                                    if (status) { flagAccessDelete.set(true); }
-                                });
+                builder.setView(dialogView);
+                AlertDialog dialog = builder.create();
+                dialog.show();
 
-                        dialog.dismiss();
-                        compositeByIngredients.add(disposable);
-                    } else {
-                        Toast.makeText(this, R.string.warning_set_all_data, Toast.LENGTH_SHORT).show();
-                    }
+                // Обробка натискання кнопки "Додати"
+                if (yesButton != null) {
+                    yesButton.setOnClickListener(v -> {
+                        if (name != null && amount != null && type != null) {
+                            String nameBox = name.getText().toString();
+                            String amountBox = amount.getText().toString();
+                            String typeBox = type.getText().toString();
+
+                            // Перевірка наявності введених даних
+                            if (!nameBox.isEmpty() && !amountBox.isEmpty() && !typeBox.isEmpty()) { // Перевіряємо наявність даних
+                                ArrayList<Ingredient> ingredients = new ArrayList<>();
+                                ingredients.add(new Ingredient(nameBox.replaceFirst("\\s+$", ""), amountBox, IngredientTypeConverter.toIngredientType(typeBox), shopList.getId()));
+
+                                // Додавання інгредієнта до списку покупок
+                                Disposable disposable = setIngredientFromDishesToShopList(ingredients, null)
+                                        .subscribeOn(Schedulers.io())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe(status -> {
+                                            if (status) { flagAccessDelete.set(true); }
+                                        });
+
+                                dialog.dismiss();
+                                compositeByIngredients.add(disposable);
+                            } else {
+                                Toast.makeText(this, R.string.warning_set_all_data, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
                 }
-            });
+                if (noButton != null) noButton.setOnClickListener(v -> dialog.dismiss());
+            }
         }
     }
 
@@ -570,78 +605,43 @@ public class ShopListActivity extends AppCompatActivity {
      * Відкриває діалогове вікно зі списком доступних страв для додавання до списку покупок.
      */
     private void onAddDishButtonClick() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_choose_items_with_search, null);
+        if (dialogues != null) {
+            ArrayList<Boolean> sortStatus = new ArrayList<>();
+            sortStatus.add(true);
+            sortStatus.add(null);
 
-        if (dialogView != null) {
-            TextView textView = dialogView.findViewById(R.id.textView22);
-            if (textView != null) { textView.setText(R.string.your_dish); }
-            RecyclerView dishesRecyclerView = dialogView.findViewById(R.id.items_result_check_RecyclerView);
-            EditText editText = dialogView.findViewById(R.id.searchEditText);
-            ConstraintLayout empty = dialogView.findViewById(R.id.empty);
-            if (editText != null) { CharacterLimitTextWatcher.setCharacterLimit(this, editText, Limits.MAX_CHAR_NAME_DISH); }
+            // Отримання відсортованих страв
+            Disposable disposable = utils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortStatus)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(dishes -> {
+                                if (dishes != null) {
+                                    dialogues.dialogChooseItemsWithSearch(new ArrayList<>(dishes), selectedDish -> {
+                                        Disposable disposable1 = setIDsDishCollectionIntoShopList(selectedDish)
+                                                .subscribeOn(Schedulers.newThread())
+                                                .observeOn(AndroidSchedulers.mainThread())
+                                                .subscribe(status -> {
+                                                    flagAccessDelete.set(true);
 
-            if (dishesRecyclerView != null) {
-                ArrayList<Boolean> sortStatus = new ArrayList<>();
-                sortStatus.add(true);
-                sortStatus.add(null);
-
-                // Отримання відсортованих страв
-                Disposable disposable = utils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortStatus)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(dishes -> {
-                                    if (dishes != null) {
-                                        if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, dishes.isEmpty());
-
-                                        // Налаштування пошуку та вибору страв
-                                        searchController = new SearchController(this, editText, dishesRecyclerView, new ChooseItemAdapter<Dish>(this, (checkBox, item) -> { }));
-                                        searchController.setArrayData(new ArrayList<>(dishes));
-
-                                        ChooseItemAdapter<Dish> adapterChooseObjects = (ChooseItemAdapter) searchController.getAdapter();
-
-                                        builder.setView(dialogView)
-                                                .setPositiveButton(R.string.button_add, (dialog, which) -> {
-                                                    ArrayList<Dish> selectedDish = adapterChooseObjects.getSelectedItem();
-
-                                                    if (!selectedDish.isEmpty()) {
-                                                        // Додавання вибраних страв до списку покупок
-                                                        Disposable disposable1 = setIDsDishCollectionIntoShopList(selectedDish)
-                                                                .subscribeOn(Schedulers.newThread())
-                                                                .observeOn(AndroidSchedulers.mainThread())
-                                                                .subscribe(
-                                                                        status -> {
-                                                                            flagAccessDelete.set(true);
-
-                                                                            if (status) {
-                                                                                Toast.makeText(this, getString(R.string.successful_add_dishes), Toast.LENGTH_SHORT).show();
-                                                                                Log.d(nameActivity, "Страви успішно додано до списку");
-                                                                            } else {
-                                                                                Toast.makeText(this, R.string.error_add_dish, Toast.LENGTH_SHORT).show();
-                                                                                Log.d(nameActivity, "Помилка додавання страв до колекції(й)");
-                                                                            }
-                                                                        },
-                                                                        throwable -> {
-                                                                            Log.e(nameActivity, "Error occurred", throwable);
-                                                                            Toast.makeText(this, R.string.error_add_dish, Toast.LENGTH_SHORT).show();
-                                                                        }
-                                                                );
-
-
-                                                        compositeDisposable.add(disposable1);
+                                                    if (status) {
+                                                        Toast.makeText(this, getString(R.string.successful_add_dishes), Toast.LENGTH_SHORT).show();
+                                                        Log.d(nameActivity, "Страви успішно додано до списку");
+                                                    } else {
+                                                        Toast.makeText(this, R.string.error_add_dish, Toast.LENGTH_SHORT).show();
+                                                        Log.d(nameActivity, "Помилка додавання страв до колекції(й)");
                                                     }
-                                                })
-                                                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+                                                }, throwable -> {
+                                                    Log.e(nameActivity, "Error occurred", throwable);
+                                                    Toast.makeText(this, R.string.error_add_dish, Toast.LENGTH_SHORT).show();
+                                                });
+                                        compositeDisposable.add(disposable1);
+                                    }, null, Limits.MAX_CHAR_NAME_DISH, R.string.your_dish, R.string.button_add);
+                                }
+                            },
+                            throwable -> Log.d(nameActivity, "Помилка отримання страв, які не лежать в колекції")
+                    );
 
-                                        builder.create().show();
-                                    }
-                                },
-                                throwable -> Log.d(nameActivity, "Помилка отримання страв, які не лежать в колекції")
-                        );
-
-                compositeDisposable.add(disposable);
-            }
+            compositeDisposable.add(disposable);
         }
     }
 
@@ -701,5 +701,22 @@ public class ShopListActivity extends AppCompatActivity {
 
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.showAsDropDown(anchorView, -75, -anchorView.getHeight() + 200);
+    }
+
+    private void showDropDownIngredientTypeForAddIngredientShopList(View anchorView, TextView spinnerTypeIngredientTextView) {
+        RecyclerView dropDownRecyclerView = new RecyclerView(this);
+        dropDownRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        IngredientTypeSpinnerAdapter spinnerTypeIngredientAdapter = new IngredientTypeSpinnerAdapter(allIngredientTypes);
+        dropDownRecyclerView.setAdapter(spinnerTypeIngredientAdapter);
+
+        customPopupWindow = new CustomPopupWindow(this, anchorView, dropDownRecyclerView);
+        customPopupWindow.setSize(90, 200);
+        customPopupWindow.showPopup();
+
+        spinnerTypeIngredientAdapter.setOnItemClickListener(item -> {
+            spinnerTypeIngredientTextView.setText(item);
+            customPopupWindow.hidePopup();
+        });
     }
 }

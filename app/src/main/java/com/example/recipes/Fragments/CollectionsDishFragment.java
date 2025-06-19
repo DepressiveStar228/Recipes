@@ -148,10 +148,7 @@ public class CollectionsDishFragment extends Fragment implements OnBackPressedLi
 
                 @Override
                 public void onImageViewClick(Collection collection, View anchorView) {
-                    final boolean isSystemCollection = Objects.equals(collection.getName(), getString(R.string.favorites))
-                            || Objects.equals(collection.getName(), getString(R.string.my_recipes))
-                            || Objects.equals(collection.getName(), getString(R.string.gpt_recipes))
-                            || Objects.equals(collection.getName(), getString(R.string.import_recipes));
+                    final boolean isSystemCollection = collection.getName().contains(Collection.SYSTEM_COLLECTION_TAG);
 
                     PopupMenu popupMenu = new PopupMenu(getContext(), anchorView, Gravity.END);
                     if (isSystemCollection) {

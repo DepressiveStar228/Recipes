@@ -4,6 +4,13 @@ import java.util.ArrayList;
 
 public interface ChooseItem<T> {
     /**
+     * Встановлює список елементів.
+     *
+     * @param items Список  елементів.
+     */
+    void setItems(ArrayList<T> items);
+
+    /**
      * Встановлює список вибраних елементів.
      *
      * @param selectedItems Список вибраних елементів.

@@ -11,6 +11,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -20,18 +21,22 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.example.recipes.Controller.ImageController;
+import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Decoration.TextLoadAnimation;
 import com.example.recipes.Enum.DishRecipeType;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.DishRecipe;
+import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
 import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.ViewItem.CustomPopupWindow;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +70,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private final ConstraintLayout empty;
     private final ImageController imageController;
     private final ImageClickListener imageClickListener;
+    private static ItemTouchHelper itemTouchHelper;
 
     /**
      * Конструктор адаптера.
@@ -128,6 +134,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             editTextHolder.delete.setOnClickListener(view -> delItem(item));
 
+            editTextHolder.dragHandle.setVisibility(isRead ? View.GONE : View.VISIBLE);
             editTextHolder.delete.setVisibility(isRead ? View.GONE : View.VISIBLE);
             editTextHolder.container.getBackground().setAlpha(isRead ? 0 : 255);
 
@@ -167,6 +174,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 }
             });
 
+            imageViewHolder.dragHandle.setVisibility(isRead ? View.GONE : View.VISIBLE);
             imageViewHolder.delete.setVisibility(isRead ? View.GONE : View.VISIBLE);
             imageViewHolder.container.getBackground().setAlpha(isRead ? 0 : 255);
         }
@@ -296,7 +304,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
      * Класс, який здійснює контроль перенесення елементів
      */
     public ItemTouchHelper getItemTouchHelper() {
-        return new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+        itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
                 ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
 
             @Override
@@ -319,9 +327,33 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             @Override
             public boolean isLongPressDragEnabled() {
-                return true;
+                return false;
+            }
+
+            @Override
+            public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+                super.onSelectedChanged(viewHolder, actionState);
+
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                    if (viewHolder != null) {
+                        viewHolder.itemView.setAlpha(0.7f);
+                        viewHolder.itemView.setScaleX(1.05f);
+                        viewHolder.itemView.setScaleY(1.05f);
+                    }
+                }
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+
+                viewHolder.itemView.setAlpha(1.0f);
+                viewHolder.itemView.setScaleX(1.0f);
+                viewHolder.itemView.setScaleY(1.0f);
             }
         });
+
+        return itemTouchHelper;
     }
 
     /**
@@ -489,14 +521,25 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
      */
     public static class EditTextViewHolder extends RecyclerView.ViewHolder {
         ConstraintLayout container;
+        AppCompatImageView dragHandle, delete;
         EditText editText;
-        AppCompatImageView delete;
 
+        @SuppressLint("ClickableViewAccessibility")
         public EditTextViewHolder(@NonNull View itemView) {
             super(itemView);
             container = itemView.findViewById(R.id.editTextContainerForAdapter);
+            dragHandle = itemView.findViewById(R.id.dragHandle);
             editText = itemView.findViewById(R.id.editText);
             delete = itemView.findViewById(R.id.delete);
+
+            dragHandle.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (itemTouchHelper != null) {
+                        itemTouchHelper.startDrag(EditTextViewHolder.this);
+                    }
+                }
+                return true;
+            });
         }
     }
 
@@ -505,15 +548,26 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
      */
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ConstraintLayout container;
-        AppCompatImageView imageView, delete;
+        AppCompatImageView imageView, dragHandle, delete;
         TextView textView;
 
+        @SuppressLint("ClickableViewAccessibility")
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             container = itemView.findViewById(R.id.imageViewContainerForAdapter);
+            dragHandle = itemView.findViewById(R.id.dragHandle);
             imageView = itemView.findViewById(R.id.imageView);
             textView = itemView.findViewById(R.id.textView);
             delete = itemView.findViewById(R.id.delete);
+
+            dragHandle.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (itemTouchHelper != null) {
+                        itemTouchHelper.startDrag(ImageViewHolder.this);
+                    }
+                }
+                return true;
+            });
         }
     }
 

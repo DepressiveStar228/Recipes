@@ -31,6 +31,7 @@ import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Fragments.CollectionsDishFragment;
 import com.example.recipes.Fragments.SearchDishFragment;
 import com.example.recipes.Item.Collection;
+import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
 
@@ -63,12 +64,13 @@ public class MainActivity extends FragmentActivity {
     private SettingPanel settingPanel;
     private ViewPager2 viewPager;
     private ViewPagerAdapter viewAdapter;
+    private Dialogues dialogues;
     private CompositeDisposable compositeDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         preferencesController = PreferencesController.getInstance();
-        
+
         super.onCreate(savedInstanceState);
         preferencesController.setPreferencesToActivity(this);
         setContentView(R.layout.activity_main);
@@ -93,6 +95,7 @@ public class MainActivity extends FragmentActivity {
         compositeDisposable.add(Completable.fromAction(() -> {
             utils = RecipeUtils.getInstance(this);
             importExportController = new ImportExportController(this);
+            dialogues = new Dialogues(this);
             initialDB(); // Створення системний колекцій, якщо їх немає
         }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -134,28 +137,18 @@ public class MainActivity extends FragmentActivity {
                     viewPager.setCurrentItem(0);
                 } else {
                     // Діалог підтвердження виходу із застосунку
-                    new AlertDialog.Builder(this)
-                            .setTitle(getString(R.string.exit_app))
-                            .setMessage(getString(R.string.confirm_exit_app))
-                            .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
-                                super.onBackPressed();
-                                finish();
-                            })
-                            .setNegativeButton(getString(R.string.no), null)
-                            .show();
+                    dialogues.dialogExit(() -> {
+                        super.onBackPressed();
+                        finish();
+                    }, null);
                 }
 
             } else {
                 // Діалог підтвердження виходу із застосунку
-                new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.exit_app))
-                        .setMessage(getString(R.string.confirm_exit_app))
-                        .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
-                            super.onBackPressed();
-                            finish();
-                        })
-                        .setNegativeButton(getString(R.string.no), null)
-                        .show();
+                dialogues.dialogExit(() -> {
+                    super.onBackPressed();
+                    finish();
+                }, null);
             }
         }
     }
@@ -320,7 +313,7 @@ public class MainActivity extends FragmentActivity {
      * Створює системні колекції.
      */
     private void initialDB() {
-        Disposable disposable = utils.ByCollection().getAll()
+        Disposable disposable = utils.ByCollection().getAllWithoutAdditionData()
                 .flatMap(collections -> {
                     if (collections.isEmpty()) {
                         return Observable.fromIterable(utils.ByCollection().getAllNameSystemCollection())

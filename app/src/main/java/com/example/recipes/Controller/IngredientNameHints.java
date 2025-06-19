@@ -2,22 +2,18 @@ package com.example.recipes.Controller;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.PopupWindow;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.SearchResultsAdapter;
 import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.ViewItem.CustomPopupWindow;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 
@@ -29,15 +25,15 @@ import io.reactivex.rxjava3.annotations.NonNull;
  * Використовується для відображення підказок при введенні тексту в EditText.
  */
 public class IngredientNameHints {
-    private Context context;
-    private RecyclerView recyclerView;
-    private PopupWindow popupWindow;
-    private PreferencesController preferencesController;
+    private final Context context;
+    private final RecyclerView recyclerView;
+    private CustomPopupWindow customPopupWindow;
+    private final PreferencesController preferencesController;
     private Runnable runnable;
     private String name;
     private SearchController<String> searchController;
     private View anchorView;
-    private ArrayList<String> allNameIngredients;
+    private final ArrayList<String> allNameIngredients;
     boolean isTouch = false;
 
     public IngredientNameHints(@NonNull Context context, @NonNull ArrayList<String> allNameIngredients) {
@@ -94,7 +90,10 @@ public class IngredientNameHints {
                 anchorView.setOnTouchListener((v, event) -> {
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
                         isTouch = true;
-                        showPopup();
+
+                        if (!editText.getText().toString().isEmpty()) {
+                            showPopup();
+                        }
                     }
                     return false;
                 });
@@ -113,18 +112,8 @@ public class IngredientNameHints {
             };
 
             // Ініціалізуємо вікно спливаючої підказки
-            popupWindow = new PopupWindow(searchController.getRecyclerView(), ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-
-            // Встановлюємо фон вікна спливаючої підказки
-            if (Objects.equals(preferencesController.getThemeNameBySpinner(preferencesController.getIndexTheme()), "Dark")) {
-                popupWindow.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            } else {
-                popupWindow.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
-            }
-            popupWindow.setHeight(300);
-            popupWindow.setWidth(500);
-            popupWindow.setOutsideTouchable(true);
-            popupWindow.setFocusable(false);
+            customPopupWindow = new CustomPopupWindow(context, anchorView, recyclerView);
+            customPopupWindow.setSize(250, 150);
         }
     }
 
@@ -147,8 +136,8 @@ public class IngredientNameHints {
      * Метод для показу спливаючого підказки.
      */
     private void showPopup() {
-        if (anchorView != null && !popupWindow.isShowing() && preferencesController.getStatus_ing_hints()) {
-            popupWindow.showAsDropDown(anchorView);
+        if (customPopupWindow != null) {
+            customPopupWindow.showPopup(preferencesController.getStatus_ing_hints() && !allNameIngredients.isEmpty());
         }
     }
 
@@ -156,8 +145,8 @@ public class IngredientNameHints {
      * Метод для приховування спливаючого підказки.
      */
     private void hidePopup() {
-        if (popupWindow != null && popupWindow.isShowing()) {
-            popupWindow.dismiss();
+        if (customPopupWindow != null) {
+            customPopupWindow.hidePopup();
         }
     }
 }

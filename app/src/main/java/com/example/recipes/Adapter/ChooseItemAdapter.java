@@ -92,9 +92,9 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
         });
     }
 
+    @Override
     public void setItems(ArrayList<T> items) {
         submitList(new ArrayList<>(items));
-        notifyDataSetChanged();
     }
 
     @Override

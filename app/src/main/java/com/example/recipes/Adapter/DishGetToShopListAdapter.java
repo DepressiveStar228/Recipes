@@ -67,13 +67,7 @@ public class DishGetToShopListAdapter extends ListAdapter<Dish, DishGetToShopLis
      * @param newItems Новий список страв.
      */
     public void setItems(ArrayList<Dish> newItems) {
-        ArrayList<Dish> newList = new ArrayList<>(newItems.size());
-        for (Dish item : newItems) {
-            newList.add(new Dish(item));
-        }
-
-        submitList(newList);
-        notifyDataSetChanged();
+        submitList(new ArrayList<>(newItems));
     }
 
     /**

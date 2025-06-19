@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/set_ingredient_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp" >
+    android:padding="5dp">
 
     <EditText
         android:id="@+id/nameIngredientEditText"
@@ -12,7 +14,7 @@
         android:layout_weight="26"
         android:inputType="textMultiLine|textCapSentences"
         android:hint="@string/hint_short_text_name_ingredient"
-        android:textColor="@color/white"
+        android:textColor="?attr/colorText"
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp" />
 
@@ -22,15 +24,40 @@
         android:layout_height="wrap_content"
         android:layout_weight="13"
         android:hint="@string/hint_short_text_numbs"
-        android:textColor="@color/white"
+        android:textColor="?attr/colorText"
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp" />
 
-    <Spinner
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/spinnerTypeIngredient"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="15"
-        android:textColor="?attr/colorText"
-        android:entries="@array/ingredient_types" />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="2">
+
+        <TextView
+            android:id="@+id/spinnerTypeIngredientTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:textColor="?attr/colorText"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/spinnerTypeIngredientButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:padding="2dp"
+            android:background="@android:color/transparent"
+            android:rotation="-90"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:tint="?attr/colorControlNormal" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

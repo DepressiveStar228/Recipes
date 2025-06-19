@@ -28,7 +28,7 @@ import java.util.Objects;
 public class DishRecipe {
     @PrimaryKey(autoGenerate = true) private long id;
     @ColumnInfo(name = "id_dish") private long idDish;
-    @ColumnInfo(name = "textData") private String textData = "";
+    @ColumnInfo(name = "text_data") private String textData = "";
     @ColumnInfo(name = "position") private int position = -1;
     @ColumnInfo(name = "type_data") private DishRecipeType typeData;
 

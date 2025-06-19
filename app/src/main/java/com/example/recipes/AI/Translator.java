@@ -1,22 +1,18 @@
 package com.example.recipes.AI;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Enum.ChatGPTRole;
-import com.example.recipes.Enum.DishRecipeType;
-import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
 import com.google.gson.Gson;
 
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Артем Нікіфоров
@@ -26,8 +22,10 @@ import io.reactivex.rxjava3.core.Single;
  * Використовує ChatGPTClient для взаємодії з API ChatGPT.
  */
 public class Translator {
-    private ChatGPTClient client;
-    private PreferencesController preferencesController;
+    private static Translator instance;
+    private final ChatGPTClient client;
+    private final PreferencesController preferencesController;
+    private boolean isInitialized = false;
 
     public Translator(Context context) {
         client = new ChatGPTClient(context, ChatGPTRole.TRANSLATOR);
@@ -35,12 +33,28 @@ public class Translator {
     }
 
     /**
-     * Ініціалізація клієнта ChatGPT.
+     * Повертає єдиний екземпляр класу (Singleton).
      *
-     * @return Single<Boolean>, який повертає true, якщо ініціалізація успішна, або false, якщо ні.
+     * @param context Контекст додатку
+     * @return Єдиний екземпляр Translator
      */
-    public Single<Boolean> initialization() {
-        return client.initialization();
+    public static synchronized Translator getInstance(Context context) {
+        if (instance == null) {
+            instance = new Translator(context);
+        }
+        return instance;
+    }
+
+    /**
+     * Ініціалізація клієнта ChatGPT.
+     */
+    @SuppressLint("CheckResult")
+    public void initialization() {
+        Single.fromCallable(client::initialization)
+                .flatMap(status -> status)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(status -> isInitialized = status);
     }
 
     /**
@@ -52,7 +66,7 @@ public class Translator {
     public Single<Dish> translateRecipe(Dish dish) {
         if (!dish.getName().isEmpty()) {
             // Надсилаємо запит на переклад до ChatGPT
-            return client.sendMessage("Lang: " + preferencesController.getLanguageString() + "; Data: " + new Gson().toJson(dish))
+            return client.sendMessage("Translate to " + preferencesController.getLanguageString() + "; Data: " + new Gson().toJson(dish))
                     .flatMap(data -> {
                         if (!data.isEmpty()) {
                             Dish translatedDish = new Gson().fromJson(data, Dish.class); // Парсимо відповідь
@@ -85,5 +99,9 @@ public class Translator {
 
     public ChatGPTClient getClient() {
         return client;
+    }
+
+    public boolean isInitialized() {
+        return isInitialized;
     }
 }

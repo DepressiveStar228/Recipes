@@ -125,18 +125,20 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
     }
 
     private void loadClickListeners() {
-        if (GPTSendButton != null && GPTDialogRecyclerView != null) { GPTSendButton.setOnClickListener(v -> {
-            String message = GPTEditText.getText().toString();
+        if (GPTSendButton != null && GPTDialogRecyclerView != null) {
+            GPTSendButton.setOnClickListener(v -> {
+                String message = GPTEditText.getText().toString();
 
-            if (!flagAccessInternet.get()) Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
-            else if (!flagInitializationGPTClient.get()) Toast.makeText(this, getString(R.string.wait_load_assistant), Toast.LENGTH_SHORT).show();
-            else if (message.isEmpty()) Toast.makeText(this, getString(R.string.warning_empty_message), Toast.LENGTH_SHORT).show();
-            else if (client.checkDailyRequestLimitLimit() && client.checkLastTimeRequest()) {
-                addMessageToDialog(getString(R.string.you), message);
-                sendPromptToGPT(GPTEditText.getText().toString());
-                GPTEditText.setText("");
-            }
-        }); }
+                if (!flagAccessInternet.get()) Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_SHORT).show();
+                else if (!flagInitializationGPTClient.get()) Toast.makeText(this, getString(R.string.wait_load_assistant), Toast.LENGTH_SHORT).show();
+                else if (message.isEmpty()) Toast.makeText(this, getString(R.string.warning_empty_message), Toast.LENGTH_SHORT).show();
+                else if (client.checkDailyRequestLimit() && client.checkLastTimeRequest()) {
+                    addMessageToDialog(getString(R.string.you), message);
+                    sendPromptToGPT(GPTEditText.getText().toString());
+                    GPTEditText.setText("");
+                }
+            });
+        }
 
         if (GPTEditText != null) CharacterLimitTextWatcher.setCharacterLimit(this, GPTEditText, Limits.MAX_CHAR_GPT_PROMPT);
         if (GPTStatusLoadTextView != null) textLoadAnimation = new TextLoadAnimation(GPTStatusLoadTextView, getString(R.string.loading));
@@ -297,7 +299,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
         container.setRole_item(role);
         container.setOriginalText(message);
 
-        if (!message.contains("{")) container.setText_item(message);
+        if (!message.contains("=")) container.setText_item(message);
         else {  // Якщо повідомлення містить {, то отже це форматований рецепт, а не просто відповідь.
             container.setVisibilityAddButton(View.VISIBLE); // Показуємо кнопку додавання страви від GPT собі в колекцію
 

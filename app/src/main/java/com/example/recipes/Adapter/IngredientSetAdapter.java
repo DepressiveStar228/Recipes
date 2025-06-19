@@ -13,11 +13,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
@@ -27,9 +31,12 @@ import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.Ingredient;
 import com.example.recipes.R;
+import com.example.recipes.Utils.AnotherUtils;
+import com.example.recipes.ViewItem.CustomPopupWindow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Артем Нікіфоров
@@ -39,11 +46,13 @@ import java.util.Arrays;
  * Підтримує підказки назв інгредієнтів.
  */
 public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdapter.IngredientViewHolder> {
-    private Context context;
-    private ConstraintLayout empty;
-    private ArrayList<Ingredient> ingredients;
-    private ArrayList<String> allNameIngredients; // Список усіх можливих назв інгредієнтів
-    private RecyclerView recyclerView;
+    private final Context context;
+    private final ConstraintLayout empty;
+    private final ArrayList<Ingredient> ingredients;
+    private final ArrayList<String> allNameIngredients; // Список усіх можливих назв інгредієнтів
+    private final RecyclerView recyclerView;
+    private final ArrayList<String> allTypes;
+    private CustomPopupWindow customPopupWindow;
 
     /**
      * Конструктор адаптера.
@@ -58,6 +67,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         this.empty = empty;
         this.ingredients = new ArrayList<>();
         this.allNameIngredients = new ArrayList<>();
+        this.allTypes = new ArrayList<>(Arrays.asList(context.getResources().getStringArray(R.array.ingredient_types)));
     }
 
     @NonNull
@@ -158,10 +168,29 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 Ingredient ingredient = ingredients.get(i);
                 ingredient.setName(holder.nameIngredientEditText.getText().toString());
                 ingredient.setAmount(holder.countIngredientEditText.getText().toString());
-                ingredient.setType(IngredientTypeConverter.toIngredientType(holder.spinnerTypeIngredient.getSelectedItem().toString()));
+                ingredient.setType(IngredientTypeConverter.toIngredientType(holder.spinnerTypeIngredientTextView.getText().toString()));
             }
         }
         checkEmpty();
+    }
+
+    private void showDropDown(View anchorView, TextView spinnerTypeIngredientTextView, int position) {
+        RecyclerView dropDownRecyclerView = new RecyclerView(context);
+        dropDownRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+
+        IngredientTypeSpinnerAdapter spinnerTypeIngredientAdapter = new IngredientTypeSpinnerAdapter(allTypes);
+        dropDownRecyclerView.setAdapter(spinnerTypeIngredientAdapter);
+
+        customPopupWindow = new CustomPopupWindow(context, anchorView, dropDownRecyclerView);
+        customPopupWindow.setSize(90, 200);
+        customPopupWindow.showPopup();
+
+        spinnerTypeIngredientAdapter.setOnItemClickListener(item -> {
+            spinnerTypeIngredientTextView.setText(item);
+            Ingredient ingredient = ingredients.get(position);
+            ingredient.setType(IngredientTypeConverter.toIngredientType(item));
+            customPopupWindow.hidePopup();
+        });
     }
 
     /**
@@ -180,8 +209,9 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
     class IngredientViewHolder extends RecyclerView.ViewHolder {
         EditText nameIngredientEditText;
         EditText countIngredientEditText;
-        Spinner spinnerTypeIngredient;
-        ImageView deleteButton;
+        ConstraintLayout spinnerTypeIngredient;
+        TextView spinnerTypeIngredientTextView;
+        AppCompatImageView deleteButton;
         IngredientNameHints ingredientNameHints;
 
         IngredientViewHolder(@NonNull View itemView) {
@@ -189,6 +219,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             nameIngredientEditText = itemView.findViewById(R.id.nameIngredientEditText);
             countIngredientEditText = itemView.findViewById(R.id.countIngredientEditText);
             spinnerTypeIngredient = itemView.findViewById(R.id.spinnerTypeIngredient);
+            spinnerTypeIngredientTextView = itemView.findViewById(R.id.spinnerTypeIngredientTextView);
             deleteButton = itemView.findViewById(R.id.imageButton);
 
             // Ініціалізуємо IngredientNameHints для підказок назв інгредієнтів
@@ -198,10 +229,8 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
             CharacterLimitTextWatcher.setCharacterLimit(context, nameIngredientEditText, Limits.MAX_CHAR_NAME_INGREDIENT);
             CharacterLimitTextWatcher.setCharacterLimit(context, countIngredientEditText, Limits.MAX_CHAR_AMOUNT_INGREDIENT);
 
-            // Налаштовуємо спінер для вибору типу інгредієнта
-            ArrayAdapter<String> languageAdapter = new CustomSpinnerAdapter(context, android.R.layout.simple_spinner_item, Arrays.asList(context.getResources().getStringArray(R.array.ingredient_types)));
-            languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerTypeIngredient.setAdapter(languageAdapter);
+            // Обробка кліку на спінер для вибору типу інгредієнта
+            spinnerTypeIngredient.setOnClickListener(v -> showDropDown(spinnerTypeIngredient, spinnerTypeIngredientTextView, getAdapterPosition()));
 
             // Обробка кліку на кнопку видалення
             deleteButton.setOnClickListener(v -> {
@@ -227,7 +256,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                 public void afterTextChanged(Editable s) {
                     int position = getAdapterPosition();
 
-                    if (position != RecyclerView.NO_POSITION) {
+                    if (position != RecyclerView.NO_POSITION && !s.toString().isEmpty()) {
                         ingredientNameHints.search(s.toString()); // Виклик методу пошуку підказок
                         ingredients.get(position).setName(s.toString());
                     }
@@ -250,20 +279,6 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
                     }
                 }
             });
-
-            // Обробка вибору типу інгредієнта
-            spinnerTypeIngredient.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    int adapterPosition = getAdapterPosition();
-                    if (adapterPosition != RecyclerView.NO_POSITION) {
-                        ingredients.get(adapterPosition).setType(IngredientTypeConverter.toIngredientType(parent.getItemAtPosition(position).toString()));
-                    }
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) { }
-            });
         }
 
         /**
@@ -274,24 +289,7 @@ public class IngredientSetAdapter extends RecyclerView.Adapter<IngredientSetAdap
         void bind(Ingredient ingredient) {
             nameIngredientEditText.setText(ingredient.getName());
             countIngredientEditText.setText(ingredient.getAmount());
-            int index = getIndex(spinnerTypeIngredient, ingredient.getTypeString());
-            spinnerTypeIngredient.setSelection(index);
-        }
-
-        /**
-         * Повертає індекс елемента у спінері за його значенням.
-         *
-         * @param spinner Спинер.
-         * @param myString Значення для пошуку.
-         * @return Індекс елемента.
-         */
-        private int getIndex(Spinner spinner, String myString) {
-            for (int i = 0; i < spinner.getCount(); i++) {
-                if (spinner.getItemAtPosition(i).toString().equalsIgnoreCase(myString)) {
-                    return i;
-                }
-            }
-            return 0;
+            spinnerTypeIngredientTextView.setText(IngredientTypeConverter.fromIngredientTypeBySettingLocale(ingredient.getType()));
         }
     }
 }

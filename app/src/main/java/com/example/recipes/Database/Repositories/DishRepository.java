@@ -235,6 +235,15 @@ public class DishRepository implements Utils<Dish> {
     }
 
     /**
+     * Отримує страву за ID без додаткових даних.
+     * @param id ID страви
+     * @return Single<Dish> Об'єкт страви
+     */
+    public Single<Dish> getByIDWithoutAdditionData(long id) {
+        return dao.getByID(id).toSingle().map(dish -> dish != null ? dish : new Dish(""));
+    }
+
+    /**
      * Отримує колекції, до яких належить страва.
      * @param dish Об'єкт страви
      * @return Single<ArrayList<Collection>> Список колекцій
@@ -283,7 +292,7 @@ public class DishRepository implements Utils<Dish> {
             query.append(" ORDER BY ");
 
             if (sortStatus.get(1) != null) {
-                query.append("d.timestamp ").append(sortStatus.get(1) ? "DESC" : "ASC").append(", ");
+                query.append("d.creation_time ").append(sortStatus.get(1) ? "DESC" : "ASC").append(", ");
             }
 
             if (sortStatus.get(0) != null) {

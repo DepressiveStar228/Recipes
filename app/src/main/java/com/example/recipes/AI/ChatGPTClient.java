@@ -14,7 +14,6 @@ import com.azure.ai.openai.assistants.models.AssistantCreationOptions;
 import com.azure.ai.openai.assistants.models.AssistantThread;
 import com.azure.ai.openai.assistants.models.AssistantThreadCreationOptions;
 import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormat;
-import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormatMode;
 import com.azure.ai.openai.assistants.models.AssistantsApiResponseFormatOption;
 import com.azure.ai.openai.assistants.models.CreateRunOptions;
 import com.azure.ai.openai.assistants.models.MessageContent;
@@ -31,6 +30,7 @@ import com.example.recipes.API_Keys;
 import com.example.recipes.Database.TypeConverter.IngredientTypeConverter;
 import com.example.recipes.Enum.ChatGPTRole;
 import com.example.recipes.Enum.DishRecipeType;
+import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.DishRecipe;
 import com.example.recipes.Item.Ingredient;
@@ -41,12 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
@@ -253,12 +249,14 @@ public class ChatGPTClient {
      * @return Створений асистент.
      */
     private Assistant createAssistant() {
-        AssistantCreationOptions assistantCreationOptions = new AssistantCreationOptions("gpt-3.5-turbo");
+        AssistantCreationOptions assistantCreationOptions;
 
         if (Objects.equals(roleAssistant, ChatGPTRole.CHEF)) {
+            assistantCreationOptions = new AssistantCreationOptions("o3-mini");
             assistantCreationOptions.setName("Chef").setInstructions(readTextFileFromAssets("asset_chef"));
         }
         else if (Objects.equals(roleAssistant, ChatGPTRole.TRANSLATOR)) {
+            assistantCreationOptions = new AssistantCreationOptions("gpt-3.5-turbo");
             assistantCreationOptions.setName("Translator").setInstructions(readTextFileFromAssets("asset_translator"));
             assistantCreationOptions.setTemperature(0.0);
             assistantCreationOptions.setResponseFormat(new AssistantsApiResponseFormatOption(new AssistantsApiResponseFormat(ApiResponseFormat.JSON_OBJECT)));
@@ -372,7 +370,7 @@ public class ChatGPTClient {
     public String getTextFromParsedAnswer(Dish dish) {
         if (dish != null) {
             StringBuilder builder = new StringBuilder();
-            builder.append(dish.getName() + "\n").append(context.getText(R.string.portionship) + ": " + dish.getPortion() + "\n\n");
+            builder.append(dish.getName() + "\n\n").append(context.getText(R.string.portionship) + ": " + dish.getPortion() + "\n\n");
 
             if (!dish.getRecipes().isEmpty()) {
                 builder.append(context.getText(R.string.recipe) + ":\n");
@@ -386,7 +384,7 @@ public class ChatGPTClient {
                 builder.append(context.getText(R.string.ingredients) + ":\n");
 
                 for (Ingredient ing : dish.getIngredients()) {
-                    builder.append("  - " + ing.getName() + "  " + ing.getAmount() + " " + ing.getType() + "\n");
+                    builder.append("  - " + ing.getName() + "  " + ing.getAmount() + " " + IngredientTypeConverter.fromIngredientTypeBySettingLocale(ing.getType()) + "\n");
                 }
             }
 
@@ -401,75 +399,66 @@ public class ChatGPTClient {
      * @return Об'єкт Dish, створений на основі відповіді.
      */
     public Dish parsedAnswerGPT(String answer) {
-        Map<String, String> recipeMap = new HashMap<>();
-        List<Map<String, String>> ingredientsList = new ArrayList<>();
+        String name = "";
+        int portion = 0;
+        ArrayList<Ingredient> ingredients = new ArrayList<>();
         ArrayList<DishRecipe> recipes = new ArrayList<>();
 
-        // Регулярний вираз для парсингу відповіді
-        Pattern pattern = Pattern.compile("\\{(\\w+)=\\[(.*?)\\]\\}|\\{(\\w+)=<(.*?)>\\}");
-        Matcher matcher = pattern.matcher(answer.contains("Data:") ? answer.substring(16) : answer);
+        String data = answer.contains("Data:") ? answer.substring(16) : answer;
+        String[] pairs = data.split(";");
 
-        while (matcher.find()) {
-            String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(3);
-            String value = matcher.group(2) != null ? matcher.group(2) : matcher.group(4);
+        for (String pair : pairs) {
+            if (pair.contains("=")) {
+                String[] keyValue = pair.split("=");
 
-            if ("ingredients".equals(key)) {
-                Pattern ingredientPattern = Pattern.compile("\\[(.*?)(?:\\|(.*?))?(?:\\|(.*?))?\\]");
-                Matcher ingredientMatcher = ingredientPattern.matcher(value);
+                if (keyValue.length == 2) {
+                    String key = keyValue[0].trim();
+                    String value = keyValue[1].trim();
 
-                while (ingredientMatcher.find()) {
-                    Map<String, String> ingredient = new HashMap<>();
-                    ingredient.put("name", ingredientMatcher.group(1));
-
-                    // Перевіряємо кількість елементів у інгредієнта
-                    if (ingredientMatcher.group(3) != null) {
-                        ingredient.put("quantity", ingredientMatcher.group(2));
-                        ingredient.put("unit", ingredientMatcher.group(3));
+                    if (key.equals("name")) name = value;
+                    else if (key.equals("portion")) {
+                        try { portion = Integer.parseInt(value); }
+                        catch (Exception ignored) { }
                     }
-                    else if (ingredientMatcher.group(2) != null) {
-                        ingredient.put("quantity", "");
-                        ingredient.put("unit", ingredientMatcher.group(2));
-                    } else {
-                        ingredient.put("quantity", "");
-                        ingredient.put("unit", "");
+                    else if (key.equals("recipe")) recipes.add(new DishRecipe(value, 1, DishRecipeType.TEXT));
+                    else if (key.equals("ingredients")) {
+                        String[] ingredientsValue = value.split(",");
+
+                        for (String pairIngs : ingredientsValue) {
+                            if (pairIngs.contains("|")) {
+                                String[] ingredientValue = pairIngs.split("\\|");
+
+                                String nameIng = "", amount = "";
+                                IngredientType type = IngredientType.VOID;
+
+                                if (ingredientValue.length == 3) {
+                                    nameIng = ingredientValue[0].trim();
+                                    amount = ingredientValue[1].trim();
+                                    type = IngredientTypeConverter.toIngredientType(ingredientValue[2].trim());
+
+                                    ingredients.add(new Ingredient(nameIng, amount, type));
+                                }
+                                else if (ingredientValue.length == 2) {
+                                    nameIng = ingredientValue[0].trim();
+
+                                    try {
+                                        int box = Integer.parseInt(ingredientValue[1].trim());
+                                        amount = ingredientValue[1].trim();
+                                    }
+                                    catch (Exception ignored) {
+                                        type = IngredientTypeConverter.toIngredientType(ingredientValue[1].trim());
+                                    }
+
+                                    ingredients.add(new Ingredient(nameIng, amount, type));
+                                }
+                            }
+                        }
                     }
-
-                    ingredientsList.add(ingredient);
                 }
-            } else if ("recipe".equals(key) || "recipes".equals(key)) {
-                Pattern recipesPattern = Pattern.compile("\\[(.*?)\\]");
-                Matcher recipesMatcher = recipesPattern.matcher(value);
-                int i = 0;
-
-                while (recipesMatcher.find()) {
-                    recipes.add(new DishRecipe(recipesMatcher.group(1), i, DishRecipeType.TEXT));
-                    i++;
-                }
-            } else {
-                recipeMap.put(key, value);
             }
         }
 
-        int portion = 0;
-
-        try {
-            String portionText = recipeMap.get("portion");
-            if (portionText != null) portion = Integer.parseInt(portionText);
-        } catch (Exception e) { }
-
-        // Створення об'єкта Dish на основі розпарсених даних
-        Dish dish = new Dish(recipeMap.get("name"), portion);
-        dish.setRecipes(recipes);
-        ArrayList<Ingredient> ingredients = new ArrayList<>();
-
-        for (Map<String, String> ingredient : ingredientsList) {
-            Ingredient box = new Ingredient(ingredient.get("name"), ingredient.get("quantity"), IngredientTypeConverter.toIngredientType(ingredient.get("unit")));
-            ingredients.add(box);
-        }
-
-        dish.setIngredients(ingredients);
-
-        return dish;
+        return new Dish(name, portion, ingredients, recipes, System.currentTimeMillis());
     }
 
     /**
@@ -521,7 +510,7 @@ public class ChatGPTClient {
      *
      * @return true, якщо ліміт не перевищено, інакше false.
      */
-    public boolean checkDailyRequestLimitLimit() {
+    public boolean checkDailyRequestLimit() {
         if (dailyRequestCount >= MAX_REQUESTS_PER_DAY) {
             Toast.makeText(context, context.getString(R.string.warning_daily_request_limit), Toast.LENGTH_SHORT).show();
             return false;

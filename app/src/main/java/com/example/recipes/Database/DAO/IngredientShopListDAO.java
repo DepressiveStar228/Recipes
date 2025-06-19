@@ -56,6 +56,9 @@ public interface IngredientShopListDAO {
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
     Maybe<List<IngredientShopList>> getAllByIDCollection(long idCollection);
 
+    @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection ORDER BY " + IS_BUY)
+    Maybe<List<IngredientShopList>> getAllByIDCollectionAndSortedByIsBuy(long idCollection);
+
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + ID_COLLECTION + " = :idCollection")
     LiveData<List<IngredientShopList>> getAllByIDCollectionLive(long idCollection);
 

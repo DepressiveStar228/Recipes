@@ -28,24 +28,48 @@
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp" />
 
-    <Spinner
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/spinnerTypeIngredient"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="18"
-        android:textColor="?attr/colorText"
-        android:entries="@array/ingredient_types" />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="2">
+
+        <TextView
+            android:id="@+id/spinnerTypeIngredientTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:textColor="?attr/colorText"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/spinnerTypeIngredientButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:padding="2dp"
+            android:background="@android:color/transparent"
+            android:rotation="-90"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:tint="?attr/colorControlNormal" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imageButton"
         android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="9dp"
+        android:layout_height="48dp"
+        android:padding="6dp"
         android:layout_weight="1"
         android:background="@android:color/transparent"
         android:onClick="onDelIngredientButtonClick"
         android:scaleType="centerCrop"
         android:src="@drawable/icon_delete"
         app:tint="?attr/colorControlNormal" />
-
 </LinearLayout>

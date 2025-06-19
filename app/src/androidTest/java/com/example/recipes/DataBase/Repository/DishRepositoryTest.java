@@ -150,8 +150,8 @@ public class DishRepositoryTest {
         ArrayList<DishRecipe> recipes = new ArrayList<>();
         recipes.add(recipe);
 
-        Dish dish1 = new Dish(1L, testDishName + "1", 1, ingredients, new ArrayList<>());
-        Dish dish2 = new Dish(2L, testDishName + "2", 2, new ArrayList<>(), recipes);
+        Dish dish1 = new Dish(1L, testDishName + "1", 1, ingredients, new ArrayList<>(), 0);
+        Dish dish2 = new Dish(2L, testDishName + "2", 2, new ArrayList<>(), recipes, 0);
 
         when(ingredientRepository.getAllByIDDish(1L)).thenReturn(Single.just(ingredients));
         when(ingredientRepository.getAllByIDDish(2L)).thenReturn(Single.just(new ArrayList<>()));
@@ -178,8 +178,8 @@ public class DishRepositoryTest {
         ArrayList<DishRecipe> recipes = new ArrayList<>();
         recipes.add(recipe);
 
-        Dish dish1 = new Dish(1L, testDishName + "1", 1, ingredients, new ArrayList<>());
-        Dish dish2 = new Dish(2L, testDishName + "2", 2, new ArrayList<>(), recipes);
+        Dish dish1 = new Dish(1L, testDishName + "1", 1, ingredients, new ArrayList<>(), 0);
+        Dish dish2 = new Dish(2L, testDishName + "2", 2, new ArrayList<>(), recipes, 0);
 
         when(ingredientRepository.getAllByIDDish(1L)).thenReturn(Single.just(ingredients));
         when(ingredientRepository.getAllByIDDish(2L)).thenReturn(Single.just(new ArrayList<>()));
@@ -210,7 +210,7 @@ public class DishRepositoryTest {
         ArrayList<DishRecipe> recipes = new ArrayList<>();
         recipes.add(recipe);
 
-        Dish dish = new Dish(1L, testDishName, 1, ingredients, recipes);
+        Dish dish = new Dish(1L, testDishName, 1, ingredients, recipes, 0);
 
         when(ingredientRepository.getAllByIDDish(any(Long.class))).thenReturn(Single.just(ingredients));
         when(dishRecipeRepository.getByDishID(any(Long.class))).thenReturn(Single.just(recipes));
@@ -224,7 +224,7 @@ public class DishRepositoryTest {
 
     @Test
     public void getCollection() {
-        Dish dish = new Dish(1L, testDishName, 1, new ArrayList<>(), new ArrayList<>());
+        Dish dish = new Dish(1L, testDishName, 1, new ArrayList<>(), new ArrayList<>(), 0);
 
         ArrayList<Long> collectionIDs = new ArrayList<>();
         collectionIDs.add(1L);

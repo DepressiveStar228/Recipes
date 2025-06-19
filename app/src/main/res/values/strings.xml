@@ -66,7 +66,7 @@
         <item>ст.л</item>
         <item>щеп.</item>
         <item>стк.</item>
-        <item>по вкс.</item>
+        <item>на смак</item>
         <item> </item>
     </string-array>
     <string-array name="language_options">
@@ -228,7 +228,7 @@
     <string name="photo">Фото</string>
     <string name="gallery">Галерея</string>
     <string name="error_access_translation">Помилка. Перекладач ще не завантажено</string>
-    <string name="clear_db">Очищення базы даних</string>
+    <string name="clear_db">Очищення бази даних</string>
     <string name="confirm_clear_db">Підтвердіть очищення бази даних</string>
     <string name="warning_clear_db">Ви дійсно хочете очистити всю базу даних?</string>
     <string name="double_warning_clear_db">Абсолютно вся ваша інформація буде видалена. Ви точно згодні?</string>
@@ -237,4 +237,7 @@
     <string name="daily_request_limit_exceeded">Перевищено денний ліміт запитів</string>
     <string name="collections">Колекції</string>
     <string name="error_saving_filters">Помилка при збереженні фільтрів</string>
+    <string name="cooking_time">Час готування</string>
+    <string name="title_cooking_time_picker">Виберіть скільки потрібно часу для готування від 00:00</string>
+    <string name="empty_selected_items_for_sort">Немає вибраних елементів для сортування.</string>
 </resources>
