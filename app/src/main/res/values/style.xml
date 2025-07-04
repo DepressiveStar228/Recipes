@@ -155,6 +155,7 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Text color -->
         <item name="colorText">@color/white</item>
+        <item name="android:textColor">@color/white</item>
         <item name="colorHintText">@color/grey</item>
         <!-- EditText color. -->
         <item name="colorControlNormal">@color/white</item>

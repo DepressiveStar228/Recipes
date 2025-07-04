@@ -1,31 +1,35 @@
 package com.example.recipes.Controller;
 
 import android.content.Context;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.recipes.Adapter.Interfaces.ChooseItem;
 import com.example.recipes.Adapter.Interfaces.Search;
-import com.example.recipes.Enum.Limits;
+import com.example.recipes.Enum.SearchMode;
 import com.example.recipes.Interface.Item;
 import com.example.recipes.R;
 import com.example.recipes.Utils.ClassUtils;
+import com.jakewharton.rxbinding4.widget.RxTextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Артем Нікіфоров
@@ -35,14 +39,16 @@ import io.reactivex.rxjava3.annotations.NonNull;
  * Відповідає за фільтрацію даних, відображення результатів пошуку та взаємодію з інтерфейсом користувача.
  */
 public class SearchController<T> {
-    private Context context;
-    private ArrayList<T> arrayData, searchResults;
-    private int sortMode = 0;
+    private final Context context;
+    private final ArrayList<T> arrayData;
+    private final ArrayList<T> searchResults;
     private EditText searchEditText;
-    private AppCompatImageView clearSearchEditText, sortResultSearchButton;
-    private RecyclerView.Adapter<?> adapter;
-    private RecyclerView searchResultsRecyclerView;
-    private AtomicBoolean flagAccessSort = new AtomicBoolean(true);
+    private RecyclerView setSearchRecyclerView;
+    private int sortMode = 0;
+    private final RecyclerView.Adapter<?> adapter;
+    private final AtomicBoolean flagAccessSort = new AtomicBoolean(true);
+    private Disposable searchDisposable = Disposable.empty();
+    private Disposable clearInputDisposable = Disposable.empty();
 
     /**
      * Конструктор для ініціалізації контролера з адаптером SearchResultsAdapter.
@@ -60,48 +66,47 @@ public class SearchController<T> {
         this.adapter = adapter;
 
         initializeRecyclerView(searchResultsRecyclerView);
-        setListener();
+        search();
     }
 
     private void initializeRecyclerView(RecyclerView searchResultsRecyclerView) {
-        this.searchResultsRecyclerView = searchResultsRecyclerView;
-        this.searchResultsRecyclerView.setAdapter(adapter);
-        this.searchResultsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        this.setSearchRecyclerView = searchResultsRecyclerView;
+        this.setSearchRecyclerView.setAdapter(adapter);
+        this.setSearchRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        Log.d("SearchController", "RecyclerView initialized with adapter and layout manager.");
     }
 
     /**
-     * Встановлює слухача для поля пошуку.
+     * Виконує пошук за поточним текстом у полі пошуку.
      */
-    private void setListener() {
+    public void search() {
         if (searchEditText != null) {
-            searchEditText.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    // Очищення результатів перед зміною тексту
-                    searchResults.clear();
-                    adapter.notifyDataSetChanged();
-                }
+            searchDisposable.dispose();
+            searchDisposable = RxTextView.textChanges(searchEditText)
+                    .debounce(300, TimeUnit.MILLISECONDS)
+                    .map(CharSequence::toString)
+                    .distinctUntilChanged()
+                    .switchMap(query -> Observable.fromCallable(() -> performSearch(query))
+                            .subscribeOn(Schedulers.computation()))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::updateResults, throwable -> Log.e("SearchController", "Search error", throwable));
 
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    search(); // Виконання пошуку при зміні тексту
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    adapter.notifyDataSetChanged(); // Оновлення адаптера після зміни тексту
-
-                    // Показати або приховати кнопку очищення тексту
-                    if (clearSearchEditText != null) {
-                        if (s.length() > 0) {
-                            clearSearchEditText.setVisibility(AppCompatImageView.VISIBLE);
-                        } else {
-                            clearSearchEditText.setVisibility(AppCompatImageView.GONE);
-                        }
-                    }
-                }
-            });
+            Log.d("SearchController", "The search field has been initialized.");
         }
+    }
+
+    /**
+     * Виконує пошук за введеним текстом та повертає результати.
+     *
+     * @param data Текст для пошуку.
+     * @return Список знайдених елементів.
+     */
+    public ArrayList<T> searchAndGetResult(String data) {
+        ArrayList<T> result = performSearch(data);
+        updateResults(result);
+        Log.d("SearchController", "Search performed with query: " + data + ", found " + result.size() + " items.");
+
+        return result;
     }
 
     /**
@@ -128,7 +133,7 @@ public class SearchController<T> {
                 }
             }
         }
-        Log.d("SearchController", "Проведено пошук за даними.");
+        Log.d("SearchController", "Search performed with query: " + searchQuery + ", found " + result.size() + " items.");
 
         return result;
     }
@@ -142,6 +147,8 @@ public class SearchController<T> {
         searchResults.clear();
         searchResults.addAll(searchResult);
         if (adapter instanceof Search) ((Search<T>) adapter).setResultItems(searchResult);
+        scrollToStart(); // Прокручуємо до початку списку після оновлення результатів
+        Log.d("SearchController", "Results updated in RecyclerView.");
     }
 
     private void sortResults() {
@@ -165,48 +172,59 @@ public class SearchController<T> {
                             return 0;
                         });
                     } else {
-                        Log.w("SearchController", "Немає вибраних елементів для сортування.");
                         Toast.makeText(context, R.string.empty_selected_items_for_sort, Toast.LENGTH_SHORT).show();
+                        Log.w("SearchController", "No items selected to sort.");
                     }
 
                     ((ChooseItem<T>) adapter).setItems(sortBySelectedItems);
-                    Log.d("SearchController", "Результати пошуку відсортовані за зростанням.");
+                    Log.d("SearchController", "Search results sorted by selected items.");
                     break;
 
                 case 1: // Сортування за спаданням (A → Z)
                     sortAlgorithm(false);
                     ((ChooseItem<T>) adapter).setItems(searchResults);
+                    Log.d("SearchController", "Search results sorted in descending order.");
                     break;
 
                 case 0: // Сортування за зростанням (Z → A)
                     sortAlgorithm(true);
                     ((ChooseItem<T>) adapter).setItems(searchResults);
+                    Log.d("SearchController", "Search results sorted in ascending order.");
                     break;
 
                 default:
-                    Log.w("SearchController", "Невідомий режим сортування: " + sortMode);
+                    Log.w("SearchController", "Unknown sort mode: " + sortMode);
             }
         } else if (adapter instanceof Search<?>) {
             switch (sortMode % 2) {
                 case 1: // Сортування за спаданням (Z → A)
                     sortAlgorithm(false);
                     ((Search<T>) adapter).setResultItems(searchResults);
+                    Log.d("SearchController", "Search results sorted in descending order.");
                     break;
 
                 case 0: // Сортування за зростанням (A → Z)
                     sortAlgorithm(true);
                     ((Search<T>) adapter).setResultItems(searchResults);
+                    Log.d("SearchController", "Search results sorted in ascending order.");
                     break;
 
                 default:
-                    Log.w("SearchController", "Невідомий режим сортування: " + sortMode);
+                    Log.d("SearchController", "Unknown sort mode: " + sortMode);
             }
 
             ((Search<T>) adapter).setResultItems(searchResults);
             adapter.notifyDataSetChanged();
+            Log.d("SearchController", "Results sorted and adapter notified.");
         }
     }
 
+    /**
+     * Сортує результати пошуку за алфавітом.
+     * Використовується для сортування рядків або об'єктів Item.
+     *
+     * @param mode Режим сортування: true - за зростанням, false - за спаданням.
+     */
     private void sortAlgorithm(boolean mode) {
         if (searchResults == null || searchResults.isEmpty()) return;
 
@@ -218,26 +236,10 @@ public class SearchController<T> {
 
         if (!mode) {
             Collections.reverse(searchResults);
-            Log.d("SearchController", "Результати пошуку відсортовані за спаданням.");
-        } else Log.d("SearchController", "Результати пошуку відсортовані за зростанням.");
+            Log.d("SearchController", "Search results sorted in descending order.");
+        } else Log.d("SearchController", "Search results sorted in ascending order.");
     }
 
-
-    /**
-     * Виконує пошук за поточним текстом у полі пошуку.
-     */
-    public void search() {
-        if (searchEditText != null) {
-            updateResults(performSearch(searchEditText.getText().toString().trim()));
-        }
-    }
-
-    public ArrayList<T> searchAndGetResult(String data) {
-        ArrayList<T> result = performSearch(data);
-        updateResults(result);
-
-        return result;
-    }
 
     /**
      * Встановлює новий набір даних для пошуку.
@@ -268,52 +270,112 @@ public class SearchController<T> {
      * @param searchEditText Нове поле для введення пошукового запиту.
      */
     public void setSearchEditText(@NonNull EditText searchEditText) {
-        this.searchEditText = searchEditText;
-        setListener();
+        if (searchEditText != null) {
+            this.searchEditText = searchEditText;
+            clear();
+            search(); // Перезапускаємо спостереження за полем пошуку
+            Log.d("SearchController", "Search EditText has been set.");
+        }
+        else Log.w("SearchController", "Search EditText is null, cannot set listener.");
     }
 
     /**
      * Встановлює новий RecyclerView для відображення результатів пошуку.
      *
-     * @param searchResultsRecyclerView Новий RecyclerView.
+     * @param setSearchRecyclerView Новий RecyclerView.
      */
-    public void setSearchResultsRecyclerView(@NonNull RecyclerView searchResultsRecyclerView) {
-        initializeRecyclerView(searchResultsRecyclerView);
+    public void setSearchRecyclerView(@NonNull RecyclerView setSearchRecyclerView) {
+        if (setSearchRecyclerView != null) initializeRecyclerView(setSearchRecyclerView);
     }
 
-    public ArrayList<T> getSearchResults() {
-        return searchResults;
+    /**
+     * Встановлює індикатор порожнього результату пошуку.
+     *
+     * @param emptyIndicator Індикатор, який відображається, коли немає результатів пошуку.
+     */
+    public void setEmptyIndicator(ConstraintLayout emptyIndicator) {
+        if (emptyIndicator != null) {
+            if (searchResults.isEmpty()) emptyIndicator.setVisibility(ConstraintLayout.VISIBLE);
+            else emptyIndicator.setVisibility(ConstraintLayout.GONE);
+        } else {
+            Log.d("SearchController", "Empty indicator is null, cannot set visibility.");
+        }
     }
 
     public RecyclerView.Adapter<?> getAdapter() {
         return adapter;
     }
 
-    public RecyclerView getRecyclerView() { return searchResultsRecyclerView; }
+    public RecyclerView getRecyclerView() { return setSearchRecyclerView; }
 
+    /**
+     * Встановлює кнопку для очищення тексту у полі пошуку.
+     *
+     * @param clearSearchEditText Кнопка для очищення тексту.
+     */
     public void setClearSearchEditText(AppCompatImageView clearSearchEditText) {
-        this.clearSearchEditText = clearSearchEditText;
+        if (clearSearchEditText != null) {
+            // Додаємо обробник натискання на кнопку очищення
+            clearSearchEditText.setOnClickListener(v -> {
+                searchEditText.setText("");
+                Log.d("SearchController", "Search EditText cleared.");
+            });
 
-        // Додаємо обробник натискання на кнопку очищення
-        this.clearSearchEditText.setOnClickListener(v -> {
-            searchEditText.setText("");
-            search();
-        });
-    }
-
-    public void setSortResultSearchButton(AppCompatImageView sortResultSearchButton) {
-        this.sortResultSearchButton = sortResultSearchButton;
-
-        this.sortResultSearchButton.setOnClickListener(v -> {
-            if (flagAccessSort.get()) {
-                flagAccessSort.set(false);
-                sortResults();
-
-                getRecyclerView().postDelayed(() -> {
-                    flagAccessSort.set(true);
-                    getRecyclerView().smoothScrollToPosition(0); // Прокрутка до початку списку після сортування
-                }, 400);
+            if (searchEditText != null) {
+                clearInputDisposable.dispose();
+                clearInputDisposable = RxTextView.textChanges(searchEditText)
+                        .subscribe(charSequence -> {
+                            if (charSequence.length() > 0) clearSearchEditText.setVisibility(AppCompatImageView.VISIBLE);
+                            else clearSearchEditText.setVisibility(AppCompatImageView.GONE);
+                        });
+            } else {
+                Log.d("SearchController", "Search EditText is null, cannot set text change listener.");
             }
-        });
+        }
     }
+
+    /**
+     * Встановлює кнопку для сортування результатів пошуку.
+     *
+     * @param sortResultSearchButton Кнопка для сортування результатів.
+     */
+    public void setSortResultSearchButton(AppCompatImageView sortResultSearchButton) {
+        if (sortResultSearchButton != null) {
+            sortResultSearchButton.setOnClickListener(v -> {
+                if (flagAccessSort.get()) {
+                    flagAccessSort.set(false);
+                    sortResults();
+                    scrollToStart(); // Прокручуємо до початку списку після сортування
+                    Log.d("SearchController", "Search results sorted.");
+                }
+            });
+        }
+    }
+
+    /**
+     * Прокручує RecyclerView до початку списку.
+     * Використовується для повернення до початку результатів пошуку після сортування.
+     */
+    private void scrollToStart() {
+        if (setSearchRecyclerView != null) {
+            setSearchRecyclerView.postDelayed(() -> {
+                flagAccessSort.set(true);
+                getRecyclerView().smoothScrollToPosition(0); // Прокрутка до початку списку
+                Log.d("SearchController", "RecyclerView scrolled to start.");
+            }, 400);
+        } else {
+            Log.w("SearchController", "RecyclerView is null, cannot scroll to start.");
+        }
+    }
+
+    /**
+     * Очищає всі ресурси, пов'язані з контролером пошуку.
+     * Використовується для звільнення пам'яті та уникнення витоків.
+     */
+    public void clear() {
+        searchDisposable.dispose();
+        clearInputDisposable.dispose();
+        Log.d("SearchController", "SearchController cleared.");
+    }
+
 }

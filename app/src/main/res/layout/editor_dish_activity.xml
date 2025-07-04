@@ -351,6 +351,8 @@
                             android:textColor="?attr/colorText"
                             android:textColorHint="?attr/colorHintText"
                             android:textSize="20sp"
+                            android:clickable="true"
+                            android:cursorVisible="false"
                             android:focusable="false"
                             android:focusableInTouchMode="false"
                             app:backgroundTint="?attr/colorControlNormal"

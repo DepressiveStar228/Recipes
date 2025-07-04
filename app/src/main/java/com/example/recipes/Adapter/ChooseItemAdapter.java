@@ -30,6 +30,7 @@ import java.util.Objects;
  */
 public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewHolder> implements Search<T>, ChooseItem<T> {
     private Context context;
+    private final ConstraintLayout empty;
     private OnItemClickListener listener;
     private ArrayList<T> selectedItem = new ArrayList<>();
 
@@ -39,9 +40,10 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
      * @param context Список об'єктів для відображення.
      * @param listener Лістенер для обробки кліків на елементи.
      */
-    public ChooseItemAdapter(Context context, OnItemClickListener listener) {
+    public ChooseItemAdapter(Context context, ConstraintLayout empty, OnItemClickListener listener) {
         super(createDiffCallback());
         this.context = context;
+        this.empty = empty;
         this.listener = listener;
     }
 
@@ -55,7 +57,7 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.dish_check_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.choose_item, parent, false);
         return new ViewHolder(view);
     }
 
@@ -90,6 +92,10 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
                 listener.onItemClick(holder.item_check, item);
             }
         });
+
+        if (empty != null) {
+            empty.setVisibility(getItemCount() == 0 ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
@@ -131,6 +137,24 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
     @Override
     public ArrayList<T> getSelectedItem() {
         return selectedItem;
+    }
+
+    /**
+     * Повертає список вибраних елементів як ArrayList<String>.
+     * Якщо елемент є об'єктом Item, то повертається його ім'я.
+     *
+     * @return Список вибраних елементів у вигляді ArrayList<String>.
+     */
+    public ArrayList<String> getSelectedItemOnlyString() {
+        ArrayList<String> selectedStrings = new ArrayList<>();
+        for (T item : selectedItem) {
+            if (item instanceof String) {
+                selectedStrings.add((String) item);
+            } else if (item instanceof Item) {
+                selectedStrings.add(((Item) item).getName());
+            }
+        }
+        return selectedStrings;
     }
 
     @Override
@@ -178,8 +202,7 @@ public class ChooseItemAdapter<T> extends ListAdapter<T, ChooseItemAdapter.ViewH
          * @param item Об'єкт, який потрібно відобразити.
          */
         void bind(Object item) {
-            if (item instanceof Item) {
-                Item selectableItem = (Item) item;
+            if (item instanceof Item selectableItem) {
                 item_name.setText(selectableItem.getName());
             } else if (item instanceof String) {
                 String name = item.toString();

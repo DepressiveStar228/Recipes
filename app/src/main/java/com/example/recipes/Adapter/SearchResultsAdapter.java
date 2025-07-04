@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +27,7 @@ import java.util.Objects;
  * @param <T> Тип елементів у списку результатів (може бути Item або String)
  */
 public class SearchResultsAdapter<T> extends ListAdapter<T, SearchResultsAdapter.ViewHolder> implements Search<T> {
+    private final ConstraintLayout empty;
     private OnItemClickListener listener;
 
     /**
@@ -33,8 +35,9 @@ public class SearchResultsAdapter<T> extends ListAdapter<T, SearchResultsAdapter
      *
      * @param listener Лістенер для обробки кліків на елементи
      */
-    public SearchResultsAdapter(OnItemClickListener listener) {
+    public SearchResultsAdapter(ConstraintLayout empty, OnItemClickListener listener) {
         super(createDiffCallback());
+        this.empty = empty;
         this.listener = listener;
     }
 
@@ -61,6 +64,10 @@ public class SearchResultsAdapter<T> extends ListAdapter<T, SearchResultsAdapter
             holder.textView.setText(item.toString());
             holder.textView.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
             holder.itemView.setOnClickListener(v -> listener.onItemClick(v, item));
+        }
+
+        if (empty != null) {
+            empty.setVisibility(getItemCount() == 0 ? View.VISIBLE : View.GONE);
         }
     }
 

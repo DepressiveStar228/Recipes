@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.util.SparseBooleanArray;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.google.firebase.crashlytics.buildtools.reloc.javax.annotation.Nonnegative;
 
@@ -42,18 +43,23 @@ public class AnimationUtils {
      * @param durationAnimation Тривалість анімації в мілісекундах
      * @param onAnimationEnd Колбек після завершення анімації
      */
-    public static void smoothRotation(View view, int way, float rotationAngel, int durationAnimation, Runnable onAnimationEnd) {
+    public static void smoothRotation(View view, int way, float rotationAngle, int durationAnimation, Runnable onAnimationEnd) {
         int viewId = view.getId();
         if (viewId == View.NO_ID) return;
 
         if (ANIMATION_FLAGS.get(viewId, true)) {
             ANIMATION_FLAGS.put(viewId, false);
 
-            ObjectAnimator rotationAnimator = new ObjectAnimator();
+            float currentRotation = view.getRotation();
+            float targetRotation;
 
-            if (way % 2 == 0) rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, rotationAngel);
-            else rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", rotationAngel, 0f);
+            if (way % 2 == 0) {
+                targetRotation = currentRotation + rotationAngle;
+            } else {
+                targetRotation = currentRotation - rotationAngle;
+            }
 
+            ObjectAnimator rotationAnimator = ObjectAnimator.ofFloat(view, "rotation", currentRotation, targetRotation);
             rotationAnimator.setDuration(durationAnimation);
             rotationAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
@@ -63,77 +69,6 @@ public class AnimationUtils {
                 }
             });
             rotationAnimator.start();
-        }
-    }
-
-    /**
-     * Анімація ковзання View з ефектом зникнення.
-     *
-     * @param view View для анімації
-     * @param way Напрямок руху
-     * @param mode SHOW або HIDE
-     * @param translationValue Відстань ковзання
-     * @param durationAnimation Тривалість в мілісекундах
-     * @param onAnimationEnd Колбек після завершення
-     */
-    public static void smoothSlipVisibility(@NonNull View view, @NonNull @Nonnegative int way,
-                                            @NonNull @Nonnegative boolean mode, @NonNull @Nonnegative float translationValue,
-                                            @NonNull @Nonnegative int durationAnimation, @NonNull Runnable onAnimationEnd) {
-        int viewId = view.getId();
-        if (viewId == View.NO_ID) return;
-
-        if (ANIMATION_FLAGS.get(viewId, true)) {
-            ANIMATION_FLAGS.put(viewId, false);
-            float firstTranslationValue = 0f, secondTranslationValue = 0f, mainTranslationValue = translationValue;
-            String propertyName;
-
-            switch (way) {
-                case TOP:
-                    propertyName = "translationY";
-                    mainTranslationValue = -mainTranslationValue;
-                    break;
-                case BOTTOM:
-                    propertyName = "translationY";
-                    break;
-                case LEFT:
-                    propertyName = "translationX";
-                    mainTranslationValue = -mainTranslationValue;
-                    break;
-                case RIGHT:
-                    propertyName = "translationX";
-                    break;
-                default:
-                    return;
-            }
-
-            ObjectAnimator alphaAnimator, translationAnimator;
-            view.setVisibility(View.VISIBLE);
-
-            if (mode) {
-                alphaAnimator = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
-                translationAnimator = ObjectAnimator.ofFloat(view, propertyName, mainTranslationValue, secondTranslationValue);
-            }
-            else {
-                alphaAnimator = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f);
-                translationAnimator = ObjectAnimator.ofFloat(view, propertyName, firstTranslationValue, mainTranslationValue);
-            }
-
-            alphaAnimator.setDuration(durationAnimation);
-            translationAnimator.setDuration(durationAnimation);
-
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(alphaAnimator, translationAnimator);
-            animatorSet.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    ANIMATION_FLAGS.put(viewId, true);
-                    onAnimationEnd.run();
-
-                    if (mode) { view.setVisibility(View.VISIBLE); }
-                    else { view.setVisibility(View.GONE); }
-                }
-            });
-            animatorSet.start();
         }
     }
 
@@ -186,7 +121,7 @@ public class AnimationUtils {
      * @param mode SHOW або HIDE
      * @return Аніматор або null, якщо анімація не може стартувати
      */
-    public static ValueAnimator backgroundVisibility(@NonNull View view, @NonNull @Nonnegative boolean mode) {
+    public static ValueAnimator backgroundVisibility(View view, boolean mode) {
         int viewKey = view.hashCode();
 
         if (ANIMATION_FLAGS.get(viewKey, true)) {
@@ -209,5 +144,42 @@ public class AnimationUtils {
             });
             return alphaAnimator;
         } else return null;
+    }
+
+    /**
+     * Плавна зміна висоти View.
+     *
+     * @param view View для анімації
+     * @param startHeight Початкова висота
+     * @param endHeight Кінцева висота
+     * @param duration Тривалість анімації в мілісекундах
+     */
+    public static void smoothHeightChange(View view, int startHeight, int endHeight, long duration, Runnable onAnimationEnd) {
+        int viewKey = view.hashCode();
+
+        if (ANIMATION_FLAGS.get(viewKey, true)) {
+            if (startHeight == endHeight) return;
+
+            ANIMATION_FLAGS.put(viewKey, false);
+
+            ValueAnimator animator = ValueAnimator.ofInt(startHeight, endHeight);
+            animator.setDuration(duration);
+            animator.addUpdateListener(animation -> {
+                int animatedValue = (int) animation.getAnimatedValue();
+                ViewGroup.LayoutParams params = view.getLayoutParams();
+                params.height = animatedValue;
+                view.setLayoutParams(params);
+            });
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (onAnimationEnd != null) {
+                        onAnimationEnd.run();
+                    }
+                    ANIMATION_FLAGS.put(viewKey, true);
+                }
+            });
+            animator.start();
+        }
     }
 }

@@ -33,7 +33,7 @@ import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Controller.ShakeDetector;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Enum.CollectionType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
@@ -142,6 +142,7 @@ public class CollectionActivity extends AppCompatActivity {
         super.onDestroy();
         compositeDisposable.clear();
         shakeDetector.unregister(this);
+        if (searchController != null) searchController.clear();
         Log.d(nameActivity, "Активність успішно закрита");
     }
 
@@ -180,7 +181,7 @@ public class CollectionActivity extends AppCompatActivity {
         if (navigationView != null) {
             navigationView.removeHeaderView(navigationView.getHeaderView(0));
 
-            if (collectionID > ID_System_Collection.values().length) {
+            if (collectionID > IDSystemCollection.values().length) {
                 View headerView = getLayoutInflater().inflate(R.layout.collection_menu_panel, navigationView, false);
 
                 if (headerView != null) {

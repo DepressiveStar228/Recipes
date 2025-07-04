@@ -97,4 +97,19 @@ public class AnotherUtils {
     public static int dpToPx(int dp, Context context) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
     }
+
+    /**
+     * Сховати клавіатуру для вказаного View.
+     *
+     * @param context Контекст додатка
+     * @param view View, для якого потрібно сховати клавіатуру
+     */
+    public static void hideKeyboard(Context context, View view) {
+        if (context != null && view != null) {
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
+    }
 }

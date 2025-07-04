@@ -5,16 +5,6 @@
     android:orientation="horizontal"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/searchImageView"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:src="@drawable/icon_search"
-        app:tint="?attr/colorControlNormal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="0dp"
@@ -24,19 +14,22 @@
         android:textColor="?attr/colorText"
         android:textColorHint="?attr/colorHintText"
         android:textSize="20sp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         app:backgroundTint="?attr/colorControlNormal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sortButton"
-        app:layout_constraintStart_toEndOf="@+id/searchImageView"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/clearInputTextButton"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_marginEnd="10dp"
+        android:padding="4dp"
         android:src="@drawable/icon_close"
-        android:visibility="gone"
+        android:visibility="visible"
         app:tint="?attr/colorControlNormal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sortButton"

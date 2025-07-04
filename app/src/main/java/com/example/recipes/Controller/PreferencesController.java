@@ -7,6 +7,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.util.Log;
 
+import com.example.recipes.Enum.SearchMode;
 import com.example.recipes.Enum.Tips;
 import com.example.recipes.R;
 
@@ -27,8 +28,9 @@ public class PreferencesController {
     public final String theme_key = "theme";
     public final String palette_key = "palette";
     private final String status_ing_hints_key = "ing_hints";
+    private final String search_mode_key = "search_mode";
     private String language, theme, palette;
-    private Boolean status_ing_hints, tip_shop_list_buttons = false;
+    private Boolean statusIngHints, tip_shop_list_buttons = false;
     private Context context;
 
     private PreferencesController() { }
@@ -58,7 +60,7 @@ public class PreferencesController {
         language = preferences.getString(language_key, "ua");
         theme = preferences.getString(theme_key, "Light");
         palette = preferences.getString(palette_key, "Brown");
-        status_ing_hints = preferences.getBoolean(status_ing_hints_key, true);
+        statusIngHints = preferences.getBoolean(status_ing_hints_key, true);
         setLocale(language, context);
         Log.d(getActivityName(context), "Завантаження налаштувань: мова - " + language + ", тема - " + theme + ", палітра - " + palette);
     }
@@ -80,7 +82,7 @@ public class PreferencesController {
      * @param theme    Тема.
      * @param palette  Палітра.
      */
-    public void savePreferences(String language, String theme, String palette) {
+    public void savePreferencesForUI(String language, String theme, String palette) {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(language_key, language);
         editor.putString(theme_key, theme);
@@ -93,15 +95,14 @@ public class PreferencesController {
     /**
      * Зберігає налаштування підказок у SharedPreferences.
      *
-     * @param status_ing_hints Статус підказок.
+     * @param statusIngHints Статус підказок.
      */
-    public void savePreferences(boolean status_ing_hints) {
+    public void saveStatusIngHints(boolean statusIngHints) {
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean(status_ing_hints_key, status_ing_hints);
+        editor.putBoolean(status_ing_hints_key, statusIngHints);
         editor.apply();
         loadPreferences();
-        Log.d(getActivityName(context), "Збереження налаштувань: статус підказок - " + status_ing_hints);
-
+        Log.d(getActivityName(context), "Збереження налаштувань: статус підказок - " + statusIngHints);
     }
 
     /**
@@ -178,8 +179,8 @@ public class PreferencesController {
      *
      * @return true, якщо підказки увімкнені, інакше false.
      */
-    public Boolean getStatus_ing_hints() {
-        return status_ing_hints;
+    public Boolean getStatusIngHints() {
+        return statusIngHints;
     }
 
     /**

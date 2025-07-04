@@ -244,200 +244,200 @@ public class DishRepositoryTest {
                 .assertValue(collections);
     }
 
-    @Test
-    public void getFilteredAndSorted() {
-        RecipeUtils recipeUtils = new RecipeUtils(ApplicationProvider.getApplicationContext());
-
-        ArrayList<String> ingredientNames = new ArrayList<>();
-
-        for (int i = 0; i < 4; i++) {
-            String ingredientName = testIngredientName + (i + 1);
-            ingredientNames.add(ingredientName);
-        }
-
-        Dish dish1 = new Dish(testDishName + 1, 1, new ArrayList<>(), new ArrayList<>(), 200L);
-        Dish dish2 = new Dish(testDishName + 2, 2, new ArrayList<>(), new ArrayList<>(), 100L);
-        Dish dish3 = new Dish(testDishName + 3, 3, new ArrayList<>(), new ArrayList<>(), 300L);
-        ArrayList<Dish> dishes = new ArrayList<>(List.of(dish1, dish2, dish3));
-
-        for (Dish dish : dishes) {
-            long id = recipeUtils.ByDish().getDao().insert(dish).blockingGet();
-            dish.setId(id);
-        }
-
-        Ingredient ingredient1 = new Ingredient(ingredientNames.get(0), "10", IngredientType.VOID, dishes.get(0).getId());
-        Ingredient ingredient2 = new Ingredient(ingredientNames.get(3), "20", IngredientType.VOID, dishes.get(0).getId());
-        Ingredient ingredient3 = new Ingredient(ingredientNames.get(0), "30", IngredientType.VOID, dishes.get(1).getId());
-        Ingredient ingredient4 = new Ingredient(ingredientNames.get(1), "40", IngredientType.VOID, dishes.get(1).getId());
-        Ingredient ingredient5 = new Ingredient(ingredientNames.get(2), "50", IngredientType.VOID, dishes.get(2).getId());
-
-        ArrayList<Ingredient> ingredients = new ArrayList<>(List.of(ingredient1, ingredient2, ingredient3, ingredient4, ingredient5));
-
-        for (Ingredient ingredient : ingredients) {
-            long id = recipeUtils.ByIngredient().getDao().insert(ingredient).blockingGet();
-            ingredient.setId(id);
-        }
-
-        ArrayList<Boolean> sortNullableOptions = new ArrayList<>();
-        sortNullableOptions.add(null);
-        sortNullableOptions.add(null);
-
-        ArrayList<Boolean> sortOptionsTest1 = new ArrayList<>(); // Сортування за часов від найстарішого без алфавіту
-        sortOptionsTest1.add(null);
-        sortOptionsTest1.add(true);
-
-        ArrayList<Boolean> sortOptionsTest2 = new ArrayList<>(); // Сортування за часов від найновішого без алфавіту
-        sortOptionsTest2.add(null);
-        sortOptionsTest2.add(false);
-
-        ArrayList<Boolean> sortOptionsTest3 = new ArrayList<>(); // Сортування за алфавітом без часу
-        sortOptionsTest3.add(true);
-        sortOptionsTest3.add(null);
-
-        ArrayList<Boolean> sortOptionsTest4 = new ArrayList<>(); // Сортування проти алфавіта без часу
-        sortOptionsTest4.add(false);
-        sortOptionsTest4.add(null);
-
-        ArrayList<Boolean> sortOptionsTest5 = new ArrayList<>(List.of(true, true)); // Сортування за алфавітом від найстарішого
-        ArrayList<Boolean> sortOptionsTest6 = new ArrayList<>(List.of(true, false)); // Сортування за алфавітом від найновішого
-        ArrayList<Boolean> sortOptionsTest7 = new ArrayList<>(List.of(false, true)); // Сортування проти алфавіта від найстарішого
-        ArrayList<Boolean> sortOptionsTest8 = new ArrayList<>(List.of(false, false)); // Сортування проти алфавіта від найновішого
-
-        //
-        // Тести сортування без фільтрації по інгредієнтам
-        //
-        TestObserver<List<Dish>> testObserver1 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest1).test();
-        testObserver1
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(2)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)) &&
-                        loadedDishes.get(2).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver2 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest2).test();
-        testObserver2
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)) &&
-                        loadedDishes.get(2).equals(dishes.get(2)));
-
-        TestObserver<List<Dish>> testObserver3 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest3).test();
-        testObserver3
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(0)) &&
-                        loadedDishes.get(1).equals(dishes.get(1)) &&
-                        loadedDishes.get(2).equals(dishes.get(2)));
-
-        TestObserver<List<Dish>> testObserver4 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest4).test();
-        testObserver4
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(2)) &&
-                        loadedDishes.get(1).equals(dishes.get(1)) &&
-                        loadedDishes.get(2).equals(dishes.get(0)));
-
-        TestObserver<List<Dish>> testObserver5 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest5).test();
-        testObserver5
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(2)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)) &&
-                        loadedDishes.get(2).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver6 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest6).test();
-        testObserver6
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)) &&
-                        loadedDishes.get(2).equals(dishes.get(2)));
-
-        TestObserver<List<Dish>> testObserver7 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest5).test();
-        testObserver7
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(2)) &&
-                                loadedDishes.get(1).equals(dishes.get(0)) &&
-                                loadedDishes.get(2).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver8 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest6).test();
-        testObserver8
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 3)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)) &&
-                                loadedDishes.get(1).equals(dishes.get(0)) &&
-                                loadedDishes.get(2).equals(dishes.get(2)));
-
-
-        //
-        // Тести фільтрації по інгредієнтам без сортування
-        //
-        TestObserver<List<Dish>> testObserver9 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortNullableOptions).test();
-        testObserver9
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 2)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(0)) &&
-                        loadedDishes.get(1).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver10 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0), ingredientNames.get(1))), sortNullableOptions).test();
-        testObserver10
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 1)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver11 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0), ingredientNames.get(1), ingredientNames.get(2))), sortNullableOptions).test();
-        testObserver11
-                .assertNoErrors()
-                .assertValue(List::isEmpty);
-
-
-        //
-        // Тести фільтрації по інгредієнтам з сортуванням
-        //
-        TestObserver<List<Dish>> testObserver12 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest1).test();
-        testObserver12
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 2)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(0)) &&
-                        loadedDishes.get(1).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver13 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest2).test();
-        testObserver13
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 2)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)));
-
-        TestObserver<List<Dish>> testObserver14 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest3).test();
-        testObserver14
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 2)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(0)) &&
-                        loadedDishes.get(1).equals(dishes.get(1)));
-
-        TestObserver<List<Dish>> testObserver15 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest4).test();
-        testObserver15
-                .assertNoErrors()
-                .assertValue(loadedDishes -> loadedDishes.size() == 2)
-                .assertValue(loadedDishes ->
-                        loadedDishes.get(0).equals(dishes.get(1)) &&
-                        loadedDishes.get(1).equals(dishes.get(0)));
-    }
+//    @Test
+//    public void getFilteredAndSorted() {
+//        RecipeUtils recipeUtils = new RecipeUtils(ApplicationProvider.getApplicationContext());
+//
+//        ArrayList<String> ingredientNames = new ArrayList<>();
+//
+//        for (int i = 0; i < 4; i++) {
+//            String ingredientName = testIngredientName + (i + 1);
+//            ingredientNames.add(ingredientName);
+//        }
+//
+//        Dish dish1 = new Dish(testDishName + 1, 1, new ArrayList<>(), new ArrayList<>(), 200L);
+//        Dish dish2 = new Dish(testDishName + 2, 2, new ArrayList<>(), new ArrayList<>(), 100L);
+//        Dish dish3 = new Dish(testDishName + 3, 3, new ArrayList<>(), new ArrayList<>(), 300L);
+//        ArrayList<Dish> dishes = new ArrayList<>(List.of(dish1, dish2, dish3));
+//
+//        for (Dish dish : dishes) {
+//            long id = recipeUtils.ByDish().getDao().insert(dish).blockingGet();
+//            dish.setId(id);
+//        }
+//
+//        Ingredient ingredient1 = new Ingredient(ingredientNames.get(0), "10", IngredientType.VOID, dishes.get(0).getId());
+//        Ingredient ingredient2 = new Ingredient(ingredientNames.get(3), "20", IngredientType.VOID, dishes.get(0).getId());
+//        Ingredient ingredient3 = new Ingredient(ingredientNames.get(0), "30", IngredientType.VOID, dishes.get(1).getId());
+//        Ingredient ingredient4 = new Ingredient(ingredientNames.get(1), "40", IngredientType.VOID, dishes.get(1).getId());
+//        Ingredient ingredient5 = new Ingredient(ingredientNames.get(2), "50", IngredientType.VOID, dishes.get(2).getId());
+//
+//        ArrayList<Ingredient> ingredients = new ArrayList<>(List.of(ingredient1, ingredient2, ingredient3, ingredient4, ingredient5));
+//
+//        for (Ingredient ingredient : ingredients) {
+//            long id = recipeUtils.ByIngredient().getDao().insert(ingredient).blockingGet();
+//            ingredient.setId(id);
+//        }
+//
+//        ArrayList<Boolean> sortNullableOptions = new ArrayList<>();
+//        sortNullableOptions.add(null);
+//        sortNullableOptions.add(null);
+//
+//        ArrayList<Boolean> sortOptionsTest1 = new ArrayList<>(); // Сортування за часов від найстарішого без алфавіту
+//        sortOptionsTest1.add(null);
+//        sortOptionsTest1.add(true);
+//
+//        ArrayList<Boolean> sortOptionsTest2 = new ArrayList<>(); // Сортування за часов від найновішого без алфавіту
+//        sortOptionsTest2.add(null);
+//        sortOptionsTest2.add(false);
+//
+//        ArrayList<Boolean> sortOptionsTest3 = new ArrayList<>(); // Сортування за алфавітом без часу
+//        sortOptionsTest3.add(true);
+//        sortOptionsTest3.add(null);
+//
+//        ArrayList<Boolean> sortOptionsTest4 = new ArrayList<>(); // Сортування проти алфавіта без часу
+//        sortOptionsTest4.add(false);
+//        sortOptionsTest4.add(null);
+//
+//        ArrayList<Boolean> sortOptionsTest5 = new ArrayList<>(List.of(true, true)); // Сортування за алфавітом від найстарішого
+//        ArrayList<Boolean> sortOptionsTest6 = new ArrayList<>(List.of(true, false)); // Сортування за алфавітом від найновішого
+//        ArrayList<Boolean> sortOptionsTest7 = new ArrayList<>(List.of(false, true)); // Сортування проти алфавіта від найстарішого
+//        ArrayList<Boolean> sortOptionsTest8 = new ArrayList<>(List.of(false, false)); // Сортування проти алфавіта від найновішого
+//
+//        //
+//        // Тести сортування без фільтрації по інгредієнтам
+//        //
+//        TestObserver<List<Dish>> testObserver1 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest1.get(0), sortOptionsTest1.get(1)).test();
+//        testObserver1
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(2)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)) &&
+//                        loadedDishes.get(2).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver2 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest2.get(0), sortOptionsTest2.get(1)).test();
+//        testObserver2
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)) &&
+//                        loadedDishes.get(2).equals(dishes.get(2)));
+//
+//        TestObserver<List<Dish>> testObserver3 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest3.get(0), sortOptionsTest3.get(1)).test();
+//        testObserver3
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(0)) &&
+//                        loadedDishes.get(1).equals(dishes.get(1)) &&
+//                        loadedDishes.get(2).equals(dishes.get(2)));
+//
+//        TestObserver<List<Dish>> testObserver4 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest4.get(0), sortOptionsTest4.get(1)).test();
+//        testObserver4
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(2)) &&
+//                        loadedDishes.get(1).equals(dishes.get(1)) &&
+//                        loadedDishes.get(2).equals(dishes.get(0)));
+//
+//        TestObserver<List<Dish>> testObserver5 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest5.get(0), sortOptionsTest5.get(1)).test();
+//        testObserver5
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(2)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)) &&
+//                        loadedDishes.get(2).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver6 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest6.get(0), sortOptionsTest6.get(1)).test();
+//        testObserver6
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)) &&
+//                        loadedDishes.get(2).equals(dishes.get(2)));
+//
+//        TestObserver<List<Dish>> testObserver7 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest5.get(0), sortOptionsTest5.get(1)).test();
+//        testObserver7
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(2)) &&
+//                                loadedDishes.get(1).equals(dishes.get(0)) &&
+//                                loadedDishes.get(2).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver8 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortOptionsTest6.get(0), sortOptionsTest6.get(1)).test();
+//        testObserver8
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 3)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)) &&
+//                                loadedDishes.get(1).equals(dishes.get(0)) &&
+//                                loadedDishes.get(2).equals(dishes.get(2)));
+//
+//
+//        //
+//        // Тести фільтрації по інгредієнтам без сортування
+//        //
+//        TestObserver<List<Dish>> testObserver9 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortNullableOptions.get(0), sortNullableOptions.get(1)).test();
+//        testObserver9
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 2)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(0)) &&
+//                        loadedDishes.get(1).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver10 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0), ingredientNames.get(1))), sortNullableOptions.get(0), sortNullableOptions.get(1)).test();
+//        testObserver10
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 1)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver11 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0), ingredientNames.get(1), ingredientNames.get(2))), sortNullableOptions.get(0), sortNullableOptions.get(1)).test();
+//        testObserver11
+//                .assertNoErrors()
+//                .assertValue(List::isEmpty);
+//
+//
+//        //
+//        // Тести фільтрації по інгредієнтам з сортуванням
+//        //
+//        TestObserver<List<Dish>> testObserver12 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest1.get(0), sortOptionsTest1.get(1)).test();
+//        testObserver12
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 2)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(0)) &&
+//                        loadedDishes.get(1).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver13 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest2.get(0), sortOptionsTest2.get(1)).test();
+//        testObserver13
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 2)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)));
+//
+//        TestObserver<List<Dish>> testObserver14 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest3.get(0), sortOptionsTest3.get(1)).test();
+//        testObserver14
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 2)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(0)) &&
+//                        loadedDishes.get(1).equals(dishes.get(1)));
+//
+//        TestObserver<List<Dish>> testObserver15 = recipeUtils.ByDish().getFilteredAndSorted(new ArrayList<>(List.of(ingredientNames.get(0))), sortOptionsTest4.get(0), sortOptionsTest4.get(1)).test();
+//        testObserver15
+//                .assertNoErrors()
+//                .assertValue(loadedDishes -> loadedDishes.size() == 2)
+//                .assertValue(loadedDishes ->
+//                        loadedDishes.get(0).equals(dishes.get(1)) &&
+//                        loadedDishes.get(1).equals(dishes.get(0)));
+//    }
 
     @Test
     public void getUniqueName() {

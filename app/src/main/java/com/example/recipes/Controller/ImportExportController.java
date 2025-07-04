@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 import com.example.recipes.Enum.DishRecipeType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
@@ -163,7 +163,7 @@ public class ImportExportController {
             }
         }
 
-        return utils.ByDish().addAll(dishes, ID_System_Collection.ID_IMPORT_RECIPE.getId())
+        return utils.ByDish().addAll(dishes, IDSystemCollection.ID_IMPORT_RECIPE.getId())
                 .flatMapCompletable(status -> {
                     if (status) return Completable.complete();
                     else return Completable.error(new Throwable("Помилка додавання страв до бази даних"));

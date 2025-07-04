@@ -26,7 +26,7 @@ import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Decoration.AnimationUtils;
 import com.example.recipes.Decoration.TextLoadAnimation;
 import com.example.recipes.Enum.ChatGPTRole;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.R;
@@ -236,7 +236,7 @@ public class GPTActivity extends AppCompatActivity implements LifecycleObserver 
                 Dish dish = client.parsedAnswerGPT(text);
 
                 if (dish != null) {
-                    Disposable disposable = utils.ByDish().add(dish, ID_System_Collection.ID_GPT_RECIPE.getId())
+                    Disposable disposable = utils.ByDish().add(dish, IDSystemCollection.ID_GPT_RECIPE.getId())
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(id -> {

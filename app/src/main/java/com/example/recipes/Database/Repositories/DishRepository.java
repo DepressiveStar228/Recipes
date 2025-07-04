@@ -8,9 +8,8 @@ import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.example.recipes.Controller.ImageController;
 import com.example.recipes.Database.DAO.DishDAO;
-import com.example.recipes.Database.DAO.DishRecipeDAO;
 import com.example.recipes.Database.ViewModels.DishViewModel;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Utils.Utils;
@@ -161,7 +160,7 @@ public class DishRepository implements Utils<Dish> {
      */
     @Override
     public Single<Boolean> addAll(ArrayList<Dish> items) {
-        return addAll(items, ID_System_Collection.ID_MY_RECIPE.getId());
+        return addAll(items, IDSystemCollection.ID_MY_RECIPE.getId());
     }
 
     /**
@@ -244,6 +243,22 @@ public class DishRepository implements Utils<Dish> {
     }
 
     /**
+     * Отримує максимальний час приготування страви.
+     * @return Single<Long> Максимальний час приготування
+     */
+    public Single<Long> getMaxCookingTime() {
+        return dao.getMaxCookingTime().switchIfEmpty(Single.just(0L));
+    }
+
+    /**
+     * Отримує мінімальний час приготування страви.
+     * @return Single<Long> Мінімальний час приготування
+     */
+    public Single<Long> getMinCookingTime() {
+        return dao.getMinCookingTime().switchIfEmpty(Single.just(0L));
+    }
+
+    /**
      * Отримує колекції, до яких належить страва.
      * @param dish Об'єкт страви
      * @return Single<ArrayList<Collection>> Список колекцій
@@ -266,10 +281,11 @@ public class DishRepository implements Utils<Dish> {
     /**
      * Отримує відфільтровані та відсортовані страви.
      * @param nameIngredients Список назв інгредієнтів для фільтрації
-     * @param sortStatus Статус сортування
+     * @param sortStatus Список прапорців для сортування (за назвою та часом створення)
+     * @param rangeCookingTime Діапазон часу приготування
      * @return Single<List<Dish>> Список страв
      */
-    public Single<List<Dish>> getFilteredAndSorted(ArrayList<String> nameIngredients, ArrayList<Boolean> sortStatus) {
+    public Single<List<Dish>> getFilteredAndSorted(ArrayList<String> nameIngredients, ArrayList<Boolean> sortStatus, ArrayList<Long> rangeCookingTime) {
         String DISH_TABLE_NAME = "dish";
         String INGREDIENT_TABLE_NAME = "ingredient";
 
@@ -283,22 +299,31 @@ public class DishRepository implements Utils<Dish> {
                 query.append(nameIngredients.get(i));
                 if (i < nameIngredients.size() - 1) query.append("', '");
             }
-            query.append("') ");
-            query.append("GROUP BY d.id ");
+            query.append("')");
+            if (rangeCookingTime != null && rangeCookingTime.size() == 2) {
+                query.append(" AND d.cooking_time BETWEEN ").append(rangeCookingTime.get(0)).append(" AND ").append(rangeCookingTime.get(1));
+            }
+            query.append(" GROUP BY d.id ");
             query.append("HAVING COUNT(DISTINCT ing.name) = ").append(nameIngredients.size());
+        } else {
+            if (rangeCookingTime != null && rangeCookingTime.size() == 2) {
+                query.append(" WHERE d.cooking_time BETWEEN ").append(rangeCookingTime.get(0)).append(" AND ").append(rangeCookingTime.get(1));
+            }
         }
 
-        if (sortStatus.get(0) != null || sortStatus.get(1) != null) {
-            query.append(" ORDER BY ");
+        if (sortStatus != null) {
+            if (sortStatus.get(0) != null || sortStatus.get(1) != null) {
+                query.append(" ORDER BY ");
 
-            if (sortStatus.get(1) != null) {
-                query.append("d.creation_time ").append(sortStatus.get(1) ? "DESC" : "ASC").append(", ");
-            }
+                if (sortStatus.get(1) != null) {
+                    query.append("d.creation_time ").append(sortStatus.get(1) ? "DESC" : "ASC").append(", ");
+                }
 
-            if (sortStatus.get(0) != null) {
-                query.append("d.name ").append(sortStatus.get(0) ? "ASC" : "DESC");
-            } else {
-                query.setLength(query.length() - 2);
+                if (sortStatus.get(0) != null) {
+                    query.append("d.name ").append(sortStatus.get(0) ? "ASC" : "DESC");
+                } else {
+                    query.setLength(query.length() - 2);
+                }
             }
         }
 

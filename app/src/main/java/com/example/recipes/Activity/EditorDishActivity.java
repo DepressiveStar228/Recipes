@@ -59,7 +59,7 @@ import com.example.recipes.Decoration.AnimationUtils;
 import com.example.recipes.Decoration.TextLoadAnimation;
 import com.example.recipes.Enum.CollectionType;
 import com.example.recipes.Enum.DishRecipeType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Enum.Limits;
@@ -73,13 +73,11 @@ import com.example.recipes.Utils.ClassUtils;
 import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
 import com.example.recipes.R;
+import com.example.recipes.ViewItem.CookingTimePicker;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.timepicker.MaterialTimePicker;
-import com.google.android.material.timepicker.TimeFormat;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -130,7 +128,7 @@ public class EditorDishActivity extends AppCompatActivity {
     private RecipeAdapter recipeAdapter;
     private ImageView back, setting, addIngredient, addTextToRecipe, addImageToRecipe, addCollection;
     private Button setDataButton;
-    private MaterialTimePicker cookingTimePicker; // Діалог для вибору часу приготування
+    private CookingTimePicker cookingTimePicker; // Діалог для вибору часу приготування
 
     private RecipeUtils utils; // Класс утиліт для роботи з рецептами через БД
 
@@ -153,7 +151,8 @@ public class EditorDishActivity extends AppCompatActivity {
         setContentView(R.layout.editor_dish_activity);
 
         loadItemsActivity();
-        setCookingTimePicker(0, 0);
+        cookingTimePicker = new CookingTimePicker(this);
+        cookingTimePicker.setCookingTimePicker(0, this::setTimeFromCookingTimePicker);
         utils = RecipeUtils.getInstance(this);
         translator = Translator.getInstance(this);
 
@@ -483,6 +482,10 @@ public class EditorDishActivity extends AppCompatActivity {
             });
         }
 
+        if (cookingTimeEditText != null) {
+            cookingTimePicker.setViewOnClickListener(cookingTimeEditText, null);
+        }
+
         // Кнопка додавання колекції
         if (addCollection != null) {
             addCollection.setOnClickListener(v -> {
@@ -533,11 +536,8 @@ public class EditorDishActivity extends AppCompatActivity {
         }
         if (cookingTimeEmpty != null && cookingTimeEditText != null) {
             if (dish.getCookingTime() > 0) {
-                int hours = (int) TimeUnit.MILLISECONDS.toHours(dish.getCookingTime());
-                int minutes = (int) TimeUnit.MILLISECONDS.toMinutes(dish.getCookingTime()) % 60;
-
-                setCookingTimePicker(hours, minutes);
-                cookingTimeEditText.setText(hours + ":" + minutes);
+                cookingTimeEditText.setText(String.format("%02d:%02d", cookingTimePicker.getHours(dish.getCookingTime()), cookingTimePicker.getMinutes(dish.getCookingTime())));
+                cookingTimePicker.setCookingTimePicker(dish.getCookingTime(), this::setTimeFromCookingTimePicker);
             }
             else cookingTimeEditText.setText("");
 
@@ -631,7 +631,7 @@ public class EditorDishActivity extends AppCompatActivity {
     private void setMyRecipeCollectionToAdapter() {
         if (mode != READ_MODE && collectionAdapter != null) {
             if (myRecipeCollection == null) {
-                Disposable disposable = utils.ByCollection().getByID(ID_System_Collection.ID_MY_RECIPE.getId())
+                Disposable disposable = utils.ByCollection().getByID(IDSystemCollection.ID_MY_RECIPE.getId())
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -1421,33 +1421,10 @@ public class EditorDishActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Встановлює таймер для готування страви
-     */
-    @SuppressLint("DefaultLocale")
-    private void setCookingTimePicker(int hours, int minutes) {
-        if (cookingTimePicker != null) cookingTimePicker.clearOnPositiveButtonClickListeners();
-
-        cookingTimePicker = new MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_24H)
-                .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-                .setHour(hours)
-                .setMinute(minutes)
-                .setTitleText(getString(R.string.title_cooking_time_picker))
-                .build();
-
-        // Слухач натискання на поле часу приготування
-        if (cookingTimeEditText != null) {
-            cookingTimeEditText.setOnClickListener(v -> {
-                cookingTimePicker.show(getSupportFragmentManager(), "cookingTimePicker");
-            });
-
-            cookingTimePicker.addOnPositiveButtonClickListener(v -> {
-                int hour = cookingTimePicker.getHour();
-                int minute = cookingTimePicker.getMinute();
-                originalDish.setCookingTime((hour * 60L + minute) * 60L * 1000L); // Перетворення часу в мілісекунди
-                cookingTimeEditText.setText(String.format("%02d:%02d", hour, minute));
-            });
-        }
+    private void setTimeFromCookingTimePicker(long data) {
+        int hours = cookingTimePicker.getHours(data);
+        int minutes = cookingTimePicker.getMinutes(data);
+        originalDish.setCookingTime((hours * 60L + minutes) * 60L * 1000L); // Перетворення часу в мілісекунди
+        cookingTimeEditText.setText(String.format("%02d:%02d", hours, minutes));
     }
 }

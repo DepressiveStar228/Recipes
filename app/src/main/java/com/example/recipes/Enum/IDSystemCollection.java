@@ -7,7 +7,7 @@ package com.example.recipes.Enum;
  * Системний перелік ідентифікаторів колекцій.
  * Містить фіксовані ID для основних системних колекцій додатку.
  */
-public enum ID_System_Collection {
+public enum IDSystemCollection {
     ID_FAVORITE(1L),
     ID_MY_RECIPE(2L),
     ID_GPT_RECIPE(3L),
@@ -20,7 +20,7 @@ public enum ID_System_Collection {
      * Конструктор переліку.
      * @param id Унікальний ідентифікатор колекції
      */
-    ID_System_Collection(Long id) {
+    IDSystemCollection(Long id) {
         this.id = id;
     }
 

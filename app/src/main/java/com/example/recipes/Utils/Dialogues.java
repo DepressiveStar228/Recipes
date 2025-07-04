@@ -17,7 +17,6 @@ import com.example.recipes.Adapter.ChooseItemAdapter;
 import com.example.recipes.Controller.CharacterLimitTextWatcher;
 import com.example.recipes.Controller.SearchController;
 import com.example.recipes.Enum.Limits;
-import com.example.recipes.Item.Dish;
 import com.example.recipes.R;
 
 import java.util.ArrayList;
@@ -173,9 +172,7 @@ public class Dialogues {
             RecyclerView recyclerView = dialogView.findViewById(R.id.items_check_RecyclerView);
             ConstraintLayout empty = dialogView.findViewById(R.id.empty);
 
-            if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, items.isEmpty());
-
-            ChooseItemAdapter<T> chooseItemAdapter = new ChooseItemAdapter<>(activity, (checkBox, item) -> { });
+            ChooseItemAdapter<T> chooseItemAdapter = new ChooseItemAdapter<>(activity, empty, (checkBox, item) -> { });
             chooseItemAdapter.setItemsAndSelected(items, selectedItems);
             if (recyclerView != null) {
                 recyclerView.setAdapter(chooseItemAdapter);
@@ -254,11 +251,11 @@ public class Dialogues {
 
             if (recyclerView != null) {
                 // Налаштовуємо пошук по елементам
-                SearchController<T> searchController = new SearchController<>(activity, editText, recyclerView, new ChooseItemAdapter<String>(activity, (checkBox, item) -> { }));
+                SearchController<T> searchController = new SearchController<>(activity, editText, recyclerView, new ChooseItemAdapter<String>(activity, empty, (checkBox, item) -> { }));
                 searchController.setArrayData(items);
                 searchController.setArraySelectedData(selectedItems);
                 searchController.setSearchEditText(editText);
-                searchController.setSearchResultsRecyclerView(recyclerView);
+                searchController.setSearchRecyclerView(recyclerView);
 
                 if (editText != null) {
                     if (clearButton != null) searchController.setClearSearchEditText(clearButton); // Додаємо кнопку очищення поля вводу
@@ -268,12 +265,12 @@ public class Dialogues {
                 ChooseItemAdapter<T> adapterChooseObjects = (ChooseItemAdapter) searchController.getAdapter();
                 ArrayList<T> newSelectedItems = adapterChooseObjects.getSelectedItem();
 
-                if (empty != null) AnotherUtils.visibilityEmptyStatus(empty, items.isEmpty());
-
                 builder.setView(dialogView);
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
+
+                dialog.setOnDismissListener(v -> searchController.clear());
 
                 if (yesButton != null) {
                     yesButton.setText(namePositiveButtonTextId);

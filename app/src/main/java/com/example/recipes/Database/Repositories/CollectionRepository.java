@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat;
 import com.example.recipes.Database.DAO.CollectionDAO;
 import com.example.recipes.Database.ViewModels.CollectionViewModel;
 import com.example.recipes.Enum.CollectionType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Dish;
 import com.example.recipes.Item.ShopList;
@@ -385,7 +385,7 @@ public class CollectionRepository implements Utils<Collection> {
     public ArrayList<String> getAllNameSystemCollection() {
         String systemTag = context.getString(R.string.system_collection_tag);
         ArrayList<String> names = new ArrayList<>();
-        for (int i = 1; i <= ID_System_Collection.values().length; i++) {
+        for (int i = 1; i <= IDSystemCollection.values().length; i++) {
             names.add(systemTag + i);
         }
         return names;

@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Database.ViewModels.IngredientShopListViewModel;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Ingredient;
@@ -235,7 +235,7 @@ public class IngredientShopListRepository implements Utils<IngredientShopList> {
      * @return Single<List<IngredientShopList>> Список інгредієнтів чорного списку
      */
     public Single<List<IngredientShopList>> getAllByBlackList() {
-        return dao.getAllByIDCollection(ID_System_Collection.ID_BLACK_LIST.getId()).switchIfEmpty(Single.just(new ArrayList<>()));
+        return dao.getAllByIDCollection(IDSystemCollection.ID_BLACK_LIST.getId()).switchIfEmpty(Single.just(new ArrayList<>()));
     }
 
     /**
@@ -243,7 +243,7 @@ public class IngredientShopListRepository implements Utils<IngredientShopList> {
      * @return Single<List<String>> Список назв інгредієнтів чорного списку
      */
     public Single<List<String>> getAllNamesByBlackList() {
-        return dao.getAllByIDCollection(ID_System_Collection.ID_BLACK_LIST.getId())
+        return dao.getAllByIDCollection(IDSystemCollection.ID_BLACK_LIST.getId())
                 .switchIfEmpty(Single.just(new ArrayList<>()))
                 .flatMap(ingredientShopLists -> Observable.fromIterable(ingredientShopLists)
                         .flatMapSingle(ingredientShopList -> Single.just(ingredientShopList.getName()))

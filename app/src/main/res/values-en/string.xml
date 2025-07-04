@@ -169,15 +169,13 @@
     <string name="successful_remove_collerction">The dish was successfully removed.</string>
     <string name="filters">Filters</string>
     <string name="sort">Sort</string>
-    <string name="type_sort">Type sort</string>
-    <string name="type_filtrers">Type filters</string>
-    <string name="ascending_alphabetical_alphabet">Ascending Alphabetical Order</string>
-    <string name="descending_alphabetical_alphabet">Descending Alphabetical Order</string>
+    <string name="ascending_alphabet">Ascending Alphabetical Order</string>
+    <string name="descending_alphabet">Descending Alphabetical Order</string>
     <string name="apply">Apply</string>
     <string name="ordered_new">Newest</string>
     <string name="ordered_old">Oldest</string>
     <string name="alphabet">Alphabet</string>
-    <string name="time">Time</string>
+    <string name="time_creating">Time</string>
     <string name="reset">Reset</string>
     <string name="your_ingredients">Your ingredients</string>
     <string name="close">Close</string>
@@ -232,4 +230,18 @@
     <string name="cooking_time">Cooking time</string>
     <string name="title_cooking_time_picker">Select how much time you need for cooking from 00:00</string>
     <string name="empty_selected_items_for_sort">There are no selected items to sort.</string>
+    <string name="sort_and_filter">Sorting/Filtration</string>
+    <string name="sort_by_creation_time">Sort by creation time</string>
+    <string name="sort_by_alphabet">Sorting alphabetically</string>
+    <string name="filter_by_ingredients">Filtering by ingredients</string>
+    <string name="filter_by_cooking_time">Filtering by cooking time</string>
+    <string name="error_max_value_less_than_min">Error: Maximum value is less than minimum</string>
+    <string name="error_min_value_greater_than_max">Error: Minimum value is greater than maximum</string>
+    <string name="error_min_value_less_than_possible">Error: Minimum value is less than possible</string>
+    <string name="error_max_value_greater_than_possible">Error: Maximum value is greater than possible</string>
+    <string name="flexible">Flexible</string>
+    <string name="strict">Strict</string>
+    <string name="settings_search_mode">Search mode settings</string>
+    <string name="necessary">(necessary)</string>
+    <string name="exclusion">(exclusion)</string>
 </resources>

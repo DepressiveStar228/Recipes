@@ -86,6 +86,17 @@
                     tools:ignore="AppLinkUrlError"/>
             </intent-filter>
         </activity>
+        <activity android:name=".Activity.SearchDishActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            tools:ignore="AppLinkUrlError">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <data android:scheme="http"/>
+                <category android:name="android.intent.category.DEFAULT"
+                    tools:ignore="AppLinkUrlError"/>
+            </intent-filter>
+        </activity>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.recipes.file-provider"

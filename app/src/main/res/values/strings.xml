@@ -177,15 +177,13 @@
     <string name="successful_remove_collerction">Страва успішно прибрана</string>
     <string name="filters">Фільтри</string>
     <string name="sort">Сортування</string>
-    <string name="type_sort">Типи сортування</string>
-    <string name="type_filtrers">Типи фільтрації</string>
-    <string name="ascending_alphabetical_alphabet">За алфавітом</string>
-    <string name="descending_alphabetical_alphabet">Проти алфавіта</string>
+    <string name="ascending_alphabet">За алфавітом</string>
+    <string name="descending_alphabet">Проти алфавіта</string>
     <string name="apply">Застосувати</string>
     <string name="ordered_new">Найновіші</string>
     <string name="ordered_old">Найстаріші</string>
     <string name="alphabet">Алфавіт</string>
-    <string name="time">Час</string>
+    <string name="time_creating">Час</string>
     <string name="reset">Скинути</string>
     <string name="your_ingredients">Ваші інгредієнти</string>
     <string name="close">Закрити</string>
@@ -240,4 +238,18 @@
     <string name="cooking_time">Час готування</string>
     <string name="title_cooking_time_picker">Виберіть скільки потрібно часу для готування від 00:00</string>
     <string name="empty_selected_items_for_sort">Немає вибраних елементів для сортування.</string>
+    <string name="sort_and_filter">Сортування/Фільтрація</string>
+    <string name="sort_by_creation_time">Сортування за часом створення</string>
+    <string name="sort_by_alphabet">Сортування за алфавітом</string>
+    <string name="filter_by_ingredients">Фільтрація за інгредієнтами</string>
+    <string name="filter_by_cooking_time">Фільтрація за часом готування</string>
+    <string name="error_max_value_less_than_min">Помилка. Максимальне значення менше мінімального</string>
+    <string name="error_min_value_greater_than_max">Помилка. Мінімальне значення більше максимального</string>
+    <string name="error_min_value_less_than_possible">Помилка. Мінімальне значення менше можливого</string>
+    <string name="error_max_value_greater_than_possible">Помилка. Максимальне значення більше можливого</string>
+    <string name="flexible">Гнучкий</string>
+    <string name="strict">Суворий</string>
+    <string name="settings_search_mode">Налаштування режиму пошуку</string>
+    <string name="necessary">(необхідні)</string>
+    <string name="exclusion">(виключення)</string>
 </resources>

@@ -76,4 +76,20 @@ public class CustomPopupWindow extends ConstraintLayout {
             popupWindow.dismiss();
         }
     }
+
+    /**
+     * Встановлює слухача для події закриття спливаючого вікна.
+     * @param listener Слухач для події закриття
+     */
+    public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
+        if (popupWindow != null) popupWindow.setOnDismissListener(listener);
+    }
+
+    /**
+     * Перевіряє, чи спливаюче вікно показано.
+     * @return true, якщо вікно показано, інакше false
+     */
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
 }

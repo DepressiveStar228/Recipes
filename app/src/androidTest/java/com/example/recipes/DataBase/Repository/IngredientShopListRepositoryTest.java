@@ -11,7 +11,7 @@ import com.example.recipes.Database.DAO.IngredientShopListDAO;
 import com.example.recipes.Database.Repositories.IngredientShopListAmountTypeRepository;
 import com.example.recipes.Database.Repositories.IngredientShopListRepository;
 import com.example.recipes.Enum.CollectionType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.IngredientType;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Item.Ingredient;
@@ -236,7 +236,7 @@ public class IngredientShopListRepositoryTest {
     public void getAllByBlackList() {
         IngredientShopList ingredientShopList1 = new IngredientShopList(1L, testNameIngredient + "1");
 
-        when(dao.getAllByIDCollection(ID_System_Collection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1))));
+        when(dao.getAllByIDCollection(IDSystemCollection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1))));
 
         TestObserver<List<IngredientShopList>> testObserver = ingredientShopListRepository.getAllByBlackList().test();
         testObserver
@@ -248,7 +248,7 @@ public class IngredientShopListRepositoryTest {
     public void getAllNamesByBlackList() {
         IngredientShopList ingredientShopList1 = new IngredientShopList(1L, testNameIngredient + "1");
 
-        when(dao.getAllByIDCollection(ID_System_Collection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1))));
+        when(dao.getAllByIDCollection(IDSystemCollection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1))));
 
         TestObserver<List<String>> testObserver = ingredientShopListRepository.getAllNamesByBlackList().test();
         testObserver
@@ -264,7 +264,7 @@ public class IngredientShopListRepositoryTest {
         Ingredient ingredient1 = new Ingredient(testNameIngredient + "2", "1", IngredientType.TEASPOON);
         Ingredient ingredient2 = new Ingredient(testNameIngredient + "3", "2", IngredientType.PIECES);
 
-        when(dao.getAllByIDCollection(ID_System_Collection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1, ingredientShopList2))));
+        when(dao.getAllByIDCollection(IDSystemCollection.ID_BLACK_LIST.getId())).thenReturn(Maybe.just(new ArrayList<>(List.of(ingredientShopList1, ingredientShopList2))));
 
         TestObserver<List<Ingredient>> testObserver = ingredientShopListRepository.filteredBlackList(new ArrayList<>(List.of(ingredient1, ingredient2))).test();
         testObserver

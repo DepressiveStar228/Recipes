@@ -3,7 +3,6 @@ package com.example.recipes.Activity;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,12 +23,12 @@ import com.example.recipes.Adapter.ViewPagerAdapter;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Decoration.LoadScreenAnimation;
 import com.example.recipes.Enum.CollectionType;
+import com.example.recipes.Fragments.HomeFragment;
 import com.example.recipes.Fragments.SettingPanel;
 import com.example.recipes.Fragments.ShoplistFragment;
 import com.example.recipes.Controller.ImportExportController;
 import com.example.recipes.Interface.OnBackPressedListener;
 import com.example.recipes.Fragments.CollectionsDishFragment;
-import com.example.recipes.Fragments.SearchDishFragment;
 import com.example.recipes.Item.Collection;
 import com.example.recipes.Utils.Dialogues;
 import com.example.recipes.Utils.RecipeUtils;
@@ -181,7 +180,7 @@ public class MainActivity extends FragmentActivity {
      */
     private void initializeUI() {
         List<Fragment> fragmentList = new ArrayList<>();
-        fragmentList.add(new SearchDishFragment());
+        fragmentList.add(new HomeFragment());
         fragmentList.add(new CollectionsDishFragment());
         fragmentList.add(new ShoplistFragment());
 

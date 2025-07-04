@@ -606,12 +606,8 @@ public class ShopListActivity extends AppCompatActivity {
      */
     private void onAddDishButtonClick() {
         if (dialogues != null) {
-            ArrayList<Boolean> sortStatus = new ArrayList<>();
-            sortStatus.add(true);
-            sortStatus.add(null);
-
             // Отримання відсортованих страв
-            Disposable disposable = utils.ByDish().getFilteredAndSorted(new ArrayList<>(), sortStatus)
+            Disposable disposable = utils.ByDish().getFilteredAndSorted(new ArrayList<>(), null, null)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(dishes -> {

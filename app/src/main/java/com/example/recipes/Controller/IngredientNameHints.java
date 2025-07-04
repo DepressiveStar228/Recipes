@@ -58,7 +58,7 @@ public class IngredientNameHints {
      * Використовується для ініціалізації контролера пошуку з адаптером результатів.
      */
     private void setSearchController() {
-        this.searchController = new SearchController<>(context, null, recyclerView, new SearchResultsAdapter<String>((view, item) -> {
+        this.searchController = new SearchController<>(context, null, recyclerView, new SearchResultsAdapter<String>(null, (view, item) -> {
             if (runnable != null) {
                 name = item.toString(); // Отримуємо назву інгредієнта
                 runnable.run();
@@ -84,7 +84,7 @@ public class IngredientNameHints {
      */
     @SuppressLint("ClickableViewAccessibility")
     public void setPopupWindow(EditText editText) {
-        if (preferencesController.getStatus_ing_hints()) {
+        if (preferencesController.getStatusIngHints()) {
             if (anchorView != null) {
                 // Додаємо обробник подій для натискання на якорь
                 anchorView.setOnTouchListener((v, event) -> {
@@ -114,6 +114,7 @@ public class IngredientNameHints {
             // Ініціалізуємо вікно спливаючої підказки
             customPopupWindow = new CustomPopupWindow(context, anchorView, recyclerView);
             customPopupWindow.setSize(250, 150);
+            customPopupWindow.setOnDismissListener(() -> searchController.clear());
         }
     }
 
@@ -124,7 +125,7 @@ public class IngredientNameHints {
      * @param text Текст, за яким буде виконано пошук
      */
     public void search(String text) {
-        if (preferencesController.getStatus_ing_hints()) {
+        if (preferencesController.getStatusIngHints()) {
             ArrayList<String> result = searchController.searchAndGetResult(text);
             if (result != null && !result.isEmpty() && isTouch) {
                 showPopup();
@@ -136,8 +137,9 @@ public class IngredientNameHints {
      * Метод для показу спливаючого підказки.
      */
     private void showPopup() {
-        if (customPopupWindow != null) {
-            customPopupWindow.showPopup(preferencesController.getStatus_ing_hints() && !allNameIngredients.isEmpty());
+        if (customPopupWindow != null && !customPopupWindow.isShowing()) {
+            customPopupWindow.showPopup(preferencesController.getStatusIngHints() && !allNameIngredients.isEmpty());
+            searchController.search();
         }
     }
 

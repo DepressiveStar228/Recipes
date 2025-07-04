@@ -22,7 +22,6 @@ import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Decoration.CustomSpinnerAdapter;
 import com.example.recipes.Interface.ExportCallbackUri;
 import com.example.recipes.R;
-import com.example.recipes.Utils.AnotherUtils;
 import com.example.recipes.Utils.FileUtils;
 import com.example.recipes.Utils.RecipeUtils;
 import com.google.android.material.navigation.NavigationView;
@@ -130,7 +129,7 @@ public class SettingPanel {
                 themeArray = preferencesController.getStringArrayForLocale(R.array.theme_options, "en");
                 paletteArray = preferencesController.getStringArrayForLocale(R.array.palette_options, "en");
 
-                isIngredientHintsEnabled = preferencesController.getStatus_ing_hints();
+                isIngredientHintsEnabled = preferencesController.getStatusIngHints();
                 ingHintsSwitch.setChecked(isIngredientHintsEnabled);
 
                 Log.d(nameActivity, "Завантаження всіх об'єктів налаштувань");
@@ -189,8 +188,8 @@ public class SettingPanel {
         confirmButton.setOnClickListener(v -> {
             Log.d(nameActivity, "Слухач помітив підтвердження налаштувань");
             preferencesController.setLocale(selectedLanguage, activity);
-            preferencesController.savePreferences(selectedLanguage, selectedTheme, selectedPalette);
-            preferencesController.savePreferences(isIngredientHintsEnabled);
+            preferencesController.savePreferencesForUI(selectedLanguage, selectedTheme, selectedPalette);
+            preferencesController.saveStatusIngHints(isIngredientHintsEnabled);
             drawerLayout.closeDrawer(GravityCompat.END);
 
             // Перезапуск активності для застосування змін

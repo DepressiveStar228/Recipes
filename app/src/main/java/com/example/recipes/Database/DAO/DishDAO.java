@@ -29,7 +29,7 @@ public interface DishDAO {
     String ID = "id";
     String NAME = "name";
     String PORTION = "portion";
-    String TIMESTAMP = "timestamp";
+    String COOKING_TIME = "cooking_time";
 
     @Insert
     Single<Long> insert(Dish dish);
@@ -63,6 +63,12 @@ public interface DishDAO {
 
     @Query("SELECT * FROM " + TABLE_NAME + " WHERE " + NAME + " = :nameDish")
     Maybe<Dish> getByName(String nameDish);
+
+    @Query("SELECT MAX(" + COOKING_TIME + ") FROM " + TABLE_NAME)
+    Maybe<Long> getMaxCookingTime();
+
+    @Query("SELECT MIN(" + COOKING_TIME + ") FROM " + TABLE_NAME)
+    Maybe<Long> getMinCookingTime();
 
     @Query("SELECT COUNT(*) FROM " + TABLE_NAME)
     Single<Integer> getCount();

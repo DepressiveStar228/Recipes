@@ -28,7 +28,7 @@ import com.example.recipes.Adapter.ShopListGetAdapter;
 import com.example.recipes.Controller.PreferencesController;
 import com.example.recipes.Controller.VerticalSpaceItemDecoration;
 import com.example.recipes.Enum.CollectionType;
-import com.example.recipes.Enum.ID_System_Collection;
+import com.example.recipes.Enum.IDSystemCollection;
 import com.example.recipes.Enum.IntentKeys;
 import com.example.recipes.Enum.Limits;
 import com.example.recipes.Interface.OnBackPressedListener;
@@ -424,7 +424,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
         removedItems.removeAll(newList);
 
         return Single.zip(
-                        utils.ByIngredientShopList().addAll(ID_System_Collection.ID_BLACK_LIST.getId(), addedItems),
+                        utils.ByIngredientShopList().addAll(IDSystemCollection.ID_BLACK_LIST.getId(), addedItems),
                         removedIngredients(removedItems),
                         Pair::new
                 )
@@ -445,7 +445,7 @@ public class ShoplistFragment extends Fragment implements OnBackPressedListener 
      */
     private Single<Boolean> removedIngredients(ArrayList<String> removedItems) {
         return Observable.fromIterable(removedItems)
-                .flatMapSingle(item -> utils.ByIngredientShopList().getByNameAndIDCollection(item, ID_System_Collection.ID_BLACK_LIST.getId())
+                .flatMapSingle(item -> utils.ByIngredientShopList().getByNameAndIDCollection(item, IDSystemCollection.ID_BLACK_LIST.getId())
                         .flatMap(ingredientShopList -> {
                             if (ingredientShopList != null) {
                                 return utils.ByIngredientShopList().delete(ingredientShopList).toSingleDefault(true).onErrorReturnItem(false);
